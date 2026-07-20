@@ -20,7 +20,11 @@ export function createSaveSystem(storage: SaveStorage): SaveSystem {
     if (json !== null && json.length <= MAX_SAVE_BYTES) {
       loaded = parseGameState(json)
       if (loaded === null) {
-        console.warn('waystone: save data was malformed, starting fresh')
+        // Never destroy what we could not read: park the bytes where a
+        // later fix (or the player, via export tooling) can recover them —
+        // the fresh state's autosave would otherwise overwrite them.
+        console.warn('waystone: save data was malformed, starting fresh (backup kept)')
+        storage.setItem(`${SAVE_KEY}:corrupt`, json)
       }
     }
   } catch (err) {
