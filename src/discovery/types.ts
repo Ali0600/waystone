@@ -11,6 +11,7 @@ export type DiscoveryKind =
   | 'glyphstone' // blank Glyph Stone pickup
   | 'latent' // Lantern-revealed
   | 'buried' // Sounding minigame dig site (M8)
+  | 'sealed' // visible but sealed; the Chime resonates it open (M10)
   | 'guarded' // drops after its elite falls (M6)
   | 'perch' // grapple-reachable ledge cache (M3)
   | 'person' // a recruit — finding them grows the Waystation (M4)
@@ -26,10 +27,18 @@ export type DiscoveryPrereq =
   | 'lantern' // must be revealed by a lantern pulse first
   | 'grapple' // needs the Grapple tool (M3)
   | 'sounding' // needs the Sounding dig (M8)
+  | 'chime' // must be resonated open by the Chime first (M10)
   | 'combat' // needs its guardian defeated (M6)
 
 export interface Payout {
-  meter: 'lumen' | 'glyphstone' | 'completion' | 'tool-grapple' | 'tool-sounding' | 'waystone'
+  meter:
+    | 'lumen'
+    | 'glyphstone'
+    | 'completion'
+    | 'tool-grapple'
+    | 'tool-sounding'
+    | 'tool-chime'
+    | 'waystone'
   amount: number
 }
 

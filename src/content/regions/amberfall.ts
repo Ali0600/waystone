@@ -243,6 +243,33 @@ export const amberfall: RegionDef = {
       ],
     },
     {
+      id: 'af-sealed-spire',
+      kind: 'sealed',
+      x: -34,
+      z: -18,
+      label: 'Spire Reliquary',
+      cue: 'a sealed stone drum hums, shut fast, below the broken spire',
+      prereq: 'chime',
+      payouts: [
+        { meter: 'glyphstone', amount: 1 },
+        { meter: 'lumen', amount: 20 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'af-sealed-east-shelf',
+      kind: 'sealed',
+      x: 36,
+      z: 33,
+      label: 'Stone-Circle Seal',
+      cue: 'one of the standing stones rings hollow, sealed shut',
+      prereq: 'chime',
+      payouts: [
+        { meter: 'lumen', amount: 30 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
       id: 'af-waystone-vault',
       kind: 'waystone',
       x: -4,

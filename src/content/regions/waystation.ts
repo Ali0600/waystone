@@ -112,6 +112,20 @@ export const waystation: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'ws-sealed-plaza',
+      kind: 'sealed',
+      x: 6,
+      z: -128,
+      label: 'Founder’s Sealed Vault',
+      cue: 'a stone drum by the plaza has hummed, sealed, since the founding',
+      prereq: 'chime',
+      payouts: [
+        { meter: 'glyphstone', amount: 1 },
+        { meter: 'lumen', amount: 15 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
   grapplePoints: [],
   enemies: [], // home is safe

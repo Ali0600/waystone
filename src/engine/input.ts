@@ -15,6 +15,7 @@ export interface InputSnapshot {
   map: boolean
   glyphs: boolean
   sounding: boolean
+  chime: boolean
   /** Every key code freshly pressed this step (combat menus, hidden arts). */
   codes: string[]
   lookDX: number
@@ -65,6 +66,7 @@ export class Input {
       map: this.pressed.has('KeyM'),
       glyphs: this.pressed.has('KeyG'),
       sounding: this.pressed.has('KeyT'),
+      chime: this.pressed.has('KeyC'),
       codes: [...this.pressed],
       lookDX: this.lookDX,
       lookDY: this.lookDY,

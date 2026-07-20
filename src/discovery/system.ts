@@ -13,6 +13,7 @@ export interface PlayerCapabilities {
   lantern: boolean
   grapple: boolean
   sounding: boolean
+  chime: boolean
 }
 
 function prereqMet(
@@ -30,6 +31,8 @@ function prereqMet(
       return caps.grapple
     case 'sounding':
       return caps.sounding
+    case 'chime':
+      return status === 'revealed' // the chime must have resonated it open
     case 'combat':
       return guardianDown
   }
@@ -114,6 +117,25 @@ export class DiscoverySystem {
     return revealed
   }
 
+  /** Chime resonance: open sealed discoverables near the player. Mirrors
+   *  the lantern pulse, but for the visible-but-sealed 'chime' prereq. */
+  chimeResonate(px: number, pz: number): number {
+    let opened = 0
+    for (const def of this.defs) {
+      if (def.prereq !== 'chime') continue
+      const status = this.state.discoveries[def.id]
+      if (status === 'revealed' || status === 'found') continue
+      const d = Math.hypot(px - def.x, pz - def.z)
+      if (d < REVEAL_RADIUS) {
+        this.state.discoveries[def.id] = 'revealed'
+        this.bus.emit('discovery:revealed', { id: def.id })
+        this.bus.emit('toast', { text: `The chime opens: ${def.label}`, flavor: 'reward' })
+        opened++
+      }
+    }
+    return opened
+  }
+
   /** Nearest unfound buried cache within range (the Sounding target). */
   nearestBuried(
     px: number,
@@ -188,6 +210,14 @@ export class DiscoverySystem {
         this.bus.emit('tool:acquired', { tool: 'grapple' })
         this.bus.emit('toast', {
           text: 'The Surveyor’s Grapple — aim at a crystal pylon and press Q',
+          flavor: 'reward',
+        })
+      } else if (p.meter === 'tool-chime') {
+        this.state.tools.chime = true
+        this.caps.chime = true
+        this.bus.emit('tool:acquired', { tool: 'chime' })
+        this.bus.emit('toast', {
+          text: 'The Resonant Chime — press C to ring sealed stone open',
           flavor: 'reward',
         })
       }

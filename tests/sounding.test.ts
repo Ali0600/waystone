@@ -44,7 +44,7 @@ describe('nearestBuried', () => {
       [buried('near', 5, 0), buried('far', 20, 0), buried('outside', 100, 0)],
       state,
       new EventBus(),
-      { lantern: true, grapple: false, sounding: true },
+      { lantern: true, grapple: false, sounding: true, chime: false },
       () => 0,
     )
     expect(sys.nearestBuried(0, 0, 30)?.def.id).toBe('near')
@@ -56,7 +56,7 @@ describe('nearestBuried', () => {
 
   it('digging a buried cache is a normal interact once the rod is carried', () => {
     const state = createInitialState()
-    const caps = { lantern: true, grapple: false, sounding: false }
+    const caps = { lantern: true, grapple: false, sounding: false, chime: false }
     const sys = new DiscoverySystem([buried('dig', 0, 0)], state, new EventBus(), caps, () => 0)
     expect(sys.interact(0, 0)).toBe(false) // no rod, no dig
     caps.sounding = true
