@@ -13,6 +13,7 @@ export interface InputSnapshot {
   lantern: boolean
   grapple: boolean
   map: boolean
+  glyphs: boolean
   lookDX: number
   lookDY: number
 }
@@ -59,6 +60,7 @@ export class Input {
       lantern: this.pressed.has('KeyF'),
       grapple: this.pressed.has('KeyQ'),
       map: this.pressed.has('KeyM'),
+      glyphs: this.pressed.has('KeyG'),
       lookDX: this.lookDX,
       lookDY: this.lookDY,
     }

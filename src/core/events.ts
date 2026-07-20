@@ -6,6 +6,7 @@ export interface GameEvents {
   'lumen:changed': { total: number; delta: number }
   'glyphstone:changed': { total: number; delta: number }
   'mastery:tier': { verb: string; tier: number }
+  'glyph:inscribed': { slot: number; glyph: string }
   'tool:acquired': { tool: string }
   'path:revealed': { id: string }
   'toast': { text: string; flavor?: 'reward' | 'info' }

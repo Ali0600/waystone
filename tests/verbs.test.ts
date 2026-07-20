@@ -5,20 +5,9 @@ import { PlayerSim, type VerbGates } from '../src/player/controller'
 import { LatentPaths } from '../src/world/latentpath'
 import { EventBus } from '../src/core/events'
 import { createInitialState } from '../src/core/state'
-import type { InputSnapshot } from '../src/engine/input'
+import { idleInput } from './helpers'
 
-const idle: InputSnapshot = {
-  moveX: 0,
-  moveZ: 0,
-  jump: false,
-  dash: false,
-  interact: false,
-  lantern: false,
-  grapple: false,
-  map: false,
-  lookDX: 0,
-  lookDY: 0,
-}
+const idle = idleInput()
 
 const DT = 1 / 60
 

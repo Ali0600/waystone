@@ -8,13 +8,16 @@ import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
+import { RECRUITS } from './content/recruits'
 import { RecruitSystem } from './hub/recruits'
 import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
 import { GrappleVerb } from './player/grapple'
 import { LanternVerb } from './player/verbs'
+import { GlyphSystem } from './progression/glyphs'
 import { MasterySystem } from './progression/mastery'
+import { GlyphPanel } from './ui/glyphpanel'
 import { LatentPaths } from './world/latentpath'
 import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
@@ -127,6 +130,17 @@ scene.add(recruits.group)
 
 const map = new RegionMap(world, saves.state)
 
+// The Glyph Grid — inscription happens beside Iole the Scribe.
+const glyphs = new GlyphSystem(saves.state, bus, () => recruits.homeCount())
+const scribeDef = RECRUITS.find((r) => r.role === 'scribe')!
+const nearScribe = () =>
+  saves.state.discoveries[scribeDef.personId] === 'found' &&
+  Math.hypot(
+    player.position.x - scribeDef.home.x,
+    player.position.z - scribeDef.home.z,
+  ) < 7
+const glyphPanel = new GlyphPanel(glyphs, saves.state, nearScribe, bus)
+
 const input = new Input()
 const orbit = new OrbitFollowCamera(camera, input)
 const hud = new Hud()
@@ -228,6 +242,7 @@ function update(dt: number) {
     }
   }
   if (snap.map) map.toggle()
+  if (snap.glyphs) glyphPanel.toggle()
   hud.setPrompt(
     target
       ? `E — ${target.label}`
@@ -278,6 +293,8 @@ if (qaMode || import.meta.env.DEV) {
     discovery,
     mastery,
     recruits,
+    glyphs,
+    glyphPanel,
     step(frames = 1) {
       for (let i = 0; i < frames; i++) update(SIM_DT)
       render()
