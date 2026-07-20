@@ -1,18 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { amberfall } from '../src/content/regions/amberfall'
+import { waystation } from '../src/content/regions/waystation'
+import { RECRUITS } from '../src/content/recruits'
 import type { RegionDef } from '../src/world/region'
 
 /**
  * The design pillars as executable tests. Authoring mistakes fail CI, not
  * playtests. Every region added to the game must join this list.
  */
-const REGIONS: RegionDef[] = [amberfall]
+const REGIONS: RegionDef[] = [amberfall, waystation]
 
 describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region) => {
   const defs = region.discoverables
 
-  it('meets the density budget (~12 discoverables)', () => {
-    expect(defs.length).toBeGreaterThanOrEqual(10)
+  it('meets its density budget', () => {
+    expect(defs.length).toBeGreaterThanOrEqual(region.minDiscoverables ?? 10)
   })
 
   it('has unique discoverable ids', () => {
@@ -49,8 +51,11 @@ describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region)
   })
 
   it('positions all discoverables inside the island', () => {
+    const [ox, oz] = region.origin
     for (const d of defs) {
-      expect(Math.hypot(d.x, d.z), `${d.id} radius`).toBeLessThan(region.island.radius * 0.97)
+      expect(Math.hypot(d.x - ox, d.z - oz), `${d.id} radius`).toBeLessThan(
+        region.island.radius * 0.97,
+      )
     }
   })
 
@@ -60,5 +65,38 @@ describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region)
         expect(p.amount, `${d.id} ${p.meter}`).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+describe('cross-region invariants', () => {
+  const all = REGIONS.flatMap((r) => r.discoverables)
+
+  it('discoverable ids are unique across the whole world', () => {
+    const ids = all.map((d) => d.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('all six recruits exist as person discoverables', () => {
+    const persons = all.filter((d) => d.kind === 'person')
+    expect(persons).toHaveLength(6)
+    for (const r of RECRUITS) {
+      const person = persons.find((p) => p.id === r.personId)
+      expect(person, r.personId).toBeDefined()
+    }
+  })
+
+  it('recruit home spots sit on the Waystation isle', () => {
+    const [ox, oz] = waystation.origin
+    for (const r of RECRUITS) {
+      expect(
+        Math.hypot(r.home.x - ox, r.home.z - oz),
+        `${r.personId} home`,
+      ).toBeLessThan(waystation.island.radius * 0.9)
+    }
+  })
+
+  it('recruit roles are unique (one structure each)', () => {
+    const roles = RECRUITS.map((r) => r.role)
+    expect(new Set(roles).size).toBe(roles.length)
   })
 })

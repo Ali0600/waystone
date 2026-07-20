@@ -12,6 +12,8 @@ export interface LatentPathDef {
   islet?: { x: number; z: number; y: number; r: number }
   /** Discoverable ids that become 'revealed' when this path solidifies. */
   reveals: string[]
+  /** Permanent walkways (hub bridge): solid from construction, no lantern. */
+  startSolid?: boolean
 }
 
 interface BuiltPath {
@@ -32,11 +34,16 @@ export class LatentPaths {
     defs: LatentPathDef[],
     private state: GameState,
     private bus: EventBus,
+    /** Ground query: island height at the point, or null when over open
+     *  mist. Endpoints over an island snap to their terrain so the first
+     *  plank is always a step, never a wall (0 is a VALID island height —
+     *  a threshold cannot distinguish rim from mist; null can). */
+    private groundAt: (x: number, z: number) => number | null = () => null,
   ) {
     this.group.name = 'latent-paths'
     for (const def of defs) {
       const g = this.build(def)
-      const solidified = state.pathsRevealed.includes(def.id)
+      const solidified = def.startSolid === true || state.pathsRevealed.includes(def.id)
       this.paths.push({ def, group: g, solidified })
       if (solidified) this.applySolid(g)
       this.group.add(g)
@@ -48,6 +55,10 @@ export class LatentPaths {
     g.name = `path:${def.id}`
     const from = new THREE.Vector3(...def.from)
     const to = new THREE.Vector3(...def.to)
+    for (const end of [from, to]) {
+      const ground = this.groundAt(end.x, end.z)
+      if (ground !== null) end.y = ground + 0.18
+    }
     const span = to.clone().sub(from)
     const length = span.length()
     const planks = Math.max(3, Math.round(length / 2.2))
@@ -92,6 +103,11 @@ export class LatentPaths {
         mesh.material = makeToonMaterial('#9a8f78')
       }
     })
+  }
+
+  /** Whether a given path is currently solid (walkable). */
+  isSolid(id: string): boolean {
+    return this.paths.some((p) => p.def.id === id && p.solidified)
   }
 
   /** Solid path groups — included in collider rebuilds. */

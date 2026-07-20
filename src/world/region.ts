@@ -40,6 +40,9 @@ export interface LandmarkDef {
 export interface RegionDef {
   id: string
   name: string
+  /** World-space centre of this island. All other coordinates in the def
+   *  (landmarks, discoverables, pylons, paths, spawn) are WORLD coords. */
+  origin: [number, number]
   island: IslandParams
   palette: RegionPalette
   fog: { near: number; far: number }
@@ -51,6 +54,9 @@ export interface RegionDef {
   discoverables: DiscoverableDef[]
   grapplePoints: GrapplePointDef[]
   latentPaths: LatentPathDef[]
+  /** Density budget floor for the content-invariant tests (hub isles are
+   *  smaller than full regions). Defaults to 10. */
+  minDiscoverables?: number
 }
 
 export interface BuiltRegion {
@@ -69,8 +75,9 @@ export function buildRegion(def: RegionDef): BuiltRegion {
   const collidable = new THREE.Group()
   collidable.name = 'collidable'
   group.add(collidable)
+  const [ox, oz] = def.origin
 
-  // Terrain.
+  // Terrain (island-local geometry placed at the region origin).
   const terrainGeo = buildIslandGeometry(def.island, {
     grass: def.palette.grass,
     cliff: def.palette.cliff,
@@ -82,9 +89,11 @@ export function buildRegion(def: RegionDef): BuiltRegion {
     makeToonMaterial('#ffffff', { vertexColors: true }),
   )
   terrain.name = 'terrain'
+  terrain.position.set(ox, 0, oz)
   collidable.add(terrain)
 
-  const h = (x: number, z: number) => heightAt(def.island, x, z)
+  /** World-coord height query for this island. */
+  const h = (x: number, z: number) => heightAt(def.island, x - ox, z - oz)
 
   // Landmarks (collidable).
   for (const lm of def.landmarks) {
@@ -125,12 +134,14 @@ export function buildRegion(def: RegionDef): BuiltRegion {
     for (let attempt = 0; attempt < 8; attempt++) {
       const a = rng() * Math.PI * 2
       const r = Math.sqrt(rng()) * def.island.radius * 0.9
-      const x = Math.cos(a) * r
-      const z = Math.sin(a) * r
+      const x = ox + Math.cos(a) * r
+      const z = oz + Math.sin(a) * r
       if (avoid.some((av) => Math.hypot(x - av.x, z - av.z) < av.r)) continue
       if (
         isTree &&
-        def.island.plateaus.some((pl) => Math.hypot(x - pl.x, z - pl.z) < pl.r * 0.8)
+        def.island.plateaus.some(
+          (pl) => Math.hypot(x - ox - pl.x, z - oz - pl.z) < pl.r * 0.8,
+        )
       ) {
         continue
       }
