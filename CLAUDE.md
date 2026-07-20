@@ -21,7 +21,9 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   latent regions are ghosts (shared material, no collision, dormant content) until
   `manifest(id)`. `region.ts` builds islands from data. Collision = three-mesh-bvh
   static BVH + capsule collide-and-slide (`collision.ts`); the collider lives at world
-  origin and never moves.
+  origin and never moves. The Mistwalker adds a soft floor at the mist plane
+  (`PlayerSim.mistFloorY`, gated by a draining `MistCharge`); main tracks the last solid
+  shore so a fall or charge-out respawns there, nothing lost.
 - `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`,
   `cindervault` — the last two latent, chained: Amberfall's waystone opens Veilspire,
   Veilspire's opens Cindervault), glyphs, chains, enemies, recruits, cards.schema (deck

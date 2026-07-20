@@ -760,3 +760,30 @@ button.pcard {
   align-items: center;
   gap: 5px;
 }
+
+/* --- Mistwalker charge meter --- */
+
+.mist-meter {
+  position: fixed;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 9px;
+  background: rgba(20, 16, 32, 0.7);
+  border: 1px solid rgba(191, 232, 255, 0.45);
+  border-radius: 5px;
+  overflow: hidden;
+  z-index: 12;
+}
+
+.mist-meter[hidden] {
+  display: none;
+}
+
+.mist-fill {
+  height: 100%;
+  width: 0%;
+  background: #bfe8ff;
+  transition: width 0.1s linear, background 0.2s ease;
+}

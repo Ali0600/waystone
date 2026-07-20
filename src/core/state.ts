@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 10
+  version: 11
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -37,7 +37,7 @@ export interface GameState {
   /** Use-based mastery counters (tiers derive from thresholds). */
   mastery: MasteryCounters
   /** World tools owned (the lantern is innate). */
-  tools: { grapple: boolean; sounding: boolean; chime: boolean }
+  tools: { grapple: boolean; sounding: boolean; chime: boolean; mistwalker: boolean }
   /** Latent paths made solid by the lantern (region content ids). */
   pathsRevealed: string[]
   /** The 4×4 Glyph Grid, row-major. Inscription is permanent-ish. */
@@ -74,7 +74,7 @@ export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 10,
+    version: 11,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -83,7 +83,7 @@ export function createInitialState(): GameState {
     glyphStones: 0,
     discoveries: {},
     mastery: { strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 },
-    tools: { grapple: false, sounding: false, chime: false },
+    tools: { grapple: false, sounding: false, chime: false, mistwalker: false },
     pathsRevealed: [],
     glyphGrid: Array<GlyphSlot>(16).fill(null),
     glyphUses: { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 },
@@ -194,8 +194,13 @@ export function parseGameState(json: string): GameState | null {
     o.cardWins = {}
     o.enemiesFelled = {}
   }
+  // v10 → v11: the Mistwalker.
+  if (o.version === 10) {
+    o.version = 11
+    ;(o.tools as Record<string, unknown>).mistwalker = false
+  }
 
-  if (o.version !== 10) return null
+  if (o.version !== 11) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -215,7 +220,8 @@ export function parseGameState(json: string): GameState | null {
   if (
     typeof tools.grapple !== 'boolean' ||
     typeof tools.sounding !== 'boolean' ||
-    typeof tools.chime !== 'boolean'
+    typeof tools.chime !== 'boolean' ||
+    typeof tools.mistwalker !== 'boolean'
   ) {
     return null
   }
@@ -281,7 +287,7 @@ export function parseGameState(json: string): GameState | null {
   }
 
   return {
-    version: 10,
+    version: 11,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -294,7 +300,12 @@ export function parseGameState(json: string): GameState | null {
       grapple: m.grapple as number,
       lantern: m.lantern as number,
     },
-    tools: { grapple: tools.grapple, sounding: tools.sounding, chime: tools.chime },
+    tools: {
+      grapple: tools.grapple,
+      sounding: tools.sounding,
+      chime: tools.chime,
+      mistwalker: tools.mistwalker,
+    },
     pathsRevealed: [...(o.pathsRevealed as string[])],
     glyphGrid: [...(grid as GlyphSlot[])],
     glyphUses: {

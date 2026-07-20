@@ -56,7 +56,7 @@ describe('DiscoverySystem', () => {
   beforeEach(() => {
     state = createInitialState()
     bus = new EventBus()
-    caps = { lantern: true, grapple: false, sounding: false, chime: false }
+    caps = { lantern: true, grapple: false, sounding: false, chime: false, mistwalker: false }
     sys = new DiscoverySystem(DEFS, state, bus, caps, () => 0)
     events = []
     bus.on('discovery:pinned', ({ id }) => events.push(`pin:${id}`))

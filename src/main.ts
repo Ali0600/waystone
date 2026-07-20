@@ -28,6 +28,7 @@ import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
 import { GrappleVerb } from './player/grapple'
 import { ChimeVerb } from './player/chime'
+import { MistCharge } from './player/mistwalker'
 import { LanternVerb } from './player/verbs'
 import { GlyphSystem } from './progression/glyphs'
 import { MasterySystem } from './progression/mastery'
@@ -118,6 +119,7 @@ const caps: PlayerCapabilities = {
   grapple: saves.state.tools.grapple,
   sounding: saves.state.tools.sounding,
   chime: saves.state.tools.chime,
+  mistwalker: saves.state.tools.mistwalker,
 }
 const discovery = new DiscoverySystem(
   world.discoverables,
@@ -153,6 +155,11 @@ scene.add(chime.ring)
 
 // Mist-angling: cast from rim spots once Nerei has taught the cast.
 const angling = new AnglingVerb(audio, saves.state, bus)
+
+// Mistwalker: walk the mist sea on a draining charge; a fall respawns at the
+// last solid shore stood on.
+const mistCharge = new MistCharge()
+const lastSolid = world.regions[0].spawn.clone()
 
 // The Waystation grows as people come home.
 const recruits = new RecruitSystem(
@@ -400,7 +407,17 @@ function update(dt: number) {
     return
   }
 
+  // Mistwalker: while owned and charged, the mist sea is a floor.
+  player.mistFloorY = caps.mistwalker && mistCharge.active() ? MIST_Y + 0.05 : null
   player.step(dt, snap, orbit.yaw, world.collider)
+  mistCharge.update(dt, player.position.y)
+  // Track the last SOLID shore so a fall (or a charge-out) respawns there,
+  // never on the mist — nothing lost.
+  if (player.onGround && player.position.y > MIST_Y + 1) {
+    lastSolid.copy(player.position)
+    player.setSpawn(lastSolid)
+  }
+  hud.setMistCharge(caps.mistwalker && mistCharge.fraction() < 0.999 ? mistCharge.fraction() : null)
   orbit.update(dt, snap, player.position, world.collider)
   mist.update(dt)
   const groundY = groundHeightBelow(
@@ -554,6 +571,7 @@ if (qaMode || import.meta.env.DEV) {
     grapple,
     chime,
     angling,
+    mistCharge,
     cardTable,
     shop,
     discovery,
@@ -597,6 +615,7 @@ if (qaMode || import.meta.env.DEV) {
         '.combat-top',
         '.combat-bottom',
         '.angling-bar',
+        '.mist-meter',
         '.card-overlay',
         '.toasts',
       ]
