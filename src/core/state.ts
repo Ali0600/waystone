@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 4
+  version: 5
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -44,13 +44,19 @@ export interface GameState {
   glyphGrid: GlyphSlot[]
   /** Per-glyph use counters (each authored glyph levels with use). */
   glyphUses: Record<Exclude<GlyphSlot, null>, number>
+  /** Per-chain use counters (each Chain levels with use). */
+  chainUses: Record<string, number>
+  /** Hidden Arts performed at least once — permanently known. */
+  artsUnlocked: string[]
+  /** Guarded discoverables whose guardian has fallen (id = discoverable). */
+  guardiansDefeated: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 4,
+    version: 5,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -63,6 +69,9 @@ export function createInitialState(): GameState {
     pathsRevealed: [],
     glyphGrid: Array<GlyphSlot>(16).fill(null),
     glyphUses: { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 },
+    chainUses: {},
+    artsUnlocked: [],
+    guardiansDefeated: [],
   }
 }
 
@@ -120,8 +129,15 @@ export function parseGameState(json: string): GameState | null {
     o.glyphGrid = Array(16).fill(null)
     o.glyphUses = { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 }
   }
+  // v4 → v5: combat (chains, hidden arts, guardians).
+  if (o.version === 4) {
+    o.version = 5
+    o.chainUses = {}
+    o.artsUnlocked = []
+    o.guardiansDefeated = []
+  }
 
-  if (o.version !== 4) return null
+  if (o.version !== 5) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -158,8 +174,21 @@ export function parseGameState(json: string): GameState | null {
     if (!isFiniteNumber(uses[g]) || (uses[g] as number) < 0) return null
   }
 
+  const chainUses = o.chainUses as Record<string, unknown> | null
+  if (typeof chainUses !== 'object' || chainUses === null || Array.isArray(chainUses)) {
+    return null
+  }
+  for (const v of Object.values(chainUses)) {
+    if (!isFiniteNumber(v) || v < 0) return null
+  }
+  const isStringArray = (v: unknown): v is string[] =>
+    Array.isArray(v) && v.every((s) => typeof s === 'string')
+  if (!isStringArray(o.artsUnlocked) || !isStringArray(o.guardiansDefeated)) {
+    return null
+  }
+
   return {
-    version: 4,
+    version: 5,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -183,5 +212,8 @@ export function parseGameState(json: string): GameState | null {
       light: uses.light as number,
       shade: uses.shade as number,
     },
+    chainUses: { ...(chainUses as Record<string, number>) },
+    artsUnlocked: [...o.artsUnlocked],
+    guardiansDefeated: [...o.guardiansDefeated],
   }
 }

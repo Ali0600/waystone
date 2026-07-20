@@ -19,6 +19,7 @@ function prereqMet(
   prereq: DiscoveryPrereq,
   caps: PlayerCapabilities,
   status: string | undefined,
+  guardianDown: boolean,
 ): boolean {
   switch (prereq) {
     case 'none':
@@ -30,7 +31,7 @@ function prereqMet(
     case 'sounding':
       return caps.sounding
     case 'combat':
-      return false // until M6 wires encounters, guardians are unbeaten
+      return guardianDown
   }
 }
 
@@ -64,7 +65,7 @@ export class DiscoverySystem {
     for (const def of this.defs) {
       const status = this.state.discoveries[def.id]
       if (status === 'found') continue
-      if (!prereqMet(def.prereq, this.caps, status)) continue
+      if (!prereqMet(def.prereq, this.caps, status, this.state.guardiansDefeated.includes(def.id))) continue
       if (py !== undefined && Math.abs(py - this.worldY(def)) > 3) continue
       const d = Math.hypot(px - def.x, pz - def.z)
       if (d < bestD) {
@@ -80,7 +81,7 @@ export class DiscoverySystem {
     for (const def of this.defs) {
       const status = this.state.discoveries[def.id]
       if (status !== undefined) continue // already pinned/revealed/found
-      if (prereqMet(def.prereq, this.caps, status)) continue // collectable, no pin needed
+      if (prereqMet(def.prereq, this.caps, status, this.state.guardiansDefeated.includes(def.id))) continue // collectable, no pin needed
       const d = Math.hypot(px - def.x, pz - def.z)
       if (d < PIN_RADIUS) {
         this.state.discoveries[def.id] = 'pinned'

@@ -14,6 +14,8 @@ export interface InputSnapshot {
   grapple: boolean
   map: boolean
   glyphs: boolean
+  /** Every key code freshly pressed this step (combat menus, hidden arts). */
+  codes: string[]
   lookDX: number
   lookDY: number
 }
@@ -61,6 +63,7 @@ export class Input {
       grapple: this.pressed.has('KeyQ'),
       map: this.pressed.has('KeyM'),
       glyphs: this.pressed.has('KeyG'),
+      codes: [...this.pressed],
       lookDX: this.lookDX,
       lookDY: this.lookDY,
     }

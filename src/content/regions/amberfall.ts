@@ -339,4 +339,12 @@ export const amberfall: RegionDef = {
       reveals: ['af-islet-cache'],
     },
   ],
+  enemies: [
+    { enemyId: 'husk', x: -26, z: 8, patrolR: 5 },
+    { enemyId: 'husk', x: 20, z: -34, patrolR: 6 },
+    { enemyId: 'warden', x: -6, z: -30, patrolR: 7 },
+    { enemyId: 'chorister', x: 48, z: 12, patrolR: 4 },
+    // The Elder Husk keeps the Sealed Coffer (prereq 'combat').
+    { enemyId: 'husk-elder', x: 44, z: -25, patrolR: 3, guards: 'af-guarded-east-coffer' },
+  ],
 }
