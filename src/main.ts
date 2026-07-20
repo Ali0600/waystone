@@ -42,6 +42,8 @@ import { ArchivistPanel } from './ui/archivist'
 import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
 import { ShopPanel } from './ui/shop'
+import { FerryPanel } from './ui/ferry'
+import { MooringPosts } from './world/moorings'
 import { grantStarterDeck } from './cards/game'
 import { Hud } from './ui/hud'
 import { EscMenu } from './ui/menu'
@@ -121,6 +123,7 @@ const caps: PlayerCapabilities = {
   sounding: saves.state.tools.sounding,
   chime: saves.state.tools.chime,
   mistwalker: saves.state.tools.mistwalker,
+  ferry: saves.state.tools.ferry,
 }
 const discovery = new DiscoverySystem(
   world.discoverables,
@@ -180,6 +183,19 @@ const postfx = new PostFx(renderer, scene, camera)
 const archivist = new ArchivistPanel(world, saves.state)
 const cardTable = new CardTable(saves.state, bus)
 const shop = new ShopPanel(saves.state, bus)
+
+// The Ferry: fast travel between region moorings, once the Bell is won.
+const mooringPosts = new MooringPosts(world.heightAt)
+mooringPosts.add(world.moorings)
+scene.add(mooringPosts.group)
+const ferryFade = document.createElement('div')
+ferryFade.className = 'ferry-fade'
+document.body.appendChild(ferryFade)
+const ferry = new FerryPanel(
+  world,
+  () => world.regionAt(player.position.x, player.position.z)?.def.id ?? null,
+  (m) => ferryTo(m),
+)
 
 // Recruiting Tam the Cardplayer deals you into the deck game.
 bus.on('discovery:found', ({ id }) => {
@@ -309,8 +325,24 @@ function plantWaystone(def: (typeof worldDefs)[number]) {
     text: `The song remembers — ${def.name} is real.`,
     flavor: 'reward',
   })
+  mooringPosts.add(world.moorings) // the new isle's mooring joins the ferry network
   bus.emit('toast', { text: 'A way west lies open.', flavor: 'info' })
   hud.announceRegion(`${def.name} — manifested`)
+  persist()
+}
+
+// Ferry travel: sail to a mooring — a fade, a teleport, a fresh region banner.
+function ferryTo(m: { regionId: string; name: string; x: number; z: number }) {
+  ferryFade.classList.add('flash')
+  setTimeout(() => ferryFade.classList.remove('flash'), 40)
+  const y = world.heightAt(m.x, m.z) + 1
+  player.position.set(m.x, y, m.z)
+  player.velocity.set(0, 0, 0)
+  lastSolid.set(m.x, y, m.z)
+  player.setSpawn(lastSolid)
+  currentRegionId = '' // force the arrival banner
+  announceRegionAt(m.x, m.z)
+  bus.emit('toast', { text: `The ferry brings you to ${m.name}.`, flavor: 'info' })
   persist()
 }
 
@@ -429,6 +461,7 @@ function update(dt: number) {
   )
   avatar.update(dt, player, groundY)
   recruits.update(dt)
+  mooringPosts.update(dt)
   announceRegionAt(player.position.x, player.position.z)
 
   // Touching an enemy begins a duel.
@@ -476,7 +509,13 @@ function update(dt: number) {
     !target && !socketReady && anglingOpen && !angling.active
       ? angling.nearestSpot(world.anglingSpots, player.position.x, player.position.z)
       : null
-  const uiOpen = cardTable.visible || shop.visible
+  const nearMooring =
+    !target && !socketReady && !nearSpot && caps.ferry
+      ? world.moorings.find(
+          (m) => Math.hypot(player.position.x - m.x, player.position.z - m.z) < 3,
+        ) ?? null
+      : null
+  const uiOpen = cardTable.visible || shop.visible || ferry.visible
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
   } else if (snap.interact && !uiOpen) {
@@ -486,6 +525,8 @@ function update(dt: number) {
       plantWaystone(awaiting)
     } else if (nearSpot) {
       angling.tryCast()
+    } else if (nearMooring) {
+      ferry.open()
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
       if (homeRecruit.role === 'archivist') {
@@ -516,9 +557,11 @@ function update(dt: number) {
             : 'The socket waits for a Waystone'
           : nearSpot
             ? 'E — cast into the mist'
-            : homeRecruit
-              ? `E — talk to ${homeRecruit.name}`
-              : null),
+            : nearMooring
+              ? 'E — ring the Ferryman’s Bell'
+              : homeRecruit
+                ? `E — talk to ${homeRecruit.name}`
+                : null),
   )
   lantern.update(dt)
   discoveryView.update(dt)
@@ -575,6 +618,7 @@ if (qaMode || import.meta.env.DEV) {
     mistCharge,
     cardTable,
     shop,
+    ferry,
     discovery,
     mastery,
     recruits,

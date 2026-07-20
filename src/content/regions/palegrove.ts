@@ -232,6 +232,7 @@ export const palegrove: RegionDef = {
       ],
     },
   ],
+  mooring: { x: -252, z: -170 }, // the dawn-landing mooring
   anglingSpots: [{ x: -300, z: -216 }], // the pale southern rim over the mist
   grapplePoints: [
     { x: -316.4, z: -197.4, dy: 5.6 }, // onto the spire-shelf perch

@@ -363,6 +363,7 @@ export const amberfall: RegionDef = {
       ],
     },
   ],
+  mooring: { x: 62, z: 20 }, // the east-rim ferry mooring
   anglingSpots: [{ x: 68, z: 14 }], // the eastern rim over the mist
   grapplePoints: [
     { x: -42.4, z: -27.4, dy: 8.8 }, // onto the spire-shelf perch ledge

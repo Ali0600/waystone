@@ -39,6 +39,7 @@ export interface Payout {
     | 'tool-sounding'
     | 'tool-chime'
     | 'tool-mistwalker'
+    | 'tool-ferry'
     | 'waystone'
   amount: number
 }

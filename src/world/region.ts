@@ -67,6 +67,8 @@ export interface RegionDef {
   socketAt?: { x: number; z: number }
   /** Rim spots (world coords) where the player can cast into the mist. */
   anglingSpots?: { x: number; z: number }[]
+  /** The region's ferry mooring (world coords) — fast-travel node. */
+  mooring?: { x: number; z: number }
 }
 
 export interface BuiltRegion {

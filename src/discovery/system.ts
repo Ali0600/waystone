@@ -15,6 +15,7 @@ export interface PlayerCapabilities {
   sounding: boolean
   chime: boolean
   mistwalker: boolean
+  ferry: boolean
 }
 
 function prereqMet(
@@ -227,6 +228,14 @@ export class DiscoverySystem {
         this.bus.emit('tool:acquired', { tool: 'mistwalker' })
         this.bus.emit('toast', {
           text: 'The Mistwalker — the mist sea holds your weight, while the charge lasts',
+          flavor: 'reward',
+        })
+      } else if (p.meter === 'tool-ferry') {
+        this.state.tools.ferry = true
+        this.caps.ferry = true
+        this.bus.emit('tool:acquired', { tool: 'ferry' })
+        this.bus.emit('toast', {
+          text: 'The Ferryman’s Bell — ring it at any mooring to sail between the isles',
           flavor: 'reward',
         })
       }

@@ -127,6 +127,7 @@ export const waystation: RegionDef = {
       ],
     },
   ],
+  mooring: { x: 3, z: -116 }, // the Waystation dock mooring
   anglingSpots: [{ x: 6, z: -114 }], // the dock edge by the bridge landing
   grapplePoints: [],
   enemies: [], // home is safe

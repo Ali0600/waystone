@@ -787,3 +787,20 @@ button.pcard {
   background: #bfe8ff;
   transition: width 0.1s linear, background 0.2s ease;
 }
+
+/* --- Ferry travel fade --- */
+
+.ferry-fade {
+  position: fixed;
+  inset: 0;
+  background: #0a0812;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 40;
+}
+
+.ferry-fade.flash {
+  opacity: 0.9;
+  transition: none;
+}

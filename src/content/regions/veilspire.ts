@@ -270,6 +270,7 @@ export const veilspire: RegionDef = {
       ],
     },
   ],
+  mooring: { x: -150, z: -26 }, // the eastern-landing mooring
   anglingSpots: [{ x: -146, z: -18 }], // the eastern shallows over the mist
   grapplePoints: [
     { x: -203.4, z: -69.4, dy: 9.6 },
