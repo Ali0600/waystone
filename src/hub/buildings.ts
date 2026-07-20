@@ -117,6 +117,49 @@ export function buildStructure(role: RecruitRole, accent: string): THREE.Group {
       g.add(counter, roofL, roofR, posts, wares, banner())
       break
     }
+    case 'cardplayer': {
+      // A round card table under a canopy — the deck game's pavilion.
+      const table = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.5, 12), wood)
+      table.position.y = 0.9
+      const felt = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.06, 12), cloth)
+      felt.position.y = 1.18
+      const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.7, 7), wood)
+      stool.position.set(1.5, 0.35, 0)
+      const posts = new THREE.Group()
+      for (const [px, pz] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]] as const) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.4, 5), wood)
+        post.position.set(px, 1.2, pz)
+        posts.add(post)
+      }
+      const canopy = new THREE.Mesh(new THREE.ConeGeometry(2.2, 0.9, 4), cloth)
+      canopy.position.y = 2.8
+      canopy.rotation.y = Math.PI / 4
+      g.add(table, felt, stool, posts, canopy, banner())
+      break
+    }
+    case 'angler': {
+      // A little dock jutting toward the mist, with a rod and lantern.
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 3), wood)
+      deck.position.set(0, 0.4, 1.2)
+      const piles = new THREE.Group()
+      for (const pz of [0, 1.2, 2.4]) {
+        const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 1.2, 5), wood)
+        pile.position.set(0.6, -0.1, pz)
+        const pile2 = pile.clone()
+        pile2.position.x = -0.6
+        piles.add(pile, pile2)
+      }
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 2.6, 4), wood)
+      rod.position.set(-0.4, 1.4, 2.4)
+      rod.rotation.x = -0.7
+      const lamp = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 7, 5),
+        new THREE.MeshBasicMaterial({ color: accent }),
+      )
+      lamp.position.set(0.5, 1.5, 0.2)
+      g.add(deck, piles, rod, lamp, banner())
+      break
+    }
   }
 
   // Every homecoming adds light + life.

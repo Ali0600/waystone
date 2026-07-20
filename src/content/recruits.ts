@@ -11,6 +11,8 @@ export type RecruitRole =
   | 'cook'
   | 'archivist'
   | 'merchant'
+  | 'cardplayer'
+  | 'angler'
 
 export interface RecruitDef {
   /** Matches the person discoverable id in the region content. */
@@ -79,5 +81,23 @@ export const RECRUITS: RecruitDef[] = [
     home: { x: 3, z: -126, yaw: 3.1 },
     foundLine: 'Sel: "A settlement with no shop is a rumour, not a town. Lead on."',
     homeLine: 'Sel: "Lumen spends, Surveyor. Everything else is decoration."',
+  },
+  {
+    personId: 'cv-person-cardplayer',
+    role: 'cardplayer',
+    name: 'Tam of the Painted Deck',
+    color: '#c65a3f',
+    home: { x: -16, z: -140, yaw: 0.6 },
+    foundLine: 'Tam: "You’ve met half the world and never PLAYED it? Come — I deal you in."',
+    homeLine: 'Tam: "Every creature you’ve faced is a card waiting to be painted. Sit."',
+  },
+  {
+    personId: 'vs-person-angler',
+    role: 'angler',
+    name: 'Nerei the Angler',
+    color: '#5aa0c6',
+    home: { x: 16, z: -142, yaw: -0.6 },
+    foundLine: 'Nerei: "The mist has fish, if you’ve the patience. I’ll teach you the cast."',
+    homeLine: 'Nerei: "Land enough from the mist and I’ll show you a trick worth keeping."',
   },
 ]

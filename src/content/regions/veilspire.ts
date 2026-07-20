@@ -44,6 +44,7 @@ export const veilspire: RegionDef = {
   landmarks: [
     { kind: 'spire', x: -199, z: -67, scale: 1.3 },
     { kind: 'arch', x: -149, z: -29, yaw: 2.2 },
+    { kind: 'socket', x: -168, z: -50 }, // dormant — Cindervault's waystone socket
     { kind: 'stone', x: -173, z: -42, yaw: 0.6 },
     { kind: 'stone', x: -178, z: -47, yaw: 1.9 },
     { kind: 'stone', x: -171, z: -49, yaw: 3.4 },
@@ -241,6 +242,33 @@ export const veilspire: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'vs-person-angler',
+      kind: 'person',
+      x: -150,
+      z: -30,
+      label: 'Nerei the Angler joins the Waystation',
+      cue: 'a lone figure casts a line into the mist by the eastern landing',
+      prereq: 'none',
+      payouts: [
+        { meter: 'lumen', amount: 20 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'vs-waystone-deep',
+      kind: 'waystone',
+      x: -205,
+      z: -55,
+      label: 'The Second Waystone',
+      cue: 'a cinder-song guards a humming stone west of the spire',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'waystone', amount: 1 },
+        { meter: 'lumen', amount: 30 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
   grapplePoints: [
     { x: -203.4, z: -69.4, dy: 9.6 },
@@ -255,6 +283,8 @@ export const veilspire: RegionDef = {
     { enemyId: 'warden', x: -159, z: -57, patrolR: 6 },
     { enemyId: 'chorister', x: -187, z: -27, patrolR: 5 },
     { enemyId: 'husk-elder', x: -145, z: -65, patrolR: 5 },
+    // A Cinder Chorister keeps the Second Waystone west of the spire.
+    { enemyId: 'cinder-chorister', x: -205, z: -55, patrolR: 3, guards: 'vs-waystone-deep' },
   ],
   latentPaths: [
     {
