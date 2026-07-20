@@ -52,6 +52,24 @@ inside the island" invariant failed with a distance of 211 units vs a 60-unit ra
 suite the day the content format exists, and every authoring mistake becomes a red CI
 check instead of a playtest mystery.
 
+## A greedy first-match sequence recognizer swallows suffix patterns
+
+A recognizer that watches a rolling input buffer and returns the *first* pattern whose
+sequence matches the buffer's tail will fire a **shorter** pattern that is a suffix of a
+**longer** one before the longer pattern can ever complete.
+
+**Why it came up:** the Hidden-Arts recognizer checks each Art against `buffer.slice(-n)`.
+Undertow was authored as `↓ ↓ ↑ Space`, whose last three keys are `↓ ↑ Space` — exactly
+Emberwake. So performing Undertow always triggered Emberwake on the third key and cleared the
+buffer; Undertow was unreachable by input. Caught while writing the combat test, not by the
+type system (both are valid `string[]`). Fixed by giving Undertow a tail no shorter Art shares
+(`→ ↓ → Space`).
+
+**Takeaway:** when patterns of different lengths share a matcher, no pattern's suffix may equal
+a shorter pattern's full sequence — enforce it (a test that every Art is reachable) rather than
+trusting authoring. The same trap lives in keybinding chords, command parsers, and gesture
+recognizers.
+
 ## EffectComposer breaks naive renderer.info readings
 
 Three.js `renderer.info.render` auto-resets on every internal `render()` call. An

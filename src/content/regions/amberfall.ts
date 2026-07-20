@@ -363,6 +363,7 @@ export const amberfall: RegionDef = {
       ],
     },
   ],
+  anglingSpots: [{ x: 68, z: 14 }], // the eastern rim over the mist
   grapplePoints: [
     { x: -42.4, z: -27.4, dy: 8.8 }, // onto the spire-shelf perch ledge
     { x: 8.4, z: 51, dy: 5.6 }, // onto the arch-crown perch ledge

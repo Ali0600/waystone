@@ -13,6 +13,8 @@ import { PostFx } from './engine/postfx'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
 import { SoundingVerb } from './minigames/sounding'
+import { AnglingVerb } from './minigames/anglingverb'
+import { cookBestFish, TEACHER_THRESHOLD } from './minigames/angling'
 import { Arena } from './combat/arena'
 import { Encounter } from './combat/encounter'
 import { ENEMIES } from './content/enemies'
@@ -143,6 +145,9 @@ const sounding = new SoundingVerb(player, discovery, audio)
 // The Chime: sealed stone rings open (Tool 3).
 const chime = new ChimeVerb(player, discovery)
 scene.add(chime.ring)
+
+// Mist-angling: cast from rim spots once Nerei has taught the cast.
+const angling = new AnglingVerb(audio, saves.state, bus)
 
 // The Waystation grows as people come home.
 const recruits = new RecruitSystem(
@@ -289,6 +294,46 @@ function plantWaystone(def: (typeof worldDefs)[number]) {
   persist()
 }
 
+// Marou the Cook turns the best fish in the pack into a next-fight buff.
+function cookAtMarou() {
+  const cooked = cookBestFish(saves.state)
+  if (cooked) {
+    bus.emit('toast', {
+      text: `Marou cooks a ${cooked.name} — you'll fight steadier next duel.`,
+      flavor: 'reward',
+    })
+  } else {
+    bus.emit('toast', {
+      text: 'Marou: "Bring me something from the mist and I\'ll make a meal of it."',
+      flavor: 'info',
+    })
+  }
+}
+
+// Nerei the Angler teaches the Undertow once you've landed enough from the mist.
+function talkToNerei() {
+  const angler = RECRUITS.find((r) => r.role === 'angler')!
+  if (
+    saves.state.anglingPoints >= TEACHER_THRESHOLD &&
+    !saves.state.artsUnlocked.includes('undertow')
+  ) {
+    saves.state.artsUnlocked.push('undertow')
+    bus.emit('toast', {
+      text: 'Nerei teaches you the Undertow — → ↓ → Space, mid-duel.',
+      flavor: 'reward',
+    })
+    bus.emit('tool:acquired', { tool: 'undertow' })
+  } else if (saves.state.artsUnlocked.includes('undertow')) {
+    bus.emit('toast', { text: angler.homeLine, flavor: 'info' })
+  } else {
+    const left = TEACHER_THRESHOLD - saves.state.anglingPoints
+    bus.emit('toast', {
+      text: `Nerei: "Land a little more from the mist — about ${left} more — and I'll teach you a trick."`,
+      flavor: 'info',
+    })
+  }
+}
+
 function startEncounter(contact: EnemyContact) {
   combatContact = contact
   encounter = new Encounter(
@@ -394,32 +439,49 @@ function update(dt: number) {
     : recruits.nearbyHome(player.position.x, player.position.z)
   const awaiting = latentAwaiting()
   const socketReady = awaiting !== null && nearSocket(awaiting)
-  if (snap.interact) {
+  const anglingOpen = saves.state.discoveries['vs-person-angler'] === 'found'
+  const nearSpot =
+    !target && !socketReady && anglingOpen && !angling.active
+      ? angling.nearestSpot(world.anglingSpots, player.position.x, player.position.z)
+      : null
+  if (angling.active) {
+    // Angling in progress: E is the reel; every other interact waits.
+  } else if (snap.interact) {
     if (target) {
       discovery.interact(player.position.x, player.position.z, player.position.y)
     } else if (socketReady && saves.state.waystones > 0) {
       plantWaystone(awaiting)
+    } else if (nearSpot) {
+      angling.tryCast()
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
       if (homeRecruit.role === 'archivist') {
         archivist.toggle()
+      } else if (homeRecruit.role === 'cook') {
+        cookAtMarou()
+      } else if (homeRecruit.role === 'angler') {
+        talkToNerei()
       } else {
         bus.emit('toast', { text: homeRecruit.homeLine, flavor: 'info' })
       }
     }
   }
+  angling.update(dt, input.isHeld('KeyE'))
   if (snap.map) map.toggle()
   if (snap.glyphs) glyphPanel.toggle()
   hud.setPrompt(
-    target
-      ? `E — ${target.label}`
-      : socketReady
-        ? saves.state.waystones > 0
-          ? 'E — Plant the Waystone'
-          : 'The socket waits for a Waystone'
-        : homeRecruit
-          ? `E — talk to ${homeRecruit.name}`
-          : null,
+    angling.statusText() ??
+      (target
+        ? `E — ${target.label}`
+        : socketReady
+          ? saves.state.waystones > 0
+            ? 'E — Plant the Waystone'
+            : 'The socket waits for a Waystone'
+          : nearSpot
+            ? 'E — cast into the mist'
+            : homeRecruit
+              ? `E — talk to ${homeRecruit.name}`
+              : null),
   )
   lantern.update(dt)
   discoveryView.update(dt)
@@ -472,6 +534,7 @@ if (qaMode || import.meta.env.DEV) {
     caps,
     grapple,
     chime,
+    angling,
     discovery,
     mastery,
     recruits,

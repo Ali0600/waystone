@@ -126,4 +126,8 @@ export class World {
   get enemies() {
     return this.active().flatMap((r) => r.def.enemies)
   }
+
+  get anglingSpots() {
+    return this.active().flatMap((r) => r.def.anglingSpots ?? [])
+  }
 }

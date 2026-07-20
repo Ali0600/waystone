@@ -245,6 +245,36 @@ describe('hidden arts', () => {
   })
 })
 
+describe('angling ties into combat', () => {
+  it('a cooked meal is a one-fight shield of over-max HP, then clears', () => {
+    const { enc, state } = makeEncounter(ENEMIES.husk, (s) => {
+      s.pendingMeal = 'veilcarp' // +12 shield
+    })
+    expect(enc.playerHp).toBe(PLAYER_MAX_HP + 12)
+    expect(state.pendingMeal).toBeNull() // consumed at the start of the fight
+  })
+
+  it('the Undertow art staggers the enemy — its turn is skipped', () => {
+    const { enc } = makeEncounter(ENEMIES.warden, (s) => {
+      s.artsUnlocked.push('undertow')
+    })
+    untilPhase(enc, 'player')
+    const undertow = ARTS.find((a) => a.id === 'undertow')!
+    const hpBefore = enc.enemyHp
+    for (const code of undertow.sequence) enc.update(DT, [code], false)
+    expect(enc.enemyHp).toBe(hpBefore - undertow.damage)
+    // A staggering Art leaves the turn with the player instead of the enemy.
+    expect(enc.phase).toBe('player')
+  })
+
+  it('a normal art (Emberwake) hands the turn to the enemy', () => {
+    const { enc } = makeEncounter(ENEMIES.warden)
+    untilPhase(enc, 'player')
+    for (const code of ['ArrowDown', 'ArrowUp', 'Space']) enc.update(DT, [code], false)
+    expect(enc.phase).toBe('enemyWindup') // contrast with Undertow's stagger
+  })
+})
+
 describe('victory and rewards', () => {
   it('defeating a guardian pays lumen and unlocks its charge', () => {
     const state = createInitialState()

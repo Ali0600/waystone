@@ -64,6 +64,8 @@ export interface ArtDef {
   name: string
   sequence: string[] // KeyboardEvent.code order
   damage: number
+  /** If set, the enemy's next turn is skipped after this Art lands. */
+  stagger?: boolean
 }
 
 export const ARTS: ArtDef[] = [
@@ -78,5 +80,16 @@ export const ARTS: ArtDef[] = [
     name: 'Stillpoint',
     sequence: ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'Space'],
     damage: 16,
+  },
+  {
+    // Taught by Nerei the Angler once you've landed enough from the mist.
+    // Not found by input alone — knowledge is the reward, per the others.
+    // NB: the tail must not equal a shorter Art's sequence, or the recognizer
+    // fires that one first (…ArrowUp,Space would collide with Emberwake).
+    id: 'undertow',
+    name: 'Undertow',
+    sequence: ['ArrowRight', 'ArrowDown', 'ArrowRight', 'Space'],
+    damage: 18,
+    stagger: true,
   },
 ]

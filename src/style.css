@@ -557,3 +557,46 @@ body {
   flex: 1;
   border-bottom: 1px dotted rgba(138, 131, 152, 0.5);
 }
+
+/* --- Mist-angling --- */
+
+.angling-bar {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  background: var(--ui-bg);
+  border: 1px solid rgba(90, 160, 198, 0.4);
+  border-radius: 4px;
+  z-index: 12;
+}
+
+.angling-bar[hidden] {
+  display: none;
+}
+
+.angling-track {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.angling-progress {
+  height: 100%;
+  width: 0%;
+  background: #5aa0c6;
+  transition: width 0.05s linear;
+}
+
+.angling-tension {
+  height: 100%;
+  width: 0%;
+  background: #e0b25e;
+  transition: width 0.05s linear, background 0.2s ease;
+}
