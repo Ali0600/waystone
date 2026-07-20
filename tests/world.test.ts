@@ -6,6 +6,7 @@ import { waystation } from '../src/content/regions/waystation'
 import { RECRUITS } from '../src/content/recruits'
 import { veilspire } from '../src/content/regions/veilspire'
 import { cindervault } from '../src/content/regions/cindervault'
+import { palegrove } from '../src/content/regions/palegrove'
 import { RecruitSystem } from '../src/hub/recruits'
 import { World } from '../src/world/world'
 import { PlayerSim } from '../src/player/controller'
@@ -100,6 +101,32 @@ describe('the second waystone chain (Cindervault)', () => {
   it('both latent regions can be real at once, each on its own island', () => {
     const world = makeWorld(['veilspire', 'cindervault'])
     expect(world.regionAt(-175, -45)?.def.id).toBe('veilspire')
+    expect(world.regionAt(-160, -190)?.def.id).toBe('cindervault')
+  })
+})
+
+describe('the third waystone chain (Palegrove)', () => {
+  const defs = [amberfall, waystation, veilspire, cindervault, palegrove]
+  const makeWorld = (manifested: string[]) =>
+    new World(defs, (id) => !defs.find((d) => d.id === id)?.latent || manifested.includes(id))
+
+  it('palegrove stays a ghost until its own (third) waystone is planted', () => {
+    const world = makeWorld(['veilspire', 'cindervault'])
+    expect(world.isManifested('palegrove')).toBe(false)
+    expect(world.heightAt(-300, -165)).toBe(0) // choir hall — not real
+    expect(world.discoverables.some((d) => d.id.startsWith('pg-'))).toBe(false)
+    // The third waystone lives in Cindervault.
+    expect(world.discoverables.some((d) => d.id === 'cv-waystone-deep')).toBe(true)
+
+    const region = world.manifest('palegrove')
+    expect(region).not.toBeNull()
+    expect(world.heightAt(-300, -165)).toBeCloseTo(5.5, 4) // choir hall plateau h
+    expect(world.discoverables.some((d) => d.id.startsWith('pg-'))).toBe(true)
+  })
+
+  it('all four island regions can be real at once', () => {
+    const world = makeWorld(['veilspire', 'cindervault', 'palegrove'])
+    expect(world.regionAt(-300, -165)?.def.id).toBe('palegrove')
     expect(world.regionAt(-160, -190)?.def.id).toBe('cindervault')
   })
 })

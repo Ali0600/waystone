@@ -48,6 +48,7 @@ export const cindervault: RegionDef = {
   landmarks: [
     { kind: 'spire', x: -190, z: -206, scale: 1.4 },
     { kind: 'arch', x: -164, z: -138, yaw: 1.6 },
+    { kind: 'socket', x: -168, z: -182 }, // dormant — Palegrove's waystone socket
     { kind: 'stone', x: -158, z: -186, yaw: 0.5 },
     { kind: 'stone', x: -163, z: -191, yaw: 2.1 },
     { kind: 'stone', x: -156, z: -193, yaw: 3.7 },
@@ -216,6 +217,20 @@ export const cindervault: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'cv-waystone-deep',
+      kind: 'waystone',
+      x: -156,
+      z: -188,
+      label: 'The Third Waystone',
+      cue: 'a cinder-song guards a humming stone deep in the vault',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'waystone', amount: 1 },
+        { meter: 'lumen', amount: 35 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
   anglingSpots: [{ x: -134, z: -166 }], // the eastern terrace rim over the mist
   grapplePoints: [
@@ -228,6 +243,8 @@ export const cindervault: RegionDef = {
     { enemyId: 'warden', x: -176, z: -180, patrolR: 6 },
     { enemyId: 'chorister', x: -142, z: -196, patrolR: 5 },
     { enemyId: 'cinder-chorister', x: -184, z: -172, patrolR: 5 },
+    // A Cinder Chorister keeps the Third Waystone deep in the vault.
+    { enemyId: 'cinder-chorister', x: -156, z: -188, patrolR: 3, guards: 'cv-waystone-deep' },
   ],
   latentPaths: [
     {

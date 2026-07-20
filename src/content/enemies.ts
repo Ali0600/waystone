@@ -127,6 +127,32 @@ export const ENEMIES: Record<string, EnemyDef> = {
       },
     ],
   },
+  // Region 4: a Warden whose volley throws TWO parryable bolts — reflect both
+  // at Parry T2 and it staggers itself.
+  'mist-warden': {
+    id: 'mist-warden',
+    name: 'Mist Warden',
+    archetype: 'warden',
+    color: '#c8d8e0',
+    hp: 38,
+    lumenReward: 26,
+    attacks: [
+      {
+        name: 'Twin Vigil',
+        pattern: 'projectile',
+        damage: 5,
+        windup: 1.4,
+        beats: [0, 0.55],
+      },
+      {
+        name: 'Pale Strike',
+        pattern: 'melee',
+        damage: 4,
+        windup: 1.1,
+        beats: [0, 0.6],
+      },
+    ],
+  },
   // Region 3 escalation: a Chorister whose dirge raises THREE locks at once —
   // you must have inscribed all three glyph types to shatter it clean.
   'cinder-chorister': {

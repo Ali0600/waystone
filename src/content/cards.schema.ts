@@ -79,6 +79,15 @@ export const ALL_CARDS: CardDef[] = [
     ability: 'quiet',
     flavor: 'Three locks, one dirge, no mercy.',
   },
+  {
+    id: 'card-mist-warden',
+    name: 'Mist Warden',
+    subject: { type: 'enemy', enemyId: 'mist-warden' },
+    power: 5,
+    cost: 3,
+    ability: 'bulwark',
+    flavor: 'Two bolts from the pale dawn — reflect both.',
+  },
   // --- Recruits ---
   {
     id: 'card-iole',
@@ -187,6 +196,15 @@ export const ALL_CARDS: CardDef[] = [
     cost: 3,
     ability: 'bulwark',
     flavor: 'Banked coals under a violet night.',
+  },
+  {
+    id: 'card-palegrove',
+    name: 'Palegrove Choir',
+    subject: { type: 'region', regionId: 'palegrove' },
+    power: 6,
+    cost: 3,
+    ability: 'echo',
+    flavor: 'A bone-pale dawn, drowned in mist.',
   },
   // --- Landmarks ---
   {

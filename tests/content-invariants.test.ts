@@ -3,6 +3,7 @@ import { amberfall } from '../src/content/regions/amberfall'
 import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
 import { cindervault } from '../src/content/regions/cindervault'
+import { palegrove } from '../src/content/regions/palegrove'
 import { RECRUITS } from '../src/content/recruits'
 import { ENEMIES } from '../src/content/enemies'
 import { GLYPHS } from '../src/content/glyphs'
@@ -12,7 +13,7 @@ import type { RegionDef } from '../src/world/region'
  * The design pillars as executable tests. Authoring mistakes fail CI, not
  * playtests. Every region added to the game must join this list.
  */
-const REGIONS: RegionDef[] = [amberfall, waystation, veilspire, cindervault]
+const REGIONS: RegionDef[] = [amberfall, waystation, veilspire, cindervault, palegrove]
 
 describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region) => {
   const defs = region.discoverables
