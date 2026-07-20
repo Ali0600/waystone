@@ -217,6 +217,20 @@ export const palegrove: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'pg-tool-mistwalker',
+      kind: 'guarded',
+      x: -282,
+      z: -148,
+      label: 'The Mistwalker',
+      cue: 'a pale sentinel guards a shimmering sole-plate on the terrace',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'tool-mistwalker', amount: 1 },
+        { meter: 'lumen', amount: 30 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
   anglingSpots: [{ x: -300, z: -216 }], // the pale southern rim over the mist
   grapplePoints: [
@@ -229,6 +243,8 @@ export const palegrove: RegionDef = {
     { enemyId: 'warden', x: -292, z: -178, patrolR: 6 },
     { enemyId: 'chorister', x: -288, z: -150, patrolR: 5 },
     { enemyId: 'mist-warden', x: -278, z: -160, patrolR: 5 },
+    // A Mist Warden keeps the Mistwalker on the south terrace.
+    { enemyId: 'mist-warden', x: -282, z: -148, patrolR: 3, guards: 'pg-tool-mistwalker' },
   ],
   latentPaths: [
     {

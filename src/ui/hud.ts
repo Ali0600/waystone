@@ -15,6 +15,8 @@ export class Hud {
   private readonly debugPanel: HTMLElement
   private readonly counters: HTMLElement
   private readonly prompt: HTMLElement
+  private readonly mistMeter: HTMLElement
+  private readonly mistFill: HTMLElement
   private debugVisible = false
 
   constructor(parent: HTMLElement = document.body) {
@@ -41,6 +43,13 @@ export class Hud {
     this.prompt.className = 'hud-prompt'
     this.prompt.hidden = true
 
+    this.mistMeter = document.createElement('div')
+    this.mistMeter.className = 'mist-meter'
+    this.mistMeter.hidden = true
+    this.mistFill = document.createElement('div')
+    this.mistFill.className = 'mist-fill'
+    this.mistMeter.appendChild(this.mistFill)
+
     this.debugPanel = document.createElement('div')
     this.debugPanel.className = 'hud-debug'
     this.debugPanel.hidden = true
@@ -51,6 +60,7 @@ export class Hud {
       this.clickHint,
       this.counters,
       this.prompt,
+      this.mistMeter,
       this.debugPanel,
     )
     parent.appendChild(this.root)
@@ -92,6 +102,16 @@ export class Hud {
   setPrompt(text: string | null): void {
     this.prompt.hidden = text === null
     if (text !== null) this.prompt.textContent = text
+  }
+
+  /** Mistwalker charge (0..1), or null to hide the meter (unowned or full). */
+  setMistCharge(fraction: number | null): void {
+    this.mistMeter.hidden = fraction === null
+    if (fraction !== null) {
+      const f = Math.max(0, Math.min(1, fraction))
+      this.mistFill.style.width = `${f * 100}%`
+      this.mistFill.style.background = f < 0.25 ? '#e05a3f' : '#bfe8ff'
+    }
   }
 
   setDebug(info: DebugInfo): void {

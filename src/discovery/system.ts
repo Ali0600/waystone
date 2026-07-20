@@ -14,6 +14,7 @@ export interface PlayerCapabilities {
   grapple: boolean
   sounding: boolean
   chime: boolean
+  mistwalker: boolean
 }
 
 function prereqMet(
@@ -218,6 +219,14 @@ export class DiscoverySystem {
         this.bus.emit('tool:acquired', { tool: 'chime' })
         this.bus.emit('toast', {
           text: 'The Resonant Chime — press C to ring sealed stone open',
+          flavor: 'reward',
+        })
+      } else if (p.meter === 'tool-mistwalker') {
+        this.state.tools.mistwalker = true
+        this.caps.mistwalker = true
+        this.bus.emit('tool:acquired', { tool: 'mistwalker' })
+        this.bus.emit('toast', {
+          text: 'The Mistwalker — the mist sea holds your weight, while the charge lasts',
           flavor: 'reward',
         })
       }

@@ -43,7 +43,7 @@ describe('the Chime (Tool 3)', () => {
   beforeEach(() => {
     state = createInitialState()
     bus = new EventBus()
-    caps = { lantern: true, grapple: false, sounding: false, chime: false }
+    caps = { lantern: true, grapple: false, sounding: false, chime: false, mistwalker: false }
     sys = new DiscoverySystem([sealed('near', 0, 0), sealed('far', 30, 0)], state, bus, caps, () => 0)
   })
 
@@ -88,6 +88,11 @@ describe('the Chime (Tool 3)', () => {
     const parsed = parseGameState(v7)
     expect(parsed).not.toBeNull()
     expect(parsed!.version).toBe(createInitialState().version)
-    expect(parsed!.tools).toEqual({ grapple: true, sounding: false, chime: false })
+    expect(parsed!.tools).toEqual({
+      grapple: true,
+      sounding: false,
+      chime: false,
+      mistwalker: false,
+    })
   })
 })

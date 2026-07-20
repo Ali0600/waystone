@@ -38,6 +38,7 @@ export interface Payout {
     | 'tool-grapple'
     | 'tool-sounding'
     | 'tool-chime'
+    | 'tool-mistwalker'
     | 'waystone'
   amount: number
 }

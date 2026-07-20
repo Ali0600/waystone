@@ -60,6 +60,10 @@ export class PlayerSim {
    *  facing -Z (away from the boot camera). */
   facing = Math.PI
   mode: 'normal' | 'grapple' = 'normal'
+  /** When set (the Mistwalker is active), falling to this Y clamps here instead
+   *  of continuing to the respawn plane — you walk on the mist sea. Cleared
+   *  (null) the instant the charge runs out, so you then sink and respawn. */
+  mistFloorY: number | null = null
   readonly grappleTarget = new THREE.Vector3()
   /** Set by step(): actions that fired this step (for mastery counting). */
   stepEvents = { dashed: false, grappleLanded: false }
@@ -180,6 +184,18 @@ export class PlayerSim {
     this.onGround = this.velocity.y <= 0 && tmpDelta.y > Math.max(1e-4, -this.velocity.y * dt * 0.25)
     if (this.onGround) {
       this.velocity.y = 0
+    }
+
+    // Mistwalker: while a charge lasts, the mist sea is a floor.
+    if (
+      this.mistFloorY !== null &&
+      this.velocity.y <= 0 &&
+      this.position.y < this.mistFloorY &&
+      this.position.y > p.fallY
+    ) {
+      this.position.y = this.mistFloorY
+      this.velocity.y = 0
+      this.onGround = true
     }
 
     if (this.position.y < p.fallY) {
