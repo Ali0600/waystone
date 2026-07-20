@@ -100,6 +100,7 @@ export const waystation: RegionDef = {
     },
   ],
   grapplePoints: [],
+  enemies: [], // home is safe
   latentPaths: [
     {
       // The old bridge home — permanent, walkable from the start.

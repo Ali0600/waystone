@@ -66,4 +66,8 @@ export class World {
   get latentPaths() {
     return this.regions.flatMap((r) => r.def.latentPaths)
   }
+
+  get enemies() {
+    return this.regions.flatMap((r) => r.def.enemies)
+  }
 }

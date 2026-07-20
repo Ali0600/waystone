@@ -12,6 +12,7 @@ import {
 import { buildIslandGeometry, heightAt, type IslandParams } from './terrain'
 import type { DiscoverableDef } from '../discovery/types'
 import type { GrapplePointDef } from '../player/grapple'
+import type { EnemySpawnDef } from '../content/enemies'
 import type { LatentPathDef } from './latentpath'
 
 export interface RegionPalette {
@@ -54,6 +55,7 @@ export interface RegionDef {
   discoverables: DiscoverableDef[]
   grapplePoints: GrapplePointDef[]
   latentPaths: LatentPathDef[]
+  enemies: EnemySpawnDef[]
   /** Density budget floor for the content-invariant tests (hub isles are
    *  smaller than full regions). Defaults to 10. */
   minDiscoverables?: number

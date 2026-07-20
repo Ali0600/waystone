@@ -8,8 +8,13 @@ import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
+import { Arena } from './combat/arena'
+import { Encounter } from './combat/encounter'
+import { ENEMIES } from './content/enemies'
+import { WorldEnemies, type EnemyContact } from './combat/worldenemies'
 import { RECRUITS } from './content/recruits'
 import { RecruitSystem } from './hub/recruits'
+import { CombatUi } from './ui/combat'
 import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
@@ -130,6 +135,14 @@ scene.add(recruits.group)
 
 const map = new RegionMap(world, saves.state)
 
+// World enemies + the encounter lifecycle.
+const worldEnemies = new WorldEnemies(world.enemies, saves.state, world.heightAt)
+scene.add(worldEnemies.group)
+let encounter: Encounter | null = null
+let arena: Arena | null = null
+let combatUi: CombatUi | null = null
+let combatContact: EnemyContact | null = null
+
 // The Glyph Grid — inscription happens beside Iole the Scribe.
 const glyphs = new GlyphSystem(saves.state, bus, () => recruits.homeCount())
 const scribeDef = RECRUITS.find((r) => r.role === 'scribe')!
@@ -181,6 +194,10 @@ if (!qaMode) {
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
+  if (arena) {
+    arena.camera.aspect = camera.aspect
+    arena.camera.updateProjectionMatrix()
+  }
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
@@ -198,8 +215,58 @@ let fps = 60
 let lastRender = performance.now()
 let hubLineCooldown = 0
 
+function startEncounter(contact: EnemyContact) {
+  combatContact = contact
+  encounter = new Encounter(
+    contact.def,
+    saves.state,
+    bus,
+    mastery,
+    glyphs,
+    contact.guards,
+  )
+  arena = new Arena(contact.def, bus, window.innerWidth / window.innerHeight)
+  combatUi = new CombatUi(bus, contact.def.name, contact.def.hp)
+  player.velocity.set(0, 0, 0)
+  player.mode = 'normal'
+  hud.setPrompt(null)
+}
+
+function endEncounter() {
+  const victory = encounter!.phase === 'victory'
+  if (victory && combatContact) {
+    worldEnemies.markDefeated(combatContact.spawnIndex)
+  }
+  if (!victory) {
+    // Defeat costs nothing but the walk: wake at the Waystation.
+    player.position.copy(world.regions[1]?.spawn ?? world.regions[0].spawn)
+    player.velocity.set(0, 0, 0)
+    bus.emit('toast', {
+      text: 'You wake at the Waystation. The world keeps what you found.',
+      flavor: 'info',
+    })
+  }
+  arena?.dispose()
+  combatUi?.dispose()
+  encounter = null
+  arena = null
+  combatUi = null
+  combatContact = null
+  persist()
+}
+
 function update(dt: number) {
   const snap = input.snapshot()
+
+  // --- Combat mode: the duel owns the update ---
+  if (encounter && arena && combatUi) {
+    encounter.update(dt, snap.codes, snap.jump)
+    arena.update(dt, encounter)
+    combatUi.update(encounter)
+    if (encounter.done) endEncounter()
+    return
+  }
+
   player.step(dt, snap, orbit.yaw, world.collider)
   orbit.update(dt, snap, player.position, world.collider)
   mist.update(dt)
@@ -212,6 +279,13 @@ function update(dt: number) {
   avatar.update(dt, player, groundY)
   recruits.update(dt)
   announceRegionAt(player.position.x, player.position.z)
+
+  // Touching an enemy begins a duel.
+  const contact = worldEnemies.update(dt, player.position.x, player.position.z)
+  if (contact) {
+    startEncounter(contact)
+    return
+  }
 
   // Verbs: lantern, grapple, dash mastery.
   if (snap.lantern) lantern.tryPulse()
@@ -262,7 +336,11 @@ function update(dt: number) {
 }
 
 function render() {
-  renderer.render(scene, camera)
+  if (encounter && arena) {
+    renderer.render(arena.scene, arena.camera)
+  } else {
+    renderer.render(scene, camera)
+  }
   const t = performance.now()
   fps = fps * 0.95 + (1000 / Math.max(1, t - lastRender)) * 0.05
   lastRender = t
@@ -295,6 +373,19 @@ if (qaMode || import.meta.env.DEV) {
     recruits,
     glyphs,
     glyphPanel,
+    get encounter() {
+      return encounter
+    },
+    startFight(enemyId: string) {
+      const idx = world.enemies.findIndex((e) => e.enemyId === enemyId)
+      if (idx < 0) return false
+      startEncounter({
+        def: ENEMIES[enemyId],
+        spawnIndex: idx,
+        guards: world.enemies[idx].guards,
+      })
+      return true
+    },
     step(frames = 1) {
       for (let i = 0; i < frames; i++) update(SIM_DT)
       render()

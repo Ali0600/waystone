@@ -7,6 +7,15 @@ export interface GameEvents {
   'glyphstone:changed': { total: number; delta: number }
   'mastery:tier': { verb: string; tier: number }
   'glyph:inscribed': { slot: number; glyph: string }
+  'combat:start': { enemyName: string }
+  'combat:phase': { phase: string }
+  'combat:beat': { result: string; beatIndex: number }
+  'combat:damage': { target: 'player' | 'enemy'; amount: number; hpLeft: number }
+  'combat:parry': { result: 'parried' | 'hit' | 'reflected' | 'lockbroken' }
+  'combat:telegraph': { name: string; pattern: string; locks: string[] }
+  'combat:lock': { remaining: string[] }
+  'combat:art': { name: string; unlocked: boolean }
+  'combat:end': { victory: boolean }
   'tool:acquired': { tool: string }
   'path:revealed': { id: string }
   'toast': { text: string; flavor?: 'reward' | 'info' }
