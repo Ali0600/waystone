@@ -513,3 +513,47 @@ body {
     rgba(255, 154, 74, 0.55) 100%
   );
 }
+
+/* --- Esc menu / Ledger --- */
+
+.esc-overlay[hidden] {
+  display: none;
+}
+
+.esc-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(12, 10, 20, 0.88);
+  z-index: 30;
+}
+
+.esc-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, 86vw);
+}
+
+.ledger-body {
+  width: min(420px, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.ledger-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ledger-line .ledger-dots {
+  flex: 1;
+  border-bottom: 1px dotted rgba(138, 131, 152, 0.5);
+}

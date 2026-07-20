@@ -34,3 +34,35 @@ manually, independent of rAF.
 **Takeaway:** never assume a game loop is running when testing through automation — expose a
 deterministic manual-step hook gated to dev/QA builds; it doubles as the foundation for
 scripted end-to-end tests.
+
+## Design rules as executable tests (content-invariant suites)
+
+When game/app content is data (regions, items, configs), the design rules governing it
+("every discoverable pays ≥2 meters", "every secret has a cue", "≥3 locked on first
+visit") can be written as unit tests over the content files themselves — turning the
+design document into a CI gate.
+
+**Why it came up:** Waystone's brief had hard authoring rules. Encoding them as
+`tests/content-invariants.test.ts` meant every new region had to satisfy the pillars to
+merge. The suite caught a real bug no read-through spotted: an entire region authored in
+island-local coordinates when the convention was world coordinates — the "positions
+inside the island" invariant failed with a distance of 211 units vs a 60-unit radius.
+
+**Takeaway:** if content is data, design rules are assertions — write the invariant
+suite the day the content format exists, and every authoring mistake becomes a red CI
+check instead of a playtest mystery.
+
+## EffectComposer breaks naive renderer.info readings
+
+Three.js `renderer.info.render` auto-resets on every internal `render()` call. An
+EffectComposer issues several internal draws per frame (scene pass, bloom mips, final
+quad), so reading `info.render.calls` after `composer.render()` reports the LAST pass —
+typically `1 call, 1 triangle` — not the scene.
+
+**Why it came up:** Waystone's F3 debug HUD and perf QA read draw calls; adding the
+bloom+vignette composer silently turned the metric into garbage.
+
+**Takeaway:** when adding post-processing, set `renderer.info.autoReset = false` and
+call `renderer.info.reset()` once at frame start — then the counters describe the whole
+frame again. A metric that keeps reporting after a pipeline change is not necessarily
+still measuring the same thing.

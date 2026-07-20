@@ -8,6 +8,7 @@ import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
 import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
 import { GameAudio } from './engine/audio'
+import { PostFx } from './engine/postfx'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
 import { SoundingVerb } from './minigames/sounding'
@@ -30,7 +31,9 @@ import { LatentPaths } from './world/latentpath'
 import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
+import { ArchivistPanel } from './ui/archivist'
 import { Hud } from './ui/hud'
+import { EscMenu } from './ui/menu'
 import { Toasts } from './ui/toast'
 import './style.css'
 
@@ -148,6 +151,8 @@ const recruits = new RecruitSystem(
 scene.add(recruits.group)
 
 const map = new RegionMap(world, saves.state)
+const postfx = new PostFx(renderer, scene, camera)
+const archivist = new ArchivistPanel(world, saves.state)
 
 // World enemies + the encounter lifecycle.
 const worldEnemies = new WorldEnemies(world.enemies, saves.state, world.heightAt)
@@ -213,6 +218,7 @@ window.addEventListener('resize', () => {
     arena.camera.updateProjectionMatrix()
   }
   renderer.setSize(window.innerWidth, window.innerHeight)
+  postfx.setSize(window.innerWidth, window.innerHeight)
 })
 
 // --- Autosave ---
@@ -223,6 +229,8 @@ function persist() {
   saves.save()
 }
 window.addEventListener('pagehide', persist)
+const escMenu = new EscMenu(saves, persist, bus)
+void escMenu
 
 // --- Loop ---
 let fps = 60
@@ -376,7 +384,11 @@ function update(dt: number) {
       plantWaystone(awaiting)
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
-      bus.emit('toast', { text: homeRecruit.homeLine, flavor: 'info' })
+      if (homeRecruit.role === 'archivist') {
+        archivist.toggle()
+      } else {
+        bus.emit('toast', { text: homeRecruit.homeLine, flavor: 'info' })
+      }
     }
   }
   if (snap.map) map.toggle()
@@ -403,11 +415,17 @@ function update(dt: number) {
   }
 }
 
+// The composer issues several internal draws per frame; reset the info
+// counters ourselves so the F3 numbers describe the SCENE, not the last
+// fullscreen quad.
+renderer.info.autoReset = false
+
 function render() {
+  renderer.info.reset()
   if (encounter && arena) {
-    renderer.render(arena.scene, arena.camera)
+    postfx.render(arena.scene, arena.camera)
   } else {
-    renderer.render(scene, camera)
+    postfx.render(scene, camera)
   }
   const t = performance.now()
   fps = fps * 0.95 + (1000 / Math.max(1, t - lastRender)) * 0.05

@@ -90,9 +90,12 @@ describe('createSaveSystem', () => {
     expect(parseGameState(storage.data[SAVE_KEY])?.lumen).toBe(99)
   })
 
-  it('falls back to fresh on malformed data', () => {
-    const sys = createSaveSystem(memoryStorage({ [SAVE_KEY]: '{"version":1' }))
+  it('falls back to fresh on malformed data — and keeps the bytes', () => {
+    const storage = memoryStorage({ [SAVE_KEY]: '{"version":1' })
+    const sys = createSaveSystem(storage)
     expect(sys.isFresh).toBe(true)
+    // The unreadable save is parked, not destroyed by the next autosave.
+    expect(storage.data[`${SAVE_KEY}:corrupt`]).toBe('{"version":1')
   })
 
   it('ignores oversized saves outright', () => {
