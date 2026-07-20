@@ -4,6 +4,7 @@ import { ENEMIES } from '../src/content/enemies'
 import { RECRUITS } from '../src/content/recruits'
 import { amberfall } from '../src/content/regions/amberfall'
 import { cindervault } from '../src/content/regions/cindervault'
+import { palegrove } from '../src/content/regions/palegrove'
 import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
 
@@ -13,7 +14,9 @@ import { waystation } from '../src/content/regions/waystation'
  * entity must have at least one card.
  */
 describe('card library references', () => {
-  const regionIds = new Set([amberfall, waystation, veilspire, cindervault].map((r) => r.id))
+  const regionIds = new Set(
+    [amberfall, waystation, veilspire, cindervault, palegrove].map((r) => r.id),
+  )
 
   it('cards have unique ids and positive stats', () => {
     const ids = ALL_CARDS.map((c) => c.id)

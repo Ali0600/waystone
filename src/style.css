@@ -141,7 +141,9 @@ body {
 .toasts {
   position: fixed;
   left: 18px;
-  bottom: 48px;
+  /* Above the bottom-centre prompt/controls so notifications never overlap
+     them (caught by __game.auditFrame). */
+  bottom: 108px;
   display: flex;
   flex-direction: column;
   gap: 6px;
