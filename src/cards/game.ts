@@ -30,8 +30,10 @@ const SHOP_SIZE = 3
 const SHOP_PRICES = [30, 45, 60]
 /** Distinct residents you must beat to open the ranked ladder. */
 export const LADDER_UNLOCK = 4
-/** Home regions are always "encountered" — the player starts among them. */
-const HOME_REGIONS = new Set(['amberfall', 'waystation'])
+/** Non-latent regions are always "encountered" for card purposes — the player
+ *  starts among the home isles, and Thornmere is solid-from-boot (traversal-
+ *  gated, not manifest-gated), so it has no `regionsManifested` entry. */
+const NON_LATENT_REGIONS = new Set(['amberfall', 'waystation', 'thornmere'])
 
 function hashStr(s: string): number {
   let h = 0x811c9dc5
@@ -77,7 +79,7 @@ export function isEncountered(state: GameState, card: CardDef): boolean {
   if (s.type === 'enemy') return (state.enemiesFelled[s.enemyId] ?? 0) > 0
   if (s.type === 'recruit') return state.discoveries[s.personId] === 'found'
   // region and landmark both carry a regionId.
-  return HOME_REGIONS.has(s.regionId) || state.regionsManifested.includes(s.regionId)
+  return NON_LATENT_REGIONS.has(s.regionId) || state.regionsManifested.includes(s.regionId)
 }
 
 export function encounteredCards(state: GameState): CardDef[] {

@@ -88,6 +88,15 @@ export const ALL_CARDS: CardDef[] = [
     ability: 'bulwark',
     flavor: 'Two bolts from the pale dawn — reflect both.',
   },
+  {
+    id: 'card-thorn-husk',
+    name: 'Thorn Husk',
+    subject: { type: 'enemy', enemyId: 'thorn-husk' },
+    power: 7,
+    cost: 4,
+    ability: 'rally',
+    flavor: 'Four blows and a rootsong, deep in the green.',
+  },
   // --- Recruits ---
   {
     id: 'card-iole',
@@ -205,6 +214,15 @@ export const ALL_CARDS: CardDef[] = [
     cost: 3,
     ability: 'echo',
     flavor: 'A bone-pale dawn, drowned in mist.',
+  },
+  {
+    id: 'card-thornmere',
+    name: 'Thornmere Deep',
+    subject: { type: 'region', regionId: 'thornmere' },
+    power: 7,
+    cost: 4,
+    ability: 'quiet',
+    flavor: 'A green dark you can only reach across the mist.',
   },
   // --- Landmarks ---
   {

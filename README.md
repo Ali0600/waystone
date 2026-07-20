@@ -30,7 +30,7 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| Discovery | 75 authored discoverables across 5 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
+| Discovery | 88 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
 | The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
 | Combat | Touch an enemy → a duel: timed beat **Chains** that level with use, per-hit **Parry** (block → reflect → lock-shatter by tier), Chorister **Locks** broken by matching glyphs, 3 undocumented **Hidden Arts** (one taught by the Angler). 6 enemy variants across 3 readable silhouettes (the Cinder Chorister raises three Locks; the Mist Warden throws two parryable bolts) |
@@ -38,6 +38,7 @@ out there come home with you, and home gets bigger.
 | Sounding | A dig-hunt minigame: pings answer in rising pitch + screen warmth as you close on buried caches |
 | The Chime | A third tool won from a guardian in Veilspire: ring it (`C`) to resonate **sealed** stone open — visible-but-locked caches that auto-pin as "?" until you carry it back to them |
 | The Mistwalker | A fourth tool won in Palegrove: the mist sea holds your weight on a draining charge (it refills on solid ground). Walk out over the void — but a charge-out sinks you, and you wake at the last shore, nothing lost |
+| Thornmere Deep | A sixth island with no bridge and no Waystone — it just sits across open mist, visible and out of reach. The only way in is to **mist-walk** the gap and **grapple** up the shore (both endgame tools), into a verdant deep guarded by Thorn Husks (four-beat strings + a two-lock rootsong) |
 | Mist-angling | Once the Angler joins, cast (`E`) from rim spots: wait for a bite, strike, then reel against a tension see-saw. Fish are consumables the **Cook** turns into pre-fight shields; enough angling points earn the Angler's **Undertow** technique |
 | The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 22 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |

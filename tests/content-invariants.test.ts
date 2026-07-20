@@ -4,16 +4,19 @@ import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
 import { cindervault } from '../src/content/regions/cindervault'
 import { palegrove } from '../src/content/regions/palegrove'
+import { thornmere } from '../src/content/regions/thornmere'
 import { RECRUITS } from '../src/content/recruits'
 import { ENEMIES } from '../src/content/enemies'
 import { GLYPHS } from '../src/content/glyphs'
+import { MIST_CAPACITY } from '../src/player/mistwalker'
+import { DEFAULT_PLAYER_PARAMS } from '../src/player/controller'
 import type { RegionDef } from '../src/world/region'
 
 /**
  * The design pillars as executable tests. Authoring mistakes fail CI, not
  * playtests. Every region added to the game must join this list.
  */
-const REGIONS: RegionDef[] = [amberfall, waystation, veilspire, cindervault, palegrove]
+const REGIONS: RegionDef[] = [amberfall, waystation, veilspire, cindervault, palegrove, thornmere]
 
 describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region) => {
   const defs = region.discoverables
@@ -110,6 +113,20 @@ describe('cross-region invariants', () => {
         }
       }
     }
+  })
+
+  it('Thornmere is reachable: the mist crossing fits inside a Mistwalker charge', () => {
+    // The player steps onto the mist at Palegrove's Thornmere-facing rim and
+    // must reach Thornmere's mist-stair base before the charge runs out. Pin
+    // that gap within range — it regresses silently if someone nudges an origin.
+    const [px, pz] = palegrove.origin
+    const [tx, tz] = thornmere.origin
+    const centreDist = Math.hypot(tx - px, tz - pz)
+    const rimGap = centreDist - palegrove.island.radius - thornmere.island.radius
+    const range = MIST_CAPACITY * DEFAULT_PLAYER_PARAMS.walkSpeed // ~70 world units
+    expect(rimGap).toBeGreaterThan(0) // the islands don't overlap
+    // Comfortably inside range (leave margin to descend + climb the stair).
+    expect(rimGap).toBeLessThan(range * 0.7)
   })
 
   it('recruit home spots sit on the Waystation isle', () => {
