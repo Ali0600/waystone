@@ -24,6 +24,8 @@ const idle: InputSnapshot = {
   jump: false,
   dash: false,
   interact: false,
+  lantern: false,
+  map: false,
   lookDX: 0,
   lookDY: 0,
 }

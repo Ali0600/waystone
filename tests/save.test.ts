@@ -26,6 +26,29 @@ describe('parseGameState', () => {
     expect(parseGameState(JSON.stringify(state))).toEqual(state)
   })
 
+  it('migrates a v1 save forward with default discovery fields', () => {
+    const v1 = JSON.stringify({
+      version: 1,
+      regionId: 'amberfall',
+      playerPos: [1, 2, 3],
+      lumen: 42,
+    })
+    const parsed = parseGameState(v1)
+    expect(parsed).not.toBeNull()
+    expect(parsed!.version).toBe(2)
+    expect(parsed!.lumen).toBe(42)
+    expect(parsed!.glyphStones).toBe(0)
+    expect(parsed!.discoveries).toEqual({})
+  })
+
+  it('rejects malformed discoveries map', () => {
+    const bad = JSON.stringify({
+      ...createInitialState(),
+      discoveries: { x: 'exploded' },
+    })
+    expect(parseGameState(bad)).toBeNull()
+  })
+
   it.each([
     ['not json', 'nope{'],
     ['null', 'null'],
