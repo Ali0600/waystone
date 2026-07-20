@@ -12,6 +12,8 @@ export class Hud {
   private readonly regionBanner: HTMLElement
   private readonly clickHint: HTMLElement
   private readonly debugPanel: HTMLElement
+  private readonly counters: HTMLElement
+  private readonly prompt: HTMLElement
   private debugVisible = false
 
   constructor(parent: HTMLElement = document.body) {
@@ -23,17 +25,31 @@ export class Hud {
 
     const controls = document.createElement('div')
     controls.className = 'hud-controls'
-    controls.textContent = 'WASD move · Space jump · mouse look'
+    controls.textContent = 'WASD move · Space jump · F lantern · E interact · M map'
 
     this.clickHint = document.createElement('div')
     this.clickHint.className = 'hud-click-hint'
     this.clickHint.textContent = 'Click to look around'
 
+    this.counters = document.createElement('div')
+    this.counters.className = 'hud-counters'
+
+    this.prompt = document.createElement('div')
+    this.prompt.className = 'hud-prompt'
+    this.prompt.hidden = true
+
     this.debugPanel = document.createElement('div')
     this.debugPanel.className = 'hud-debug'
     this.debugPanel.hidden = true
 
-    this.root.append(this.regionBanner, controls, this.clickHint, this.debugPanel)
+    this.root.append(
+      this.regionBanner,
+      controls,
+      this.clickHint,
+      this.counters,
+      this.prompt,
+      this.debugPanel,
+    )
     parent.appendChild(this.root)
 
     window.addEventListener('keydown', (e) => {
@@ -55,6 +71,15 @@ export class Hud {
 
   showClickHint(show: boolean): void {
     this.clickHint.style.display = show ? '' : 'none'
+  }
+
+  setCounters(lumen: number, glyphStones: number): void {
+    this.counters.textContent = `◆ ${lumen}   ⬡ ${glyphStones}`
+  }
+
+  setPrompt(text: string | null): void {
+    this.prompt.hidden = text === null
+    if (text !== null) this.prompt.textContent = text
   }
 
   setDebug(info: DebugInfo): void {

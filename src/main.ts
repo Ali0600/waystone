@@ -1,15 +1,21 @@
 import * as THREE from 'three'
 import { amberfall } from './content/regions/amberfall'
+import { EventBus } from './core/events'
 import { createSaveSystem } from './core/save'
+import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
+import { DiscoveryView } from './discovery/view'
+import { RegionMap } from './discovery/map'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
 import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
+import { LanternVerb } from './player/verbs'
 import { buildRegion } from './world/region'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
 import { Hud } from './ui/hud'
+import { Toasts } from './ui/toast'
 import './style.css'
 
 const qaMode = new URLSearchParams(location.search).has('qa')
@@ -63,10 +69,33 @@ if (savedValid) {
 const avatar = new Avatar()
 scene.add(avatar.group)
 
+// --- Discovery ---
+const bus = new EventBus()
+const caps: PlayerCapabilities = { lantern: true, grapple: false, sounding: false }
+const discovery = new DiscoverySystem(
+  region.def.discoverables,
+  saves.state,
+  bus,
+  caps,
+  region.heightAt,
+)
+const discoveryView = new DiscoveryView(region.def.discoverables, discovery, bus)
+scene.add(discoveryView.group)
+const lantern = new LanternVerb(player, discovery, avatar.lanternLight)
+scene.add(lantern.ring)
+const map = new RegionMap(region.def, region.def.discoverables, saves.state)
+
 const input = new Input()
 const orbit = new OrbitFollowCamera(camera, input)
 const hud = new Hud()
+const toasts = new Toasts(bus)
+void toasts
 hud.announceRegion(region.def.name)
+hud.setCounters(saves.state.lumen, saves.state.glyphStones)
+bus.on('lumen:changed', () => hud.setCounters(saves.state.lumen, saves.state.glyphStones))
+bus.on('glyphstone:changed', () =>
+  hud.setCounters(saves.state.lumen, saves.state.glyphStones),
+)
 
 // --- Pointer lock (QA mode steers with arrow keys instead) ---
 if (!qaMode) {
@@ -114,6 +143,18 @@ function update(dt: number) {
     player.position.z,
   )
   avatar.update(dt, player, groundY)
+
+  // Discovery pass: pins, prompts, interaction, lantern, map.
+  discovery.update(player.position.x, player.position.z)
+  if (snap.lantern) lantern.tryPulse()
+  if (snap.interact) discovery.interact(player.position.x, player.position.z)
+  if (snap.map) map.toggle()
+  const target = discovery.interactable(player.position.x, player.position.z)
+  hud.setPrompt(target ? `E — ${target.label}` : null)
+  lantern.update(dt)
+  discoveryView.update(dt)
+  map.draw(player.position.x, player.position.z, orbit.yaw, discovery.completion())
+
   saveTimer += dt
   if (saveTimer >= 5) {
     saveTimer = 0

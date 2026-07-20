@@ -10,6 +10,7 @@ import {
   type ScatterPlacement,
 } from './props'
 import { buildIslandGeometry, heightAt, type IslandParams } from './terrain'
+import type { DiscoverableDef } from '../discovery/types'
 
 export interface RegionPalette {
   sky: string
@@ -45,6 +46,7 @@ export interface RegionDef {
   scatter: { trees: number; rocks: number; seed: number }
   /** x/z only; y resolved from the terrain at build time. */
   spawn: [number, number]
+  discoverables: DiscoverableDef[]
 }
 
 export interface BuiltRegion {
