@@ -95,6 +95,31 @@ describe('DiscoverySystem', () => {
     expect(state.lumen).toBe(20)
   })
 
+  it('an elevated discoverable is out of reach from the ground below', () => {
+    const elevated: DiscoverableDef = {
+      id: 'sky-chest',
+      kind: 'perch',
+      x: 20,
+      z: 0,
+      dy: 7,
+      label: 'Sky Chest',
+      cue: 'a chest floats overhead',
+      prereq: 'none',
+      payouts: [
+        { meter: 'lumen', amount: 5 },
+        { meter: 'completion', amount: 1 },
+      ],
+    }
+    const sys2 = new DiscoverySystem([elevated], state, bus, caps, () => 0)
+    // Standing directly under it at ground level: not interactable.
+    expect(sys2.interactable(20, 0, 0)).toBeNull()
+    expect(sys2.interact(20, 0, 0)).toBe(false)
+    // Standing on the ledge at its height: collectable.
+    expect(sys2.interactable(20, 0, 7)?.id).toBe('sky-chest')
+    // Callers that pass no height (tests/tools) keep the 2D behavior.
+    expect(sys2.interactable(20, 0)?.id).toBe('sky-chest')
+  })
+
   it('latent flow: hidden → revealed by pulse → collectable', () => {
     expect(sys.interactable(5, 0)).toBeNull()
     // Pulse from too far does nothing.

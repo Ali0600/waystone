@@ -201,16 +201,62 @@ export const amberfall: RegionDef = {
     {
       id: 'af-perch-arch-crown',
       kind: 'perch',
-      x: 6,
-      z: 48,
-      dy: 3.6,
+      x: 8,
+      z: 50.5,
+      dy: 4,
       label: 'Arch-Crown Cache',
-      cue: 'a glint atop the old arch',
+      cue: 'a glint above the old arch',
       prereq: 'grapple',
       payouts: [
         { meter: 'lumen', amount: 25 },
         { meter: 'completion', amount: 1 },
       ],
+    },
+    {
+      id: 'af-tool-grapple',
+      kind: 'cache',
+      x: 28,
+      z: 34.5,
+      label: 'The Surveyor’s Grapple',
+      cue: 'the stone circle guards an old tool',
+      prereq: 'none',
+      payouts: [
+        { meter: 'tool-grapple', amount: 1 },
+        { meter: 'lumen', amount: 10 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'af-islet-cache',
+      kind: 'cache',
+      x: 76,
+      z: -3,
+      dy: 2.6,
+      label: 'Choir-Isle Reliquary',
+      cue: 'a lone islet hangs beyond the eastern rim',
+      prereq: 'lantern',
+      payouts: [
+        { meter: 'glyphstone', amount: 1 },
+        { meter: 'lumen', amount: 35 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+  ],
+  grapplePoints: [
+    { x: -42.4, z: -27.4, dy: 8.8 }, // onto the spire-shelf perch ledge
+    { x: 8.4, z: 51, dy: 5.6 }, // onto the arch-crown perch ledge
+    { x: 2, z: 22, dy: 4.5 }, // mid-slope hop toward the socket plateau
+    { x: 55, z: 3, dy: 3.6 }, // east rim rise near the islet overlook
+  ],
+  latentPaths: [
+    {
+      // from-y hugs the rim terrain (~0.9 there) so the first plank is a
+      // step, not a wall; the walkway climbs gently to the islet.
+      id: 'af-path-choir-isle',
+      from: [59, 1.15, 5],
+      to: [72, 2.5, -1],
+      islet: { x: 76, z: -3, y: 2.6, r: 7 },
+      reveals: ['af-islet-cache'],
     },
   ],
 }

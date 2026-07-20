@@ -5,6 +5,9 @@ export interface GameEvents {
   'discovery:revealed': { id: string }
   'lumen:changed': { total: number; delta: number }
   'glyphstone:changed': { total: number; delta: number }
+  'mastery:tier': { verb: string; tier: number }
+  'tool:acquired': { tool: string }
+  'path:revealed': { id: string }
   'toast': { text: string; flavor?: 'reward' | 'info' }
 }
 

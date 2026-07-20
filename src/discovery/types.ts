@@ -27,7 +27,7 @@ export type DiscoveryPrereq =
   | 'combat' // needs its guardian defeated (M6)
 
 export interface Payout {
-  meter: 'lumen' | 'glyphstone' | 'completion'
+  meter: 'lumen' | 'glyphstone' | 'completion' | 'tool-grapple'
   amount: number
 }
 

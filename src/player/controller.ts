@@ -12,6 +12,9 @@ export interface PlayerParams {
   jumpSpeed: number
   /** Falling below this world Y respawns the player (the mist sea). */
   fallY: number
+  dashSpeed: number
+  dashCooldown: number
+  grappleSpeed: number
 }
 
 export const DEFAULT_PLAYER_PARAMS: PlayerParams = {
@@ -22,6 +25,23 @@ export const DEFAULT_PLAYER_PARAMS: PlayerParams = {
   gravity: 26,
   jumpSpeed: 9.5,
   fallY: -14,
+  dashSpeed: 16,
+  dashCooldown: 1.3,
+  grappleSpeed: 22,
+}
+
+/** Tier-gated abilities, wired to mastery by the caller. */
+export interface VerbGates {
+  airDash(): boolean
+  airGrapple(): boolean
+  /** Dash length multiplier (tier 2 dash). */
+  dashPower(): number
+}
+
+const DEFAULT_GATES: VerbGates = {
+  airDash: () => false,
+  airGrapple: () => false,
+  dashPower: () => 1,
 }
 
 const tmpSegment = new THREE.Line3()
@@ -39,11 +59,29 @@ export class PlayerSim {
   /** Yaw the avatar should face (radians), driven by movement. Starts
    *  facing -Z (away from the boot camera). */
   facing = Math.PI
+  mode: 'normal' | 'grapple' = 'normal'
+  readonly grappleTarget = new THREE.Vector3()
+  /** Set by step(): actions that fired this step (for mastery counting). */
+  stepEvents = { dashed: false, grappleLanded: false }
+  private grappleTime = 0
+  private dashTimer = 0
   private readonly spawn = new THREE.Vector3()
 
   constructor(
     public params: PlayerParams = { ...DEFAULT_PLAYER_PARAMS },
+    public gates: VerbGates = DEFAULT_GATES,
   ) {}
+
+  /** Begin a grapple pull toward a world point. Air use is tier-gated. */
+  startGrapple(point: THREE.Vector3): boolean {
+    if (this.mode === 'grapple') return false
+    if (!this.onGround && !this.gates.airGrapple()) return false
+    this.mode = 'grapple'
+    this.grappleTarget.copy(point)
+    this.grappleTime = 0
+    this.onGround = false
+    return true
+  }
 
   setSpawn(p: THREE.Vector3): void {
     this.spawn.copy(p)
@@ -53,6 +91,7 @@ export class PlayerSim {
     this.position.copy(this.spawn)
     this.velocity.set(0, 0, 0)
     this.onGround = false
+    this.mode = 'normal'
   }
 
   /**
@@ -61,28 +100,64 @@ export class PlayerSim {
    */
   step(dt: number, input: InputSnapshot, cameraYaw: number, collider: Collider): void {
     const p = this.params
+    this.stepEvents.dashed = false
+    this.stepEvents.grappleLanded = false
+    this.dashTimer = Math.max(0, this.dashTimer - dt)
 
-    // Wish direction in world space.
-    tmpWish.set(input.moveX, 0, input.moveZ)
-    if (tmpWish.lengthSq() > 1) tmpWish.normalize()
-    tmpWish.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
-
-    const control = this.onGround ? 1 : p.airControl
-    const targetVx = tmpWish.x * p.walkSpeed
-    const targetVz = tmpWish.z * p.walkSpeed
-    const blend = 1 - Math.exp(-12 * control * dt)
-    this.velocity.x += (targetVx - this.velocity.x) * blend
-    this.velocity.z += (targetVz - this.velocity.z) * blend
-
-    if (tmpWish.lengthSq() > 0.001) {
-      this.facing = Math.atan2(tmpWish.x, tmpWish.z)
+    if (this.mode === 'grapple') {
+      this.grappleTime += dt
+      tmpWish.subVectors(this.grappleTarget, this.position)
+      tmpWish.y += p.height * 0.4 // aim the chest, not the feet
+      const dist = tmpWish.length()
+      if (dist < 1.4 || this.grappleTime > 2.5) {
+        // Arrive: keep some momentum, pop upward to clear the ledge lip.
+        this.mode = 'normal'
+        this.velocity.multiplyScalar(0.3)
+        this.velocity.y = 5.5
+        this.stepEvents.grappleLanded = true
+      } else {
+        tmpWish.normalize()
+        this.velocity.copy(tmpWish).multiplyScalar(p.grappleSpeed)
+        this.facing = Math.atan2(tmpWish.x, tmpWish.z)
+      }
     }
 
-    if (input.jump && this.onGround) {
-      this.velocity.y = p.jumpSpeed
-      this.onGround = false
+    if (this.mode === 'normal') {
+      // Wish direction in world space.
+      tmpWish.set(input.moveX, 0, input.moveZ)
+      if (tmpWish.lengthSq() > 1) tmpWish.normalize()
+      tmpWish.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
+
+      const control = this.onGround ? 1 : p.airControl
+      const targetVx = tmpWish.x * p.walkSpeed
+      const targetVz = tmpWish.z * p.walkSpeed
+      const blend = 1 - Math.exp(-12 * control * dt)
+      this.velocity.x += (targetVx - this.velocity.x) * blend
+      this.velocity.z += (targetVz - this.velocity.z) * blend
+
+      if (tmpWish.lengthSq() > 0.001) {
+        this.facing = Math.atan2(tmpWish.x, tmpWish.z)
+      }
+
+      if (input.dash && this.dashTimer <= 0 && (this.onGround || this.gates.airDash())) {
+        const dir =
+          tmpWish.lengthSq() > 0.001
+            ? tmpWish.clone().normalize()
+            : new THREE.Vector3(Math.sin(this.facing), 0, Math.cos(this.facing))
+        const power = p.dashSpeed * this.gates.dashPower()
+        this.velocity.x = dir.x * power
+        this.velocity.z = dir.z * power
+        if (!this.onGround) this.velocity.y = Math.max(this.velocity.y, 0)
+        this.dashTimer = p.dashCooldown
+        this.stepEvents.dashed = true
+      }
+
+      if (input.jump && this.onGround) {
+        this.velocity.y = p.jumpSpeed
+        this.onGround = false
+      }
+      this.velocity.y -= p.gravity * dt
     }
-    this.velocity.y -= p.gravity * dt
 
     this.position.addScaledVector(this.velocity, dt)
 

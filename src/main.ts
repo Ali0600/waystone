@@ -10,7 +10,10 @@ import { SIM_DT, startLoop } from './engine/loop'
 import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
+import { GrappleVerb } from './player/grapple'
 import { LanternVerb } from './player/verbs'
+import { MasterySystem } from './progression/mastery'
+import { LatentPaths } from './world/latentpath'
 import { buildRegion } from './world/region'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
@@ -49,7 +52,13 @@ scene.add(mist.group)
 
 // --- Player ---
 const saves = createSaveSystem(localStorage)
-const player = new PlayerSim()
+const bus = new EventBus()
+const mastery = new MasterySystem(saves.state, bus)
+const player = new PlayerSim(undefined, {
+  airDash: () => mastery.tier('dash') >= 3,
+  airGrapple: () => mastery.tier('grapple') >= 3,
+  dashPower: () => (mastery.tier('dash') >= 2 ? 1.35 : 1),
+})
 player.params.fallY = MIST_Y - 4
 player.setSpawn(region.spawn)
 // Restore a saved position only if it still sits on/above today's terrain —
@@ -70,8 +79,11 @@ const avatar = new Avatar()
 scene.add(avatar.group)
 
 // --- Discovery ---
-const bus = new EventBus()
-const caps: PlayerCapabilities = { lantern: true, grapple: false, sounding: false }
+const caps: PlayerCapabilities = {
+  lantern: true,
+  grapple: saves.state.tools.grapple,
+  sounding: false,
+}
 const discovery = new DiscoverySystem(
   region.def.discoverables,
   saves.state,
@@ -81,8 +93,22 @@ const discovery = new DiscoverySystem(
 )
 const discoveryView = new DiscoveryView(region.def.discoverables, discovery, bus)
 scene.add(discoveryView.group)
-const lantern = new LanternVerb(player, discovery, avatar.lanternLight)
+
+// Latent paths (Lantern T2) — solid ones join the collider.
+const latentPaths = new LatentPaths(region.def.latentPaths, saves.state, bus)
+scene.add(latentPaths.group)
+if (latentPaths.solidGroups().length > 0) {
+  region.rebuildCollider(latentPaths.solidGroups())
+}
+const lantern = new LanternVerb(player, discovery, avatar.lanternLight, mastery, latentPaths, () =>
+  region.rebuildCollider(latentPaths.solidGroups()),
+)
 scene.add(lantern.ring)
+
+// Grapple pylons.
+const grapple = new GrappleVerb(region.def.grapplePoints, region.heightAt, player)
+scene.add(grapple.group)
+
 const map = new RegionMap(region.def, region.def.discoverables, saves.state)
 
 const input = new Input()
@@ -144,12 +170,26 @@ function update(dt: number) {
   )
   avatar.update(dt, player, groundY)
 
-  // Discovery pass: pins, prompts, interaction, lantern, map.
-  discovery.update(player.position.x, player.position.z)
+  // Verbs: lantern, grapple, dash mastery.
   if (snap.lantern) lantern.tryPulse()
-  if (snap.interact) discovery.interact(player.position.x, player.position.z)
+  if (caps.grapple) {
+    grapple.updateTargeting(orbit.yaw, orbit.pitch, region.collider)
+    if (snap.grapple && grapple.tryLaunch()) mastery.record('grapple')
+  }
+  if (player.stepEvents.dashed) mastery.record('dash')
+  grapple.update(dt)
+
+  // Discovery pass: pins, prompts, interaction, map.
+  discovery.update(player.position.x, player.position.z)
+  if (snap.interact) {
+    discovery.interact(player.position.x, player.position.z, player.position.y)
+  }
   if (snap.map) map.toggle()
-  const target = discovery.interactable(player.position.x, player.position.z)
+  const target = discovery.interactable(
+    player.position.x,
+    player.position.z,
+    player.position.y,
+  )
   hud.setPrompt(target ? `E — ${target.label}` : null)
   lantern.update(dt)
   discoveryView.update(dt)
@@ -189,6 +229,10 @@ if (qaMode || import.meta.env.DEV) {
     saves,
     region,
     scene,
+    caps,
+    grapple,
+    discovery,
+    mastery,
     step(frames = 1) {
       for (let i = 0; i < frames; i++) update(SIM_DT)
       render()

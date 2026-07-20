@@ -8,8 +8,16 @@
  *  latent discoverable made solid by the Lantern but not yet collected. */
 export type DiscoveryStatus = 'pinned' | 'revealed' | 'found'
 
+export interface MasteryCounters {
+  strike: number
+  parry: number
+  dash: number
+  grapple: number
+  lantern: number
+}
+
 export interface GameState {
-  version: 2
+  version: 3
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -17,13 +25,19 @@ export interface GameState {
   /** Blank Glyph Stones — finite, found only in the world. */
   glyphStones: number
   discoveries: Record<string, DiscoveryStatus>
+  /** Use-based mastery counters (tiers derive from thresholds). */
+  mastery: MasteryCounters
+  /** World tools owned (the lantern is innate). */
+  tools: { grapple: boolean }
+  /** Latent paths made solid by the lantern (region content ids). */
+  pathsRevealed: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 2,
+    version: 3,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -31,6 +45,9 @@ export function createInitialState(): GameState {
     lumen: 0,
     glyphStones: 0,
     discoveries: {},
+    mastery: { strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 },
+    tools: { grapple: false },
+    pathsRevealed: [],
   }
 }
 
@@ -75,20 +92,52 @@ export function parseGameState(json: string): GameState | null {
     o.glyphStones = 0
     o.discoveries = {}
   }
+  // v2 → v3: mastery, tools, latent paths.
+  if (o.version === 2) {
+    o.version = 3
+    o.mastery = { strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 }
+    o.tools = { grapple: false }
+    o.pathsRevealed = []
+  }
 
-  if (o.version !== 2) return null
+  if (o.version !== 3) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
   if (!isFiniteNumber(o.glyphStones) || o.glyphStones < 0) return null
   const discoveries = parseDiscoveries(o.discoveries)
   if (discoveries === null) return null
+
+  const m = o.mastery as Record<string, unknown> | null
+  if (typeof m !== 'object' || m === null) return null
+  const verbs = ['strike', 'parry', 'dash', 'grapple', 'lantern'] as const
+  for (const v of verbs) {
+    if (!isFiniteNumber(m[v]) || (m[v] as number) < 0) return null
+  }
+
+  const tools = o.tools as Record<string, unknown> | null
+  if (typeof tools !== 'object' || tools === null) return null
+  if (typeof tools.grapple !== 'boolean') return null
+
+  if (!Array.isArray(o.pathsRevealed) || o.pathsRevealed.some((p) => typeof p !== 'string')) {
+    return null
+  }
+
   return {
-    version: 2,
+    version: 3,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
     glyphStones: o.glyphStones,
     discoveries,
+    mastery: {
+      strike: m.strike as number,
+      parry: m.parry as number,
+      dash: m.dash as number,
+      grapple: m.grapple as number,
+      lantern: m.lantern as number,
+    },
+    tools: { grapple: tools.grapple },
+    pathsRevealed: [...(o.pathsRevealed as string[])],
   }
 }

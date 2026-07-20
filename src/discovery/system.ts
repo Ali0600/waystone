@@ -56,14 +56,16 @@ export class DiscoverySystem {
     return this.state.discoveries[id]
   }
 
-  /** Nearest not-yet-found discoverable the player could interact with now. */
-  interactable(px: number, pz: number): DiscoverableDef | null {
+  /** Nearest not-yet-found discoverable the player could interact with now.
+   *  py guards elevation: a chest on a ledge overhead is NOT in reach. */
+  interactable(px: number, pz: number, py?: number): DiscoverableDef | null {
     let best: DiscoverableDef | null = null
     let bestD = INTERACT_RADIUS
     for (const def of this.defs) {
       const status = this.state.discoveries[def.id]
       if (status === 'found') continue
       if (!prereqMet(def.prereq, this.caps, status)) continue
+      if (py !== undefined && Math.abs(py - this.worldY(def)) > 3) continue
       const d = Math.hypot(px - def.x, pz - def.z)
       if (d < bestD) {
         best = def
@@ -106,9 +108,30 @@ export class DiscoverySystem {
     return revealed
   }
 
+  /** Lantern T3: buried caches call out — pin every one in a wide sweep. */
+  buriedSweep(px: number, pz: number, radius: number): number {
+    let pinned = 0
+    for (const def of this.defs) {
+      if (def.kind !== 'buried') continue
+      if (this.state.discoveries[def.id] !== undefined) continue
+      if (Math.hypot(px - def.x, pz - def.z) < radius) {
+        this.state.discoveries[def.id] = 'pinned'
+        this.bus.emit('discovery:pinned', { id: def.id })
+        pinned++
+      }
+    }
+    if (pinned > 0) {
+      this.bus.emit('toast', {
+        text: `Something buried answers the light (${pinned} marked)`,
+        flavor: 'reward',
+      })
+    }
+    return pinned
+  }
+
   /** Attempt to collect the nearest eligible discoverable. */
-  interact(px: number, pz: number): boolean {
-    const def = this.interactable(px, pz)
+  interact(px: number, pz: number, py?: number): boolean {
+    const def = this.interactable(px, pz, py)
     if (!def) return false
     this.state.discoveries[def.id] = 'found'
     for (const p of def.payouts) {
@@ -120,6 +143,14 @@ export class DiscoverySystem {
         this.bus.emit('glyphstone:changed', {
           total: this.state.glyphStones,
           delta: p.amount,
+        })
+      } else if (p.meter === 'tool-grapple') {
+        this.state.tools.grapple = true
+        this.caps.grapple = true
+        this.bus.emit('tool:acquired', { tool: 'grapple' })
+        this.bus.emit('toast', {
+          text: 'The Surveyor’s Grapple — aim at a crystal pylon and press Q',
+          flavor: 'reward',
         })
       }
     }
