@@ -41,6 +41,11 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
 - `src/minigames/` — `sounding.ts` (dig) and `angling.ts` (pure `AnglingSim` + species +
   `cookBestFish`/`mealShield`, all rng/time injected) with `anglingverb.ts` the DOM/input
   wrapper. Angling pays fish (Cook → pre-fight shield) + points (Angler teaches Undertow).
+- `src/cards/` — the deck game. `rules.ts` = pure three-lane match engine (pinned ability
+  order quiet→echo→rally→bulwark, locked by test); `ai.ts` = greedy deterministic opponent;
+  `game.ts` = economy (ownership, subject-encountered gate, shop, opponents/ladder, rewards)
+  bridging save ↔ matches. UI in `ui/cardtable.ts` + `ui/shop.ts`. Card data in
+  `content/cards.schema.ts` (`ALL_CARDS` — one per enemy/recruit/region, coverage-tested).
 - `src/progression/` — use-based mastery (verbs) + glyph grid.
 - `src/hub/` — recruit figures/structures; hub state DERIVES from discovery state.
 

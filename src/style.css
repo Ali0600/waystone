@@ -600,3 +600,161 @@ body {
   background: #e0b25e;
   transition: width 0.05s linear, background 0.2s ease;
 }
+
+/* --- Deck game (The Painted Table + Sel's shelf) --- */
+
+.card-overlay .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: min(880px, 94vw);
+  max-height: 82vh;
+  overflow-y: auto;
+  padding: 4px 6px;
+}
+
+.card-opplist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-rival {
+  border-color: rgba(255, 179, 71, 0.6);
+  color: #ffe8c0;
+}
+
+.card-lanes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.card-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(30, 26, 46, 0.6);
+  border: 1px solid rgba(138, 131, 152, 0.3);
+  border-radius: 5px;
+  min-height: 150px;
+}
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 52px;
+  align-content: flex-start;
+}
+
+.card-row-opp {
+  opacity: 0.92;
+}
+
+.card-lane-mid {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--ui-dim);
+  border-top: 1px solid rgba(138, 131, 152, 0.25);
+  border-bottom: 1px solid rgba(138, 131, 152, 0.25);
+  padding: 2px 0;
+}
+
+.card-hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.card-collection {
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.pcard {
+  position: relative;
+  width: 74px;
+  min-height: 48px;
+  padding: 4px 5px 5px;
+  background: linear-gradient(160deg, rgba(58, 50, 82, 0.95), rgba(36, 30, 54, 0.95));
+  border: 1px solid rgba(159, 216, 208, 0.4);
+  border-radius: 5px;
+  color: var(--ui-fg);
+  font-family: var(--ui-font);
+  font-size: 0.7rem;
+  text-align: left;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+button.pcard {
+  cursor: pointer;
+}
+
+.pcard-selected {
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 1px var(--ui-accent);
+}
+
+.pcard-dim {
+  opacity: 0.45;
+}
+
+.pcard-cost {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  color: #9fd8d0;
+}
+
+.pcard-power {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffe8c0;
+}
+
+.pcard-name {
+  line-height: 1.1;
+}
+
+.pcard-ability {
+  color: var(--ui-accent);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-drop {
+  width: 74px;
+  min-height: 48px;
+  font-size: 0.68rem;
+  border-style: dashed;
+}
+
+.card-foot {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card-result {
+  text-align: center;
+  font-size: 1.05rem;
+  color: #ffe8c0;
+  letter-spacing: 0.03em;
+}
+
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}

@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 9
+  version: 10
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -60,13 +60,21 @@ export interface GameState {
   anglingPoints: number
   /** A cooked meal buff waiting to be spent on the next encounter. */
   pendingMeal: string | null
+  /** Deck-game cards owned (ids into the card library). */
+  cardsOwned: string[]
+  /** The chosen deck (subset of cardsOwned, ≤ 8). */
+  deck: string[]
+  /** Deck-game wins by opponent id (drives the ladder + first-win rewards). */
+  cardWins: Record<string, number>
+  /** Enemies defeated in the world, by id — gates which cards can appear. */
+  enemiesFelled: Record<string, number>
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 9,
+    version: 10,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -87,6 +95,10 @@ export function createInitialState(): GameState {
     fishHeld: {},
     anglingPoints: 0,
     pendingMeal: null,
+    cardsOwned: [],
+    deck: [],
+    cardWins: {},
+    enemiesFelled: {},
   }
 }
 
@@ -174,8 +186,16 @@ export function parseGameState(json: string): GameState | null {
     o.anglingPoints = 0
     o.pendingMeal = null
   }
+  // v9 → v10: the deck game (owned cards, deck, wins, felled enemies).
+  if (o.version === 9) {
+    o.version = 10
+    o.cardsOwned = []
+    o.deck = []
+    o.cardWins = {}
+    o.enemiesFelled = {}
+  }
 
-  if (o.version !== 9) return null
+  if (o.version !== 10) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -241,8 +261,27 @@ export function parseGameState(json: string): GameState | null {
   if (!isFiniteNumber(o.anglingPoints) || (o.anglingPoints as number) < 0) return null
   if (o.pendingMeal !== null && typeof o.pendingMeal !== 'string') return null
 
+  // Deck game. Structural only: unknown ids are filtered at render (cardById),
+  // so a hostile import can inject at worst an unplayable no-op card.
+  if (!isStringArray(o.cardsOwned) || !isStringArray(o.deck)) return null
+  if ((o.deck as string[]).length > 8) return null
+  const owned = new Set(o.cardsOwned as string[])
+  if ((o.deck as string[]).some((d) => !owned.has(d))) return null
+  const cardWins = o.cardWins as Record<string, unknown> | null
+  if (typeof cardWins !== 'object' || cardWins === null || Array.isArray(cardWins)) return null
+  for (const v of Object.values(cardWins)) {
+    if (!isFiniteNumber(v) || v < 0) return null
+  }
+  const enemiesFelled = o.enemiesFelled as Record<string, unknown> | null
+  if (typeof enemiesFelled !== 'object' || enemiesFelled === null || Array.isArray(enemiesFelled)) {
+    return null
+  }
+  for (const v of Object.values(enemiesFelled)) {
+    if (!isFiniteNumber(v) || v < 0) return null
+  }
+
   return {
-    version: 9,
+    version: 10,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -274,5 +313,9 @@ export function parseGameState(json: string): GameState | null {
     fishHeld: { ...(fishHeld as Record<string, number>) },
     anglingPoints: o.anglingPoints,
     pendingMeal: o.pendingMeal,
+    cardsOwned: [...(o.cardsOwned as string[])],
+    deck: [...(o.deck as string[])],
+    cardWins: { ...(cardWins as Record<string, number>) },
+    enemiesFelled: { ...(enemiesFelled as Record<string, number>) },
   }
 }
