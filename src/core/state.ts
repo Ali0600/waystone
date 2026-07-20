@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 6
+  version: 7
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -37,7 +37,7 @@ export interface GameState {
   /** Use-based mastery counters (tiers derive from thresholds). */
   mastery: MasteryCounters
   /** World tools owned (the lantern is innate). */
-  tools: { grapple: boolean }
+  tools: { grapple: boolean; sounding: boolean }
   /** Latent paths made solid by the lantern (region content ids). */
   pathsRevealed: string[]
   /** The 4×4 Glyph Grid, row-major. Inscription is permanent-ish. */
@@ -60,7 +60,7 @@ export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 6,
+    version: 7,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -69,7 +69,7 @@ export function createInitialState(): GameState {
     glyphStones: 0,
     discoveries: {},
     mastery: { strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 },
-    tools: { grapple: false },
+    tools: { grapple: false, sounding: false },
     pathsRevealed: [],
     glyphGrid: Array<GlyphSlot>(16).fill(null),
     glyphUses: { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 },
@@ -148,8 +148,13 @@ export function parseGameState(json: string): GameState | null {
     o.waystones = 0
     o.regionsManifested = []
   }
+  // v6 → v7: the Sounding Rod.
+  if (o.version === 6) {
+    o.version = 7
+    ;(o.tools as Record<string, unknown>).sounding = false
+  }
 
-  if (o.version !== 6) return null
+  if (o.version !== 7) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -166,7 +171,9 @@ export function parseGameState(json: string): GameState | null {
 
   const tools = o.tools as Record<string, unknown> | null
   if (typeof tools !== 'object' || tools === null) return null
-  if (typeof tools.grapple !== 'boolean') return null
+  if (typeof tools.grapple !== 'boolean' || typeof tools.sounding !== 'boolean') {
+    return null
+  }
 
   if (!Array.isArray(o.pathsRevealed) || o.pathsRevealed.some((p) => typeof p !== 'string')) {
     return null
@@ -202,7 +209,7 @@ export function parseGameState(json: string): GameState | null {
   if (!isStringArray(o.regionsManifested)) return null
 
   return {
-    version: 6,
+    version: 7,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -215,7 +222,7 @@ export function parseGameState(json: string): GameState | null {
       grapple: m.grapple as number,
       lantern: m.lantern as number,
     },
-    tools: { grapple: tools.grapple },
+    tools: { grapple: tools.grapple, sounding: tools.sounding },
     pathsRevealed: [...(o.pathsRevealed as string[])],
     glyphGrid: [...(grid as GlyphSlot[])],
     glyphUses: {

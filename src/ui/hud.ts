@@ -26,7 +26,7 @@ export class Hud {
     const controls = document.createElement('div')
     controls.className = 'hud-controls'
     controls.textContent =
-      'WASD move · Space jump · Shift dash · F lantern · Q grapple · E interact · M map · G glyphs'
+      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · E interact · M map · G glyphs'
 
     this.clickHint = document.createElement('div')
     this.clickHint.className = 'hud-click-hint'

@@ -43,7 +43,7 @@ export const waystation: RegionDef = {
   ],
   scatter: { trees: 10, rocks: 14, seed: 515 },
   spawn: [0, -122],
-  minDiscoverables: 4,
+  minDiscoverables: 5,
   discoverables: [
     {
       id: 'ws-cache-dock',
@@ -82,6 +82,20 @@ export const waystation: RegionDef = {
       prereq: 'sounding',
       payouts: [
         { meter: 'lumen', amount: 25 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'ws-tool-sounding-rod',
+      kind: 'cache',
+      x: -6,
+      z: -140,
+      label: 'The Sounding Rod',
+      cue: 'an old surveyor’s kit rests by the arch',
+      prereq: 'none',
+      payouts: [
+        { meter: 'tool-sounding', amount: 1 },
+        { meter: 'lumen', amount: 5 },
         { meter: 'completion', amount: 1 },
       ],
     },
