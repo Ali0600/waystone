@@ -31,7 +31,13 @@ export function makeToonMaterial(
   color: THREE.ColorRepresentation,
   opts: { bands?: number } & Pick<
     THREE.MeshToonMaterialParameters,
-    'transparent' | 'opacity' | 'side' | 'emissive' | 'emissiveIntensity' | 'fog'
+    | 'transparent'
+    | 'opacity'
+    | 'side'
+    | 'emissive'
+    | 'emissiveIntensity'
+    | 'fog'
+    | 'vertexColors'
   > = {},
 ): THREE.MeshToonMaterial {
   const { bands, ...params } = opts

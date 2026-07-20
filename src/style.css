@@ -32,26 +32,81 @@ body {
   display: block;
 }
 
-.overlay-label {
+/* --- HUD --- */
+
+.hud {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  inset: 0;
   pointer-events: none;
   user-select: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.overlay-label.title {
-  top: 6%;
-  font-size: 2.4rem;
-  letter-spacing: 0.35em;
-  color: var(--ui-fg);
+.hud-region {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  opacity: 0;
 }
 
-.overlay-label.subtitle {
-  top: calc(6% + 3.2rem);
-  font-size: 0.85rem;
-  letter-spacing: 0.2em;
+.hud-region.visible {
+  animation: region-banner 4.5s ease-out forwards;
+}
+
+@keyframes region-banner {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.hud-controls {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
   color: var(--ui-dim);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.hud-click-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 22px;
+  background: var(--ui-bg);
+  border: 1px solid rgba(255, 179, 71, 0.35);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+}
+
+.hud-debug {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 8px 10px;
+  background: var(--ui-bg);
+  font-family: var(--ui-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre;
+  color: #b8e0a0;
+  border-radius: 3px;
 }

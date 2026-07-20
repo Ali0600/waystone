@@ -1,81 +1,87 @@
-// M0 bootstrap scene: proves the renderer, toon banding, fog and palette.
-// Replaced by the real game boot in M1.
 import * as THREE from 'three'
-import { makeToonMaterial } from './engine/toon'
+import { amberfall } from './content/regions/amberfall'
+import { createSaveSystem } from './core/save'
+import { Input } from './engine/input'
+import { SIM_DT, startLoop } from './engine/loop'
+import { Avatar } from './player/avatar'
+import { OrbitFollowCamera } from './player/camera'
+import { PlayerSim } from './player/controller'
+import { buildRegion } from './world/region'
+import { groundHeightBelow } from './world/collision'
+import { MistSea, MIST_Y } from './world/mist'
+import { Hud } from './ui/hud'
 import './style.css'
 
-const app = document.querySelector<HTMLDivElement>('#app')!
+const qaMode = new URLSearchParams(location.search).has('qa')
 
+const app = document.querySelector<HTMLDivElement>('#app')!
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 app.appendChild(renderer.domElement)
 
 const scene = new THREE.Scene()
-const duskSky = new THREE.Color('#2a2340')
-scene.background = duskSky
-scene.fog = new THREE.Fog(duskSky, 18, 70)
-
 const camera = new THREE.PerspectiveCamera(
   55,
   window.innerWidth / window.innerHeight,
   0.1,
-  200,
+  600,
 )
-camera.position.set(0, 6, 16)
 
-scene.add(new THREE.HemisphereLight('#7a6fae', '#3b2f2a', 1.6))
-const sun = new THREE.DirectionalLight('#ffd9a0', 2.2)
-sun.position.set(8, 12, 6)
+// --- Region ---
+const region = buildRegion(amberfall)
+scene.add(region.group)
+scene.background = new THREE.Color(region.def.palette.sky)
+scene.fog = new THREE.Fog(region.def.palette.fog, region.def.fog.near, region.def.fog.far)
+scene.add(new THREE.HemisphereLight(region.def.palette.hemiSky, region.def.palette.hemiGround, 1.9))
+const sun = new THREE.DirectionalLight(region.def.palette.sun, 2.4)
+sun.position.set(...region.def.sunDir).multiplyScalar(60)
 scene.add(sun)
 
-// A floating-island sketch: rock disc, a spire, scattered toon shapes.
-const island = new THREE.Group()
-scene.add(island)
+const mist = new MistSea(region.def.palette.fog)
+scene.add(mist.group)
 
-const ground = new THREE.Mesh(
-  new THREE.CylinderGeometry(9, 5.5, 3, 10, 1),
-  makeToonMaterial('#4f6b4a'),
-)
-ground.position.y = -1.5
-island.add(ground)
-
-const spire = new THREE.Mesh(
-  new THREE.ConeGeometry(1.2, 7, 6),
-  makeToonMaterial('#8d86a8'),
-)
-spire.position.set(-3.5, 3.5, -2)
-island.add(spire)
-
-const arch = new THREE.Mesh(
-  new THREE.TorusGeometry(2.2, 0.45, 8, 14, Math.PI),
-  makeToonMaterial('#b9a06a'),
-)
-arch.position.set(3, 0, 1)
-island.add(arch)
-
-const shapes: THREE.Mesh[] = []
-const shapeColors = ['#c96f4a', '#5f8aa6', '#a65f8a', '#e0c26e']
-for (let i = 0; i < 8; i++) {
-  const rock = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(0.5 + (i % 3) * 0.3, 0),
-    makeToonMaterial(shapeColors[i % shapeColors.length]),
-  )
-  const angle = (i / 8) * Math.PI * 2
-  rock.position.set(Math.cos(angle) * 6, 0.4, Math.sin(angle) * 6)
-  island.add(rock)
-  shapes.push(rock)
+// --- Player ---
+const saves = createSaveSystem(localStorage)
+const player = new PlayerSim()
+player.params.fallY = MIST_Y - 4
+player.setSpawn(region.spawn)
+// Restore a saved position only if it still sits on/above today's terrain —
+// a stale save from older world content must not bury the player in rock.
+const savedPos = saves.state.playerPos
+const savedValid =
+  !saves.isFresh &&
+  saves.state.regionId === region.def.id &&
+  Math.hypot(savedPos[0], savedPos[2]) < region.def.island.radius &&
+  savedPos[1] > region.heightAt(savedPos[0], savedPos[2]) - 0.5
+if (savedValid) {
+  player.position.set(savedPos[0], savedPos[1] + 0.05, savedPos[2])
+} else {
+  player.respawn()
 }
 
-const title = document.createElement('div')
-title.className = 'overlay-label title'
-title.textContent = 'WAYSTONE'
-document.body.appendChild(title)
+const avatar = new Avatar()
+scene.add(avatar.group)
 
-const subtitle = document.createElement('div')
-subtitle.className = 'overlay-label subtitle'
-subtitle.textContent = 'M0 — renderer proof'
-document.body.appendChild(subtitle)
+const input = new Input()
+const orbit = new OrbitFollowCamera(camera, input)
+const hud = new Hud()
+hud.announceRegion(region.def.name)
+
+// --- Pointer lock (QA mode steers with arrow keys instead) ---
+if (!qaMode) {
+  renderer.domElement.addEventListener('click', () => {
+    if (!document.pointerLockElement) {
+      renderer.domElement.requestPointerLock()
+    }
+  })
+  document.addEventListener('pointerlockchange', () => {
+    hud.showClickHint(!document.pointerLockElement)
+  })
+  hud.showClickHint(true)
+} else {
+  hud.showClickHint(false)
+}
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
@@ -83,15 +89,72 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-const clock = new THREE.Clock()
-renderer.setAnimationLoop(() => {
-  const t = clock.getElapsedTime()
-  island.rotation.y = t * 0.1
-  for (const [i, s] of shapes.entries()) {
-    s.position.y = 0.4 + Math.sin(t * 1.2 + i) * 0.15
-    s.rotation.x = t * 0.3 + i
+// --- Autosave ---
+let saveTimer = 0
+function persist() {
+  saves.state.regionId = region.def.id
+  saves.state.playerPos = [player.position.x, player.position.y, player.position.z]
+  saves.save()
+}
+window.addEventListener('pagehide', persist)
+
+// --- Loop ---
+let fps = 60
+let lastRender = performance.now()
+
+function update(dt: number) {
+  const snap = input.snapshot()
+  player.step(dt, snap, orbit.yaw, region.collider)
+  orbit.update(dt, snap, player.position, region.collider)
+  mist.update(dt)
+  const groundY = groundHeightBelow(
+    region.collider,
+    player.position.x,
+    player.position.y + 1.2,
+    player.position.z,
+  )
+  avatar.update(dt, player, groundY)
+  saveTimer += dt
+  if (saveTimer >= 5) {
+    saveTimer = 0
+    persist()
   }
-  camera.position.y = 6 + Math.sin(t * 0.4) * 0.4
-  camera.lookAt(0, 1, 0)
+}
+
+function render() {
   renderer.render(scene, camera)
-})
+  const t = performance.now()
+  fps = fps * 0.95 + (1000 / Math.max(1, t - lastRender)) * 0.05
+  lastRender = t
+  hud.setDebug({
+    fps,
+    drawCalls: renderer.info.render.calls,
+    triangles: renderer.info.render.triangles,
+    pos: player.position,
+    onGround: player.onGround,
+  })
+}
+
+startLoop({ update, render })
+
+// QA/dev handle for automation and debugging. step() advances the sim
+// deterministically even when the tab is hidden and rAF is parked.
+if (qaMode || import.meta.env.DEV) {
+  ;(window as unknown as Record<string, unknown>).__game = {
+    THREE,
+    player,
+    orbit,
+    renderer,
+    saves,
+    region,
+    scene,
+    step(frames = 1) {
+      for (let i = 0; i < frames; i++) update(SIM_DT)
+      render()
+    },
+    teleport(x: number, y: number, z: number) {
+      player.position.set(x, y, z)
+      player.velocity.set(0, 0, 0)
+    },
+  }
+}
