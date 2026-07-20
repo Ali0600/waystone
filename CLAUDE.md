@@ -1,6 +1,7 @@
 # Waystone — agent notes
 
-Browser exploration RPG (Three.js + TS + Vite). MVP vertical slice complete (M0–M9).
+Browser exploration RPG (Three.js + TS + Vite). MVP vertical slice complete (M0–M9);
+Phase 2 in progress (M10–M13: Chime, Region 3, mist-angling, deck game).
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -25,7 +26,9 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   glyphs, chains, enemies, recruits, cards.schema (deck game Phase 2 data model).
   **All content coordinates are WORLD coordinates** (region.origin offsets the island).
 - `src/discovery/` — registry/prereq gating/auto-pin "?" system (headless), view,
-  canvas Survey Map.
+  canvas Survey Map. Prereq gate types: `lantern` (reveal latent) · `grapple` ·
+  `sounding` (dig buried) · `chime` (resonate `sealed` open, `player/chime.ts`) ·
+  `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus
   events); arena scene + DOM overlay render it but own no rules. `timing.ts` pure.
 - `src/progression/` — use-based mastery (verbs) + glyph grid.

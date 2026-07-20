@@ -23,6 +23,7 @@ import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
 import { GrappleVerb } from './player/grapple'
+import { ChimeVerb } from './player/chime'
 import { LanternVerb } from './player/verbs'
 import { GlyphSystem } from './progression/glyphs'
 import { MasterySystem } from './progression/mastery'
@@ -108,6 +109,7 @@ const caps: PlayerCapabilities = {
   lantern: true,
   grapple: saves.state.tools.grapple,
   sounding: saves.state.tools.sounding,
+  chime: saves.state.tools.chime,
 }
 const discovery = new DiscoverySystem(
   world.discoverables,
@@ -136,6 +138,10 @@ scene.add(grapple.group)
 
 // Sounding: the buried world answers in pitch.
 const sounding = new SoundingVerb(player, discovery, audio)
+
+// The Chime: sealed stone rings open (Tool 3).
+const chime = new ChimeVerb(player, discovery)
+scene.add(chime.ring)
 
 // The Waystation grows as people come home.
 const recruits = new RecruitSystem(
@@ -354,6 +360,10 @@ function update(dt: number) {
   }
   if (snap.sounding && caps.sounding) sounding.tryPing()
   sounding.update(dt)
+  if (snap.chime && caps.chime) {
+    if (chime.tryResonate()) audio.chord([587, 784, 988], 0.5, 'sine')
+  }
+  chime.update(dt)
   if (caps.grapple) {
     grapple.updateTargeting(orbit.yaw, orbit.pitch, world.collider)
     if (snap.grapple && grapple.tryLaunch()) {
@@ -454,6 +464,7 @@ if (qaMode || import.meta.env.DEV) {
     scene,
     caps,
     grapple,
+    chime,
     discovery,
     mastery,
     recruits,

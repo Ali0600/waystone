@@ -100,6 +100,24 @@ export class DiscoveryView {
         solid.add(patch)
         break
       }
+      case 'sealed': {
+        // A banded stone drum — visibly sealed; the Chime rings it open.
+        const drum = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.6, 0.7, 1.0, 8),
+          makeToonMaterial('#6d6a72'),
+        )
+        drum.position.y = 0.5
+        drum.name = 'seal'
+        const band = new THREE.Mesh(
+          new THREE.TorusGeometry(0.62, 0.09, 6, 8),
+          makeToonMaterial('#c9a0ff', { emissive: '#4a2f7a', emissiveIntensity: 0.6 }),
+        )
+        band.rotation.x = Math.PI / 2
+        band.position.y = 0.5
+        band.name = 'seal'
+        solid.add(drum, band)
+        break
+      }
       case 'person':
         // The figure itself is rendered by RecruitSystem; only the glint here.
         break
@@ -150,6 +168,19 @@ export class DiscoveryView {
       if (entry.glint) {
         ;(entry.glint.material as THREE.MeshBasicMaterial).color.set('#ffd98a')
         ;(entry.glint.material as THREE.MeshBasicMaterial).opacity = 0.9
+      }
+    }
+    if (entry.def.kind === 'sealed' && status === 'revealed') {
+      // Resonated open: the seal sinks into the ground; a gold spark
+      // marks the now-collectable cache.
+      entry.solid.children
+        .filter((c) => c.name === 'seal')
+        .forEach((c) => {
+          c.position.y = -0.7
+        })
+      if (entry.glint) {
+        ;(entry.glint.material as THREE.MeshBasicMaterial).color.set('#ffd98a')
+        ;(entry.glint.material as THREE.MeshBasicMaterial).opacity = 0.95
       }
     }
   }

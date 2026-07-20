@@ -200,6 +200,47 @@ export const veilspire: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'vs-tool-chime',
+      kind: 'guarded',
+      x: -195,
+      z: -63,
+      label: 'The Resonant Chime',
+      cue: 'an elder keeps a humming bell at the foot of the veiled spire',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'tool-chime', amount: 1 },
+        { meter: 'lumen', amount: 20 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'vs-sealed-court',
+      kind: 'sealed',
+      x: -181,
+      z: -44,
+      label: 'Drowned-Court Vault',
+      cue: 'a sealed stone drum rings faintly in the court',
+      prereq: 'chime',
+      payouts: [
+        { meter: 'glyphstone', amount: 1 },
+        { meter: 'lumen', amount: 20 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
+      id: 'vs-sealed-north',
+      kind: 'sealed',
+      x: -160,
+      z: -73,
+      label: 'Shelf Seal',
+      cue: 'the northern shelf holds a stone shut with an old note',
+      prereq: 'chime',
+      payouts: [
+        { meter: 'lumen', amount: 30 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
   grapplePoints: [
     { x: -203.4, z: -69.4, dy: 9.6 },
@@ -209,6 +250,8 @@ export const veilspire: RegionDef = {
   enemies: [
     { enemyId: 'warden', x: -177, z: -51, patrolR: 4, guards: 'vs-guarded-court-crown' },
     { enemyId: 'chorister', x: -195, z: -73, patrolR: 3, guards: 'vs-guarded-spire-heart' },
+    // The Elder Husk keeps the Chime at the spire's foot.
+    { enemyId: 'husk-elder', x: -195, z: -63, patrolR: 3, guards: 'vs-tool-chime' },
     { enemyId: 'warden', x: -159, z: -57, patrolR: 6 },
     { enemyId: 'chorister', x: -187, z: -27, patrolR: 5 },
     { enemyId: 'husk-elder', x: -145, z: -65, patrolR: 5 },

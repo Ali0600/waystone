@@ -30,19 +30,20 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| Discovery | 37 authored discoverables across 3 regions: caches, glyph stones, latents, buried, guarded, perches, people, the Waystone |
+| Discovery | 46 authored discoverables across 3 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, the Waystone |
 | The Waystation | A hub isle that starts as one ruined arch; each of 6 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
 | Combat | Touch an enemy → a duel: timed beat **Chains** that level with use, per-hit **Parry** (block → reflect → lock-shatter by tier), Chorister **Locks** broken by matching glyphs, 2 undocumented **Hidden Arts** |
 | The Waystone | Defeat the vault's guardian, carry the Waystone to the dormant socket, and watch a ghost island across the mist become real — terrain, bridge, enemies and all |
 | Sounding | A dig-hunt minigame: pings answer in rising pitch + screen warmth as you close on buried caches |
+| The Chime | A third tool won from a guardian in Veilspire: ring it (`C`) to resonate **sealed** stone open — visible-but-locked caches that auto-pin as "?" until you carry it back to them |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |
 | Saves | Autosave to localStorage + validated JSON export/import (corrupt saves are parked, never destroyed) |
 
 ## Controls
 
 `WASD` move · `Space` jump · `Shift` dash · mouse look (click to lock) ·
-`F` lantern pulse · `Q` grapple · `T` sounding ping · `E` interact ·
+`F` lantern pulse · `Q` grapple · `T` sounding ping · `C` chime · `E` interact ·
 `M` survey map · `G` glyph grid · `Esc` menu / save
 
 ## Stack

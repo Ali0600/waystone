@@ -41,7 +41,7 @@ describe('parseGameState', () => {
     expect(parsed!.glyphStones).toBe(0)
     expect(parsed!.discoveries).toEqual({})
     expect(parsed!.mastery).toEqual({ strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 })
-    expect(parsed!.tools).toEqual({ grapple: false, sounding: false })
+    expect(parsed!.tools).toEqual({ grapple: false, sounding: false, chime: false })
     expect(parsed!.pathsRevealed).toEqual([])
   })
 
