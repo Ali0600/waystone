@@ -59,6 +59,12 @@ export interface RegionDef {
   /** Density budget floor for the content-invariant tests (hub isles are
    *  smaller than full regions). Defaults to 10. */
   minDiscoverables?: number
+  /** Latent regions hang as ghosts over the mist — visible, not real —
+   *  until a waystone is planted at their socket. */
+  latent?: boolean
+  /** Where this latent region's waystone must be planted (world coords,
+   *  usually inside another region). */
+  socketAt?: { x: number; z: number }
 }
 
 export interface BuiltRegion {

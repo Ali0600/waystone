@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { amberfall } from './content/regions/amberfall'
+import { veilspire } from './content/regions/veilspire'
 import { waystation } from './content/regions/waystation'
 import { EventBus } from './core/events'
 import { createSaveSystem } from './core/save'
@@ -48,7 +49,14 @@ const camera = new THREE.PerspectiveCamera(
 )
 
 // --- World: every island in one scene, joined across the mist ---
-const world = new World([amberfall, waystation])
+const saves = createSaveSystem(localStorage)
+const worldDefs = [amberfall, waystation, veilspire]
+const world = new World(
+  worldDefs,
+  (id) =>
+    !worldDefs.find((d) => d.id === id)?.latent ||
+    saves.state.regionsManifested.includes(id),
+)
 scene.add(world.group)
 const prime = world.regions[0].def
 scene.background = new THREE.Color(prime.palette.sky)
@@ -62,7 +70,6 @@ const mist = new MistSea(prime.palette.fog)
 scene.add(mist.group)
 
 // --- Player ---
-const saves = createSaveSystem(localStorage)
 const bus = new EventBus()
 const mastery = new MasterySystem(saves.state, bus)
 const player = new PlayerSim(undefined, {
@@ -215,6 +222,45 @@ let fps = 60
 let lastRender = performance.now()
 let hubLineCooldown = 0
 
+// --- The socket: planting a Waystone manifests its latent region ---
+function latentAwaiting(): (typeof worldDefs)[number] | null {
+  for (const def of worldDefs) {
+    if (def.latent && def.socketAt && !world.isManifested(def.id)) return def
+  }
+  return null
+}
+
+function nearSocket(def: (typeof worldDefs)[number]): boolean {
+  return (
+    Math.hypot(
+      player.position.x - def.socketAt!.x,
+      player.position.z - def.socketAt!.z,
+    ) < 4
+  )
+}
+
+function plantWaystone(def: (typeof worldDefs)[number]) {
+  saves.state.waystones -= 1
+  saves.state.regionsManifested.push(def.id)
+  const region = world.manifest(def.id)
+  if (!region) return
+  // Wake the new region's content in every system.
+  discovery.addDefs(def.discoverables)
+  discoveryView.addDefs(def.discoverables)
+  grapple.addPoints(def.grapplePoints)
+  latentPaths.addDefs(def.latentPaths)
+  world.rebuildCollider(latentPaths.solidGroups())
+  worldEnemies.addSpawns(def.enemies)
+  bus.emit('toast', { text: 'The Waystone takes root…', flavor: 'reward' })
+  bus.emit('toast', {
+    text: `The song remembers — ${def.name} is real.`,
+    flavor: 'reward',
+  })
+  bus.emit('toast', { text: 'A way west lies open.', flavor: 'info' })
+  hud.announceRegion(`${def.name} — manifested`)
+  persist()
+}
+
 function startEncounter(contact: EnemyContact) {
   combatContact = contact
   encounter = new Encounter(
@@ -307,9 +353,13 @@ function update(dt: number) {
   const homeRecruit = target
     ? null
     : recruits.nearbyHome(player.position.x, player.position.z)
+  const awaiting = latentAwaiting()
+  const socketReady = awaiting !== null && nearSocket(awaiting)
   if (snap.interact) {
     if (target) {
       discovery.interact(player.position.x, player.position.z, player.position.y)
+    } else if (socketReady && saves.state.waystones > 0) {
+      plantWaystone(awaiting)
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
       bus.emit('toast', { text: homeRecruit.homeLine, flavor: 'info' })
@@ -320,9 +370,13 @@ function update(dt: number) {
   hud.setPrompt(
     target
       ? `E — ${target.label}`
-      : homeRecruit
-        ? `E — talk to ${homeRecruit.name}`
-        : null,
+      : socketReady
+        ? saves.state.waystones > 0
+          ? 'E — Plant the Waystone'
+          : 'The socket waits for a Waystone'
+        : homeRecruit
+          ? `E — talk to ${homeRecruit.name}`
+          : null,
   )
   lantern.update(dt)
   discoveryView.update(dt)

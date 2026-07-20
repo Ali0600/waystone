@@ -41,9 +41,15 @@ export class LatentPaths {
     private groundAt: (x: number, z: number) => number | null = () => null,
   ) {
     this.group.name = 'latent-paths'
+    this.addDefs(defs)
+  }
+
+  /** Newly manifested regions add their walkways at runtime. */
+  addDefs(defs: LatentPathDef[]): void {
     for (const def of defs) {
       const g = this.build(def)
-      const solidified = def.startSolid === true || state.pathsRevealed.includes(def.id)
+      const solidified =
+        def.startSolid === true || this.state.pathsRevealed.includes(def.id)
       this.paths.push({ def, group: g, solidified })
       if (solidified) this.applySolid(g)
       this.group.add(g)

@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 5
+  version: 6
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -50,13 +50,17 @@ export interface GameState {
   artsUnlocked: string[]
   /** Guarded discoverables whose guardian has fallen (id = discoverable). */
   guardiansDefeated: string[]
+  /** Waystones held — plant one at a socket to manifest a latent region. */
+  waystones: number
+  /** Latent regions completed by a planted waystone. */
+  regionsManifested: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 5,
+    version: 6,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -72,6 +76,8 @@ export function createInitialState(): GameState {
     chainUses: {},
     artsUnlocked: [],
     guardiansDefeated: [],
+    waystones: 0,
+    regionsManifested: [],
   }
 }
 
@@ -136,8 +142,14 @@ export function parseGameState(json: string): GameState | null {
     o.artsUnlocked = []
     o.guardiansDefeated = []
   }
+  // v5 → v6: waystones and latent regions.
+  if (o.version === 5) {
+    o.version = 6
+    o.waystones = 0
+    o.regionsManifested = []
+  }
 
-  if (o.version !== 5) return null
+  if (o.version !== 6) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -186,9 +198,11 @@ export function parseGameState(json: string): GameState | null {
   if (!isStringArray(o.artsUnlocked) || !isStringArray(o.guardiansDefeated)) {
     return null
   }
+  if (!isFiniteNumber(o.waystones) || o.waystones < 0) return null
+  if (!isStringArray(o.regionsManifested)) return null
 
   return {
-    version: 5,
+    version: 6,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -215,5 +229,7 @@ export function parseGameState(json: string): GameState | null {
     chainUses: { ...(chainUses as Record<string, number>) },
     artsUnlocked: [...o.artsUnlocked],
     guardiansDefeated: [...o.guardiansDefeated],
+    waystones: o.waystones,
+    regionsManifested: [...o.regionsManifested],
   }
 }

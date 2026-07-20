@@ -79,16 +79,22 @@ export class WorldEnemies {
   private enemies: WorldEnemy[] = []
   private t = 0
 
+  private rng = mulberry32(31337)
+
   constructor(
     spawns: EnemySpawnDef[],
     private state: GameState,
-    heightAt: (x: number, z: number) => number,
+    private heightAt: (x: number, z: number) => number,
   ) {
-    const rng = mulberry32(31337)
+    this.addSpawns(spawns)
+  }
+
+  /** Newly manifested regions add their enemies at runtime. */
+  addSpawns(spawns: EnemySpawnDef[]): void {
     for (const spawn of spawns) {
       const def = ENEMIES[spawn.enemyId]
       const group = buildEnemyMesh(def)
-      group.position.set(spawn.x, heightAt(spawn.x, spawn.z), spawn.z)
+      group.position.set(spawn.x, this.heightAt(spawn.x, spawn.z), spawn.z)
       this.group.add(group)
       const defeated =
         spawn.guards !== undefined &&
@@ -98,15 +104,12 @@ export class WorldEnemies {
         spawn,
         def,
         group,
-        angle: rng() * Math.PI * 2,
-        speed: 0.55 + rng() * 0.4,
+        angle: this.rng() * Math.PI * 2,
+        speed: 0.55 + this.rng() * 0.4,
         defeated,
       })
     }
-    this.heightAt = heightAt
   }
-
-  private heightAt: (x: number, z: number) => number
 
   /** Mark an enemy defeated (despawn) after a victorious encounter. */
   markDefeated(spawnIndex: number): void {

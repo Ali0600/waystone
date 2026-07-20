@@ -49,6 +49,11 @@ export class DiscoverySystem {
     private heightAt: (x: number, z: number) => number,
   ) {}
 
+  /** Newly manifested regions add their content at runtime. */
+  addDefs(defs: DiscoverableDef[]): void {
+    this.defs.push(...defs)
+  }
+
   worldY(def: DiscoverableDef): number {
     return this.heightAt(def.x, def.z) + (def.dy ?? 0)
   }
@@ -144,6 +149,12 @@ export class DiscoverySystem {
         this.bus.emit('glyphstone:changed', {
           total: this.state.glyphStones,
           delta: p.amount,
+        })
+      } else if (p.meter === 'waystone') {
+        this.state.waystones += p.amount
+        this.bus.emit('toast', {
+          text: 'A Waystone — heavy with an unfinished note. The socket waits.',
+          flavor: 'reward',
         })
       } else if (p.meter === 'tool-grapple') {
         this.state.tools.grapple = true

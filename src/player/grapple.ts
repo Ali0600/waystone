@@ -31,11 +31,27 @@ export class GrappleVerb {
 
   constructor(
     defs: GrapplePointDef[],
-    heightAt: (x: number, z: number) => number,
+    private heightAt: (x: number, z: number) => number,
     private player: PlayerSim,
   ) {
+    this.addPoints(defs)
+    const ropeGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+    ])
+    this.rope = new THREE.Line(
+      ropeGeo,
+      new THREE.LineBasicMaterial({ color: '#ffd98a', transparent: true, opacity: 0.9 }),
+    )
+    this.rope.visible = false
+    this.rope.frustumCulled = false
+    this.group.add(this.rope)
+  }
+
+  /** Newly manifested regions add their pylons at runtime. */
+  addPoints(defs: GrapplePointDef[]): void {
     for (const def of defs) {
-      const pos = new THREE.Vector3(def.x, heightAt(def.x, def.z) + def.dy, def.z)
+      const pos = new THREE.Vector3(def.x, this.heightAt(def.x, def.z) + def.dy, def.z)
       const post = new THREE.Mesh(
         new THREE.CylinderGeometry(0.09, 0.14, Math.min(def.dy, 2.2), 5),
         makeToonMaterial('#5a5470'),
@@ -49,18 +65,6 @@ export class GrappleVerb {
       this.group.add(post, crystal)
       this.pylons.push({ pos, crystal })
     }
-
-    const ropeGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(),
-      new THREE.Vector3(),
-    ])
-    this.rope = new THREE.Line(
-      ropeGeo,
-      new THREE.LineBasicMaterial({ color: '#ffd98a', transparent: true, opacity: 0.9 }),
-    )
-    this.rope.visible = false
-    this.rope.frustumCulled = false
-    this.group.add(this.rope)
   }
 
   /** Current highlighted pylon position (null if none aimable). */

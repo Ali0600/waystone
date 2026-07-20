@@ -14,6 +14,7 @@ export type DiscoveryKind =
   | 'guarded' // drops after its elite falls (M6)
   | 'perch' // grapple-reachable ledge cache (M3)
   | 'person' // a recruit — finding them grows the Waystation (M4)
+  | 'waystone' // the key that completes a latent region (M7)
 
 /**
  * What must be true before the discoverable can be collected. Anything the
@@ -28,7 +29,7 @@ export type DiscoveryPrereq =
   | 'combat' // needs its guardian defeated (M6)
 
 export interface Payout {
-  meter: 'lumen' | 'glyphstone' | 'completion' | 'tool-grapple'
+  meter: 'lumen' | 'glyphstone' | 'completion' | 'tool-grapple' | 'waystone'
   amount: number
 }
 
