@@ -43,7 +43,9 @@ import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
 import { ShopPanel } from './ui/shop'
 import { FerryPanel } from './ui/ferry'
+import { RewardBoardPanel } from './ui/rewardboard'
 import { MooringPosts } from './world/moorings'
+import { makeToonMaterial } from './engine/toon'
 import { grantStarterDeck } from './cards/game'
 import { Hud } from './ui/hud'
 import { EscMenu } from './ui/menu'
@@ -196,6 +198,30 @@ const ferry = new FerryPanel(
   () => world.regionAt(player.position.x, player.position.z)?.def.id ?? null,
   (m) => ferryTo(m),
 )
+
+// The Reward Board: a posted board by the arch, appearing once the hub grows.
+const rewardBoard = new RewardBoardPanel(saves.state, () => world.regions.map((r) => r.def), bus)
+const boardPos = { x: 6, z: -129 }
+const boardProp = (() => {
+  const g = new THREE.Group()
+  const wood = makeToonMaterial('#6b5540')
+  for (const px of [-0.7, 0.7]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 2, 5), wood)
+    post.position.set(px, 1, 0)
+    g.add(post)
+  }
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.2, 0.1), makeToonMaterial('#8a7a5a'))
+  panel.position.set(0, 1.5, 0)
+  const notice = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 0.85, 0.04),
+    makeToonMaterial('#e8e2d4', { emissive: '#3a3550', emissiveIntensity: 0.3 }),
+  )
+  notice.position.set(0, 1.5, 0.08)
+  g.add(panel, notice)
+  g.position.set(boardPos.x, world.heightAt(boardPos.x, boardPos.z), boardPos.z)
+  return g
+})()
+scene.add(boardProp)
 
 // Recruiting Tam the Cardplayer deals you into the deck game.
 bus.on('discovery:found', ({ id }) => {
@@ -515,7 +541,14 @@ function update(dt: number) {
           (m) => Math.hypot(player.position.x - m.x, player.position.z - m.z) < 3,
         ) ?? null
       : null
-  const uiOpen = cardTable.visible || shop.visible || ferry.visible
+  // The board appears once the Waystation has visibly grown (≥4 recruits home).
+  boardProp.visible = recruits.homeCount() >= 4
+  const nearBoard =
+    !target &&
+    !nearMooring &&
+    boardProp.visible &&
+    Math.hypot(player.position.x - boardPos.x, player.position.z - boardPos.z) < 3
+  const uiOpen = cardTable.visible || shop.visible || ferry.visible || rewardBoard.visible
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
   } else if (snap.interact && !uiOpen) {
@@ -527,6 +560,8 @@ function update(dt: number) {
       angling.tryCast()
     } else if (nearMooring) {
       ferry.open()
+    } else if (nearBoard) {
+      rewardBoard.open()
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
       if (homeRecruit.role === 'archivist') {
@@ -559,9 +594,11 @@ function update(dt: number) {
             ? 'E — cast into the mist'
             : nearMooring
               ? 'E — ring the Ferryman’s Bell'
-              : homeRecruit
-                ? `E — talk to ${homeRecruit.name}`
-                : null),
+              : nearBoard
+                ? 'E — read the Reward Board'
+                : homeRecruit
+                  ? `E — talk to ${homeRecruit.name}`
+                  : null),
   )
   lantern.update(dt)
   discoveryView.update(dt)
@@ -619,6 +656,7 @@ if (qaMode || import.meta.env.DEV) {
     cardTable,
     shop,
     ferry,
+    rewardBoard,
     discovery,
     mastery,
     recruits,

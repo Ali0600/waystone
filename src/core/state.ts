@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 12
+  version: 13
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -68,13 +68,15 @@ export interface GameState {
   cardWins: Record<string, number>
   /** Enemies defeated in the world, by id — gates which cards can appear. */
   enemiesFelled: Record<string, number>
+  /** Reward-board bounty ids already claimed (paid once). */
+  bountiesClaimed: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 12,
+    version: 13,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -99,6 +101,7 @@ export function createInitialState(): GameState {
     deck: [],
     cardWins: {},
     enemiesFelled: {},
+    bountiesClaimed: [],
   }
 }
 
@@ -204,8 +207,13 @@ export function parseGameState(json: string): GameState | null {
     o.version = 12
     ;(o.tools as Record<string, unknown>).ferry = false
   }
+  // v12 → v13: the Reward Board.
+  if (o.version === 12) {
+    o.version = 13
+    o.bountiesClaimed = []
+  }
 
-  if (o.version !== 12) return null
+  if (o.version !== 13) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -291,9 +299,10 @@ export function parseGameState(json: string): GameState | null {
   for (const v of Object.values(enemiesFelled)) {
     if (!isFiniteNumber(v) || v < 0) return null
   }
+  if (!isStringArray(o.bountiesClaimed)) return null
 
   return {
-    version: 12,
+    version: 13,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -335,5 +344,6 @@ export function parseGameState(json: string): GameState | null {
     deck: [...(o.deck as string[])],
     cardWins: { ...(cardWins as Record<string, number>) },
     enemiesFelled: { ...(enemiesFelled as Record<string, number>) },
+    bountiesClaimed: [...(o.bountiesClaimed as string[])],
   }
 }

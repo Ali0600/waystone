@@ -48,7 +48,8 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `game.ts` = economy (ownership, subject-encountered gate, shop, opponents/ladder, rewards)
   bridging save ↔ matches. UI in `ui/cardtable.ts` + `ui/shop.ts`. Card data in
   `content/cards.schema.ts` (`ALL_CARDS` — one per enemy/recruit/region, coverage-tested).
-- `src/progression/` — use-based mastery (verbs) + glyph grid.
+- `src/progression/` — use-based mastery (verbs) + glyph grid + `bounties.ts` (pure
+  Reward-Board evaluator; bounty DATA in `content/bounties.ts`, UI in `ui/rewardboard.ts`).
 - `src/hub/` — recruit figures/structures; hub state DERIVES from discovery state.
 
 ## Invariants enforced by tests (tests/content-invariants.test.ts)
