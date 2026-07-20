@@ -36,6 +36,9 @@ import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
 import { ArchivistPanel } from './ui/archivist'
+import { CardTable } from './ui/cardtable'
+import { ShopPanel } from './ui/shop'
+import { grantStarterDeck } from './cards/game'
 import { Hud } from './ui/hud'
 import { EscMenu } from './ui/menu'
 import { Toasts } from './ui/toast'
@@ -165,6 +168,13 @@ scene.add(recruits.group)
 const map = new RegionMap(world, saves.state)
 const postfx = new PostFx(renderer, scene, camera)
 const archivist = new ArchivistPanel(world, saves.state)
+const cardTable = new CardTable(saves.state, bus)
+const shop = new ShopPanel(saves.state, bus)
+
+// Recruiting Tam the Cardplayer deals you into the deck game.
+bus.on('discovery:found', ({ id }) => {
+  if (id === 'cv-person-cardplayer') grantStarterDeck(saves.state)
+})
 
 // World enemies + the encounter lifecycle.
 const worldEnemies = new WorldEnemies(world.enemies, saves.state, world.heightAt)
@@ -444,9 +454,10 @@ function update(dt: number) {
     !target && !socketReady && anglingOpen && !angling.active
       ? angling.nearestSpot(world.anglingSpots, player.position.x, player.position.z)
       : null
+  const uiOpen = cardTable.visible || shop.visible
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
-  } else if (snap.interact) {
+  } else if (snap.interact && !uiOpen) {
     if (target) {
       discovery.interact(player.position.x, player.position.z, player.position.y)
     } else if (socketReady && saves.state.waystones > 0) {
@@ -459,6 +470,10 @@ function update(dt: number) {
         archivist.toggle()
       } else if (homeRecruit.role === 'cook') {
         cookAtMarou()
+      } else if (homeRecruit.role === 'cardplayer') {
+        cardTable.open()
+      } else if (homeRecruit.role === 'merchant') {
+        shop.open()
       } else if (homeRecruit.role === 'angler') {
         talkToNerei()
       } else {
@@ -535,6 +550,8 @@ if (qaMode || import.meta.env.DEV) {
     grapple,
     chime,
     angling,
+    cardTable,
+    shop,
     discovery,
     mastery,
     recruits,

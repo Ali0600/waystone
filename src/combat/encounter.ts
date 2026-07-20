@@ -140,6 +140,8 @@ export class Encounter {
 
   private win(): void {
     this.setPhase('victory')
+    this.state.enemiesFelled[this.enemy.id] =
+      (this.state.enemiesFelled[this.enemy.id] ?? 0) + 1
     this.state.lumen += this.enemy.lumenReward
     this.bus.emit('lumen:changed', {
       total: this.state.lumen,
