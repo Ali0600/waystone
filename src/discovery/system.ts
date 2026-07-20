@@ -114,6 +114,24 @@ export class DiscoverySystem {
     return revealed
   }
 
+  /** Nearest unfound buried cache within range (the Sounding target). */
+  nearestBuried(
+    px: number,
+    pz: number,
+    range: number,
+  ): { def: DiscoverableDef; dist: number } | null {
+    let best: { def: DiscoverableDef; dist: number } | null = null
+    for (const def of this.defs) {
+      if (def.kind !== 'buried') continue
+      if (this.state.discoveries[def.id] === 'found') continue
+      const dist = Math.hypot(px - def.x, pz - def.z)
+      if (dist <= range && (best === null || dist < best.dist)) {
+        best = { def, dist }
+      }
+    }
+    return best
+  }
+
   /** Lantern T3: buried caches call out — pin every one in a wide sweep. */
   buriedSweep(px: number, pz: number, radius: number): number {
     let pinned = 0
@@ -154,6 +172,14 @@ export class DiscoverySystem {
         this.state.waystones += p.amount
         this.bus.emit('toast', {
           text: 'A Waystone — heavy with an unfinished note. The socket waits.',
+          flavor: 'reward',
+        })
+      } else if (p.meter === 'tool-sounding') {
+        this.state.tools.sounding = true
+        this.caps.sounding = true
+        this.bus.emit('tool:acquired', { tool: 'sounding' })
+        this.bus.emit('toast', {
+          text: 'The Sounding Rod — press T; the buried world answers in pitch',
           flavor: 'reward',
         })
       } else if (p.meter === 'tool-grapple') {

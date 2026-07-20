@@ -497,3 +497,19 @@ body {
   20% { opacity: 1; }
   100% { opacity: 0; transform: translateY(-14px); }
 }
+
+/* --- Sounding warmth vignette --- */
+
+.sounding-warmth {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(255, 154, 74, 0.55) 100%
+  );
+}

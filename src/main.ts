@@ -7,8 +7,10 @@ import { createSaveSystem } from './core/save'
 import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
 import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
+import { GameAudio } from './engine/audio'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
+import { SoundingVerb } from './minigames/sounding'
 import { Arena } from './combat/arena'
 import { Encounter } from './combat/encounter'
 import { ENEMIES } from './content/enemies'
@@ -71,6 +73,8 @@ scene.add(mist.group)
 
 // --- Player ---
 const bus = new EventBus()
+const audio = new GameAudio()
+audio.attach(bus)
 const mastery = new MasterySystem(saves.state, bus)
 const player = new PlayerSim(undefined, {
   airDash: () => mastery.tier('dash') >= 3,
@@ -100,7 +104,7 @@ scene.add(avatar.group)
 const caps: PlayerCapabilities = {
   lantern: true,
   grapple: saves.state.tools.grapple,
-  sounding: false,
+  sounding: saves.state.tools.sounding,
 }
 const discovery = new DiscoverySystem(
   world.discoverables,
@@ -126,6 +130,9 @@ scene.add(lantern.ring)
 // Grapple pylons.
 const grapple = new GrappleVerb(world.grapplePoints, world.heightAt, player)
 scene.add(grapple.group)
+
+// Sounding: the buried world answers in pitch.
+const sounding = new SoundingVerb(player, discovery, audio)
 
 // The Waystation grows as people come home.
 const recruits = new RecruitSystem(
@@ -334,10 +341,17 @@ function update(dt: number) {
   }
 
   // Verbs: lantern, grapple, dash mastery.
-  if (snap.lantern) lantern.tryPulse()
+  if (snap.lantern) {
+    if (lantern.tryPulse()) audio.chord([392, 494, 587], 0.35, 'triangle')
+  }
+  if (snap.sounding && caps.sounding) sounding.tryPing()
+  sounding.update(dt)
   if (caps.grapple) {
     grapple.updateTargeting(orbit.yaw, orbit.pitch, world.collider)
-    if (snap.grapple && grapple.tryLaunch()) mastery.record('grapple')
+    if (snap.grapple && grapple.tryLaunch()) {
+      mastery.record('grapple')
+      audio.tone(240, 0.3, 'sawtooth', 0.5, 720)
+    }
   }
   if (player.stepEvents.dashed) mastery.record('dash')
   grapple.update(dt)
