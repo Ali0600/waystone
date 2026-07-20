@@ -4,11 +4,15 @@ import { createInitialState } from '../src/core/state'
 import { amberfall } from '../src/content/regions/amberfall'
 import { waystation } from '../src/content/regions/waystation'
 import { RECRUITS } from '../src/content/recruits'
+import { veilspire } from '../src/content/regions/veilspire'
 import { RecruitSystem } from '../src/hub/recruits'
 import { World } from '../src/world/world'
+import { PlayerSim } from '../src/player/controller'
+import { idleInput } from './helpers'
+import * as THREE from 'three'
 
 describe('World', () => {
-  const world = new World([amberfall, waystation])
+  const world = new World([amberfall, waystation], () => true)
 
   it('dispatches heightAt to the island containing the point', () => {
     // Amberfall centre plateau.
@@ -30,6 +34,46 @@ describe('World', () => {
       amberfall.discoverables.length + waystation.discoverables.length,
     )
     expect(world.latentPaths.some((p) => p.startSolid)).toBe(true)
+  })
+})
+
+describe('latent regions', () => {
+  const defs = [amberfall, waystation, veilspire]
+  const makeWorld = (manifested: string[]) =>
+    new World(defs, (id) => !defs.find((d) => d.id === id)?.latent || manifested.includes(id))
+
+  it('an unmanifested region contributes nothing', () => {
+    const world = makeWorld([])
+    // Court plateau centre would be 5.5 — but the island is not real yet.
+    expect(world.heightAt(-175, -45)).toBe(0)
+    expect(world.regionAt(-175, -45)).toBeNull()
+    expect(world.discoverables.some((d) => d.id.startsWith('vs-'))).toBe(false)
+    expect(world.enemies.some((e) => e.guards?.startsWith('vs-'))).toBe(false)
+    expect(world.latentPaths.some((p) => p.id === 'vs-bridge-east')).toBe(false)
+  })
+
+  it('manifesting makes the region real: height, content, collision', () => {
+    const world = makeWorld([])
+    const region = world.manifest('veilspire')
+    expect(region).not.toBeNull()
+    expect(world.heightAt(-175, -45)).toBeCloseTo(5.5, 4)
+    expect(world.regionAt(-175, -45)?.def.id).toBe('veilspire')
+    expect(world.discoverables.some((d) => d.id.startsWith('vs-'))).toBe(true)
+
+    // The island is walkable: a capsule dropped over the court lands on it.
+    const sim = new PlayerSim()
+    sim.setSpawn(new THREE.Vector3(-175, 9, -45))
+    sim.respawn()
+    for (let i = 0; i < 240; i++) sim.step(1 / 60, idleInput(), 0, world.collider)
+    expect(sim.onGround).toBe(true)
+    expect(sim.position.y).toBeGreaterThan(5)
+  })
+
+  it('manifest is idempotent and restores from save state', () => {
+    const world = makeWorld(['veilspire'])
+    expect(world.isManifested('veilspire')).toBe(true)
+    expect(world.manifest('veilspire')).toBeNull() // already real
+    expect(world.heightAt(-175, -45)).toBeCloseTo(5.5, 4)
   })
 })
 

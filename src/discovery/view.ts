@@ -34,6 +34,16 @@ export class DiscoveryView {
     bus.on('discovery:revealed', ({ id }) => this.sync(id))
   }
 
+  /** Newly manifested regions add their discoverables at runtime. */
+  addDefs(defs: DiscoverableDef[]): void {
+    for (const def of defs) {
+      const entry = this.build(def)
+      this.entries.set(def.id, entry)
+      this.group.add(entry.root)
+      this.sync(def.id)
+    }
+  }
+
   private build(def: DiscoverableDef): Entry {
     const root = new THREE.Group()
     root.position.set(def.x, this.system.worldY(def), def.z)
@@ -93,6 +103,16 @@ export class DiscoveryView {
       case 'person':
         // The figure itself is rendered by RecruitSystem; only the glint here.
         break
+      case 'waystone': {
+        const monolith = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.35, 0.5, 2.2, 6),
+          makeToonMaterial('#8ad8c8', { emissive: '#1e5a50', emissiveIntensity: 0.9 }),
+        )
+        monolith.position.y = 1.1
+        monolith.name = 'rune'
+        solid.add(monolith)
+        break
+      }
     }
 
     // The glint: a small bobbing spark — the universal "something is here"

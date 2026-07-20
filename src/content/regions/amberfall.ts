@@ -243,6 +243,20 @@ export const amberfall: RegionDef = {
       ],
     },
     {
+      id: 'af-waystone-vault',
+      kind: 'waystone',
+      x: -4,
+      z: -60,
+      label: 'The Waystone',
+      cue: 'a sealed vault sings at the northern rim',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'waystone', amount: 1 },
+        { meter: 'lumen', amount: 25 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
+    {
       id: 'af-person-scribe',
       kind: 'person',
       x: 33,
@@ -346,5 +360,7 @@ export const amberfall: RegionDef = {
     { enemyId: 'chorister', x: 48, z: 12, patrolR: 4 },
     // The Elder Husk keeps the Sealed Coffer (prereq 'combat').
     { enemyId: 'husk-elder', x: 44, z: -25, patrolR: 3, guards: 'af-guarded-east-coffer' },
+    // A Chorister keeps the Waystone vault.
+    { enemyId: 'chorister', x: -6, z: -58, patrolR: 3, guards: 'af-waystone-vault' },
   ],
 }

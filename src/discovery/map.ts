@@ -74,12 +74,27 @@ export class RegionMap {
     ctx.clearRect(0, 0, w, w)
 
     for (const region of this.world.regions) {
+      const manifested = this.world.isManifested(region.def.id)
       const [ox, oz] = region.def.origin
       const [rx, ry] = this.toCanvas(ox, oz)
-      ctx.fillStyle = 'rgba(90, 82, 128, 0.4)'
+      ctx.fillStyle = manifested
+        ? 'rgba(90, 82, 128, 0.4)'
+        : 'rgba(140, 200, 220, 0.1)'
       ctx.beginPath()
       ctx.arc(rx, ry, region.def.island.radius * this.scale, 0, Math.PI * 2)
       ctx.fill()
+      if (!manifested) {
+        // A latent isle: a faint dashed outline of a promise.
+        ctx.strokeStyle = 'rgba(160, 216, 232, 0.45)'
+        ctx.setLineDash([6, 6])
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.fillStyle = 'rgba(160, 216, 232, 0.6)'
+        ctx.font = 'italic 12px Georgia'
+        ctx.textAlign = 'center'
+        ctx.fillText('…latent…', rx, ry + 4)
+        continue
+      }
       ctx.fillStyle = 'rgba(140, 128, 180, 0.3)'
       for (const p of region.def.island.plateaus) {
         const [px, py] = this.toCanvas(ox + p.x, oz + p.z)
