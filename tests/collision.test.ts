@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { buildCollider } from '../src/world/collision'
 import { PlayerSim } from '../src/player/controller'
-import type { InputSnapshot } from '../src/engine/input'
+import { idleInput } from './helpers'
 
 /**
  * Headless integration: real PlayerSim vs a real BVH world. This is the test
@@ -18,18 +18,7 @@ function makeWorld(): ReturnType<typeof buildCollider> {
   return buildCollider(root)
 }
 
-const idle: InputSnapshot = {
-  moveX: 0,
-  moveZ: 0,
-  jump: false,
-  dash: false,
-  interact: false,
-  lantern: false,
-  grapple: false,
-  map: false,
-  lookDX: 0,
-  lookDY: 0,
-}
+const idle = idleInput()
 
 const DT = 1 / 60
 
@@ -53,7 +42,7 @@ describe('PlayerSim vs BVH world', () => {
     sim.setSpawn(new THREE.Vector3(0, 0.5, 0))
     sim.respawn()
     // Camera yaw 0 makes +moveX push toward +X (into the wall at x=4.5).
-    const run: InputSnapshot = { ...idle, moveX: 1 }
+    const run = idleInput({ moveX: 1 })
     for (let i = 0; i < 300; i++) sim.step(DT, run, 0, collider)
     // Blocked at the wall face minus the capsule radius (some tolerance).
     expect(sim.position.x).toBeLessThan(4.5 - sim.params.radius + 0.1)

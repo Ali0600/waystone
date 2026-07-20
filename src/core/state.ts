@@ -16,8 +16,17 @@ export interface MasteryCounters {
   lantern: number
 }
 
+export type GlyphSlot =
+  | 'ember'
+  | 'gale'
+  | 'stone'
+  | 'tide'
+  | 'light'
+  | 'shade'
+  | null
+
 export interface GameState {
-  version: 3
+  version: 4
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -31,13 +40,17 @@ export interface GameState {
   tools: { grapple: boolean }
   /** Latent paths made solid by the lantern (region content ids). */
   pathsRevealed: string[]
+  /** The 4×4 Glyph Grid, row-major. Inscription is permanent-ish. */
+  glyphGrid: GlyphSlot[]
+  /** Per-glyph use counters (each authored glyph levels with use). */
+  glyphUses: Record<Exclude<GlyphSlot, null>, number>
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 3,
+    version: 4,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -48,6 +61,8 @@ export function createInitialState(): GameState {
     mastery: { strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 },
     tools: { grapple: false },
     pathsRevealed: [],
+    glyphGrid: Array<GlyphSlot>(16).fill(null),
+    glyphUses: { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 },
   }
 }
 
@@ -99,8 +114,14 @@ export function parseGameState(json: string): GameState | null {
     o.tools = { grapple: false }
     o.pathsRevealed = []
   }
+  // v3 → v4: the Glyph Grid.
+  if (o.version === 3) {
+    o.version = 4
+    o.glyphGrid = Array(16).fill(null)
+    o.glyphUses = { ember: 0, gale: 0, stone: 0, tide: 0, light: 0, shade: 0 }
+  }
 
-  if (o.version !== 3) return null
+  if (o.version !== 4) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -123,8 +144,22 @@ export function parseGameState(json: string): GameState | null {
     return null
   }
 
+  const GLYPH_IDS = ['ember', 'gale', 'stone', 'tide', 'light', 'shade'] as const
+  const grid = o.glyphGrid
+  if (!Array.isArray(grid) || grid.length !== 16) return null
+  for (const cell of grid) {
+    if (cell !== null && !GLYPH_IDS.includes(cell as (typeof GLYPH_IDS)[number])) {
+      return null
+    }
+  }
+  const uses = o.glyphUses as Record<string, unknown> | null
+  if (typeof uses !== 'object' || uses === null) return null
+  for (const g of GLYPH_IDS) {
+    if (!isFiniteNumber(uses[g]) || (uses[g] as number) < 0) return null
+  }
+
   return {
-    version: 3,
+    version: 4,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -139,5 +174,14 @@ export function parseGameState(json: string): GameState | null {
     },
     tools: { grapple: tools.grapple },
     pathsRevealed: [...(o.pathsRevealed as string[])],
+    glyphGrid: [...(grid as GlyphSlot[])],
+    glyphUses: {
+      ember: uses.ember as number,
+      gale: uses.gale as number,
+      stone: uses.stone as number,
+      tide: uses.tide as number,
+      light: uses.light as number,
+      shade: uses.shade as number,
+    },
   }
 }
