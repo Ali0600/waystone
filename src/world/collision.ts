@@ -10,9 +10,10 @@ export interface Collider {
   bvh: MeshBVH
 }
 
-export function buildCollider(root: THREE.Object3D): Collider {
-  root.updateMatrixWorld(true)
-  const generator = new StaticGeometryGenerator(root)
+export function buildCollider(roots: THREE.Object3D | THREE.Object3D[]): Collider {
+  const list = Array.isArray(roots) ? roots : [roots]
+  for (const root of list) root.updateMatrixWorld(true)
+  const generator = new StaticGeometryGenerator(list)
   generator.attributes = ['position']
   const merged = generator.generate()
   return { bvh: new MeshBVH(merged) }

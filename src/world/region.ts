@@ -11,6 +11,8 @@ import {
 } from './props'
 import { buildIslandGeometry, heightAt, type IslandParams } from './terrain'
 import type { DiscoverableDef } from '../discovery/types'
+import type { GrapplePointDef } from '../player/grapple'
+import type { LatentPathDef } from './latentpath'
 
 export interface RegionPalette {
   sky: string
@@ -47,6 +49,8 @@ export interface RegionDef {
   /** x/z only; y resolved from the terrain at build time. */
   spawn: [number, number]
   discoverables: DiscoverableDef[]
+  grapplePoints: GrapplePointDef[]
+  latentPaths: LatentPathDef[]
 }
 
 export interface BuiltRegion {
@@ -55,6 +59,8 @@ export interface BuiltRegion {
   collider: Collider
   spawn: THREE.Vector3
   heightAt(x: number, z: number): number
+  /** Rebuild collision including extra solidified groups (latent paths). */
+  rebuildCollider(extra: THREE.Object3D[]): void
 }
 
 export function buildRegion(def: RegionDef): BuiltRegion {
@@ -87,6 +93,19 @@ export function buildRegion(def: RegionDef): BuiltRegion {
     built.rotation.y = lm.yaw ?? 0
     built.scale.setScalar(lm.scale ?? 1)
     collidable.add(built)
+  }
+
+  // Elevated perch discoverables stand on real floating ledges — grapple
+  // destinations with actual footing (interaction requires being up there).
+  for (const d of def.discoverables) {
+    if (d.kind === 'perch' && (d.dy ?? 0) > 1.5) {
+      const ledge = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.3, 1.5, 0.6, 8),
+        makeToonMaterial(def.palette.rock),
+      )
+      ledge.position.set(d.x, h(d.x, d.z) + (d.dy ?? 0) - 0.3, d.z)
+      collidable.add(ledge)
+    }
   }
 
   // Scattered decor (visual only): one BatchedMesh, one draw call.
@@ -130,11 +149,20 @@ export function buildRegion(def: RegionDef): BuiltRegion {
   for (let i = 0; i < def.scatter.trees; i++) tryPlace(2 + (i % 2), true)
   group.add(buildScatterMesh(geometries, placements))
 
-  const collider = buildCollider(collidable)
   const spawn = new THREE.Vector3(
     def.spawn[0],
     h(def.spawn[0], def.spawn[1]) + 0.2,
     def.spawn[1],
   )
-  return { def, group, collider, spawn, heightAt: h }
+  const built: BuiltRegion = {
+    def,
+    group,
+    collider: buildCollider(collidable),
+    spawn,
+    heightAt: h,
+    rebuildCollider(extra: THREE.Object3D[]) {
+      built.collider = buildCollider([collidable, ...extra])
+    },
+  }
+  return built
 }

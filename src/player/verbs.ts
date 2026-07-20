@@ -1,13 +1,17 @@
 import * as THREE from 'three'
 import type { DiscoverySystem } from '../discovery/system'
+import { REVEAL_RADIUS } from '../discovery/types'
+import type { MasterySystem } from '../progression/mastery'
+import type { LatentPaths } from '../world/latentpath'
 import type { PlayerSim } from './controller'
 
 const PULSE_COOLDOWN = 1.1
 const PULSE_MAX_RADIUS = 7
 
 /**
- * The Lantern verb (T1: reveal latent objects). A pulse is a visible
- * expanding ring + a discovery-system reveal query.
+ * The Lantern verb. Tiers change what a pulse can touch:
+ *  T1 — reveal latent objects · T2 — solidify latent paths · T3 — buried
+ *  caches call out (auto-pinned in a wide sweep).
  */
 export class LanternVerb {
   readonly ring: THREE.Mesh
@@ -18,6 +22,10 @@ export class LanternVerb {
     private player: PlayerSim,
     private discovery: DiscoverySystem,
     private lanternLight: THREE.PointLight,
+    private mastery: MasterySystem,
+    private paths: LatentPaths,
+    /** Called when a path solidifies (collider rebuild). */
+    private onPathRevealed: () => void,
   ) {
     this.ring = new THREE.Mesh(
       new THREE.TorusGeometry(1, 0.06, 6, 40),
@@ -31,7 +39,6 @@ export class LanternVerb {
     this.ring.visible = false
   }
 
-  /** Returns true if a pulse fired (mastery counting hooks in at M3). */
   tryPulse(): boolean {
     if (this.cooldown > 0) return false
     this.cooldown = PULSE_COOLDOWN
@@ -39,7 +46,19 @@ export class LanternVerb {
     this.ring.visible = true
     this.ring.position.copy(this.player.position)
     this.ring.position.y += 0.15
-    this.discovery.lanternPulse(this.player.position.x, this.player.position.z)
+    const px = this.player.position.x
+    const pz = this.player.position.z
+
+    this.discovery.lanternPulse(px, pz)
+    const tier = this.mastery.tier('lantern')
+    if (tier >= 2) {
+      const revealed = this.paths.pulse(px, pz, REVEAL_RADIUS + 4)
+      if (revealed.length > 0) this.onPathRevealed()
+    }
+    if (tier >= 3) {
+      this.discovery.buriedSweep(px, pz, PULSE_MAX_RADIUS * 3)
+    }
+    this.mastery.record('lantern')
     return true
   }
 

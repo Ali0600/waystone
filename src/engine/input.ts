@@ -11,6 +11,7 @@ export interface InputSnapshot {
   dash: boolean
   interact: boolean
   lantern: boolean
+  grapple: boolean
   map: boolean
   lookDX: number
   lookDY: number
@@ -56,6 +57,7 @@ export class Input {
       dash: this.pressed.has('ShiftLeft') || this.pressed.has('ShiftRight'),
       interact: this.pressed.has('KeyE'),
       lantern: this.pressed.has('KeyF'),
+      grapple: this.pressed.has('KeyQ'),
       map: this.pressed.has('KeyM'),
       lookDX: this.lookDX,
       lookDY: this.lookDY,

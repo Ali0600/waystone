@@ -35,10 +35,14 @@ describe('parseGameState', () => {
     })
     const parsed = parseGameState(v1)
     expect(parsed).not.toBeNull()
-    expect(parsed!.version).toBe(2)
+    // Chains all the way to the current version with defaults filled in.
+    expect(parsed!.version).toBe(createInitialState().version)
     expect(parsed!.lumen).toBe(42)
     expect(parsed!.glyphStones).toBe(0)
     expect(parsed!.discoveries).toEqual({})
+    expect(parsed!.mastery).toEqual({ strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 })
+    expect(parsed!.tools).toEqual({ grapple: false })
+    expect(parsed!.pathsRevealed).toEqual([])
   })
 
   it('rejects malformed discoveries map', () => {
