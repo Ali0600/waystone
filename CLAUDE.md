@@ -67,6 +67,11 @@ authored in island-local coords before it ever loaded.
   idleInput()` — grow it there.
 - QA: `?qa=1` + `window.__game` (step(n), teleport, startFight, saves, world…).
   rAF parks in hidden tabs — ALWAYS drive QA via `step(n)`, never wall-clock waits.
+- Read every QA screenshot TWICE: "did my feature render?" AND "what's overlapping /
+  stale / shouldn't be here?" Run `__game.auditFrame()` in every UI-owning state
+  (combat, angling, card table, shop, any new overlay) — it flags visible-element
+  overlaps + "world HUD during combat". Screenshot states you only proved headlessly.
+  Overlap detector is pure (`ui/framecheck.ts`), tested against the real bug's rects.
 - Branch + PR + merge-on-green (`gh pr checks N --watch --fail-fast`, unpiped); main
   push deploys to Pages after tests.
 - Save schema changes: bump version, chain a migration, extend validation, update the

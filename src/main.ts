@@ -36,6 +36,7 @@ import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
 import { ArchivistPanel } from './ui/archivist'
+import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
 import { ShopPanel } from './ui/shop'
 import { grantStarterDeck } from './cards/game'
@@ -359,6 +360,7 @@ function startEncounter(contact: EnemyContact) {
   player.velocity.set(0, 0, 0)
   player.mode = 'normal'
   hud.setPrompt(null)
+  hud.setWorldUiVisible(false) // the duel owns the screen; hide the world HUD
 }
 
 function endEncounter() {
@@ -381,6 +383,7 @@ function endEncounter() {
   arena = null
   combatUi = null
   combatContact = null
+  hud.setWorldUiVisible(true) // the world resumes; restore the HUD
   persist()
 }
 
@@ -577,6 +580,55 @@ if (qaMode || import.meta.env.DEV) {
     teleport(x: number, y: number, z: number) {
       player.position.set(x, y, z)
       player.velocity.set(0, 0, 0)
+    },
+    /**
+     * Frame audit: catch layout bugs a feature-focused screenshot misses.
+     * Returns every intersecting pair of currently-visible key UI elements,
+     * plus named invariants (the world HUD must be hidden during combat).
+     * Run this in every UI-owning state BEFORE trusting a screenshot.
+     */
+    auditFrame() {
+      const SELECTORS = [
+        '.hud-controls',
+        '.hud-prompt',
+        '.hud-counters',
+        '.hud-region',
+        '.combat-top',
+        '.combat-bottom',
+        '.angling-bar',
+        '.card-overlay',
+        '.toasts',
+      ]
+      const boxes: Box[] = []
+      const shown: string[] = []
+      for (const sel of SELECTORS) {
+        for (const el of document.querySelectorAll<HTMLElement>(sel)) {
+          const cs = getComputedStyle(el)
+          const r = el.getBoundingClientRect()
+          if (cs.display === 'none' || cs.visibility === 'hidden' || r.width < 1 || r.height < 1) {
+            continue
+          }
+          boxes.push({ name: sel, top: r.top, bottom: r.bottom, left: r.left, right: r.right })
+          shown.push(sel)
+        }
+      }
+      const overlaps = findOverlappingPairs(boxes)
+      const combatActive = !!document.querySelector('.combat-ui')
+      const worldControls = document.querySelector<HTMLElement>('.hud-controls')
+      const worldHudDuringCombat =
+        combatActive &&
+        !!worldControls &&
+        !worldControls.hidden &&
+        getComputedStyle(worldControls).display !== 'none'
+      return {
+        visible: shown,
+        overlaps,
+        problems: [
+          ...overlaps.map((o) => `overlap: ${o}`),
+          ...(worldHudDuringCombat ? ['world HUD visible during combat'] : []),
+        ],
+        clean: overlaps.length === 0 && !worldHudDuringCombat,
+      }
     },
   }
 }
