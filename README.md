@@ -30,11 +30,11 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| Discovery | 46 authored discoverables across 3 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, the Waystone |
-| The Waystation | A hub isle that starts as one ruined arch; each of 6 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant) |
+| Discovery | 61 authored discoverables across 4 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
+| The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
-| Combat | Touch an enemy → a duel: timed beat **Chains** that level with use, per-hit **Parry** (block → reflect → lock-shatter by tier), Chorister **Locks** broken by matching glyphs, 2 undocumented **Hidden Arts** |
-| The Waystone | Defeat the vault's guardian, carry the Waystone to the dormant socket, and watch a ghost island across the mist become real — terrain, bridge, enemies and all |
+| Combat | Touch an enemy → a duel: timed beat **Chains** that level with use, per-hit **Parry** (block → reflect → lock-shatter by tier), Chorister **Locks** broken by matching glyphs, 2 undocumented **Hidden Arts**. 5 enemy variants across 3 readable silhouettes (the Cinder Chorister raises three Locks at once) |
+| The Waystones | Two of them: defeat a vault's guardian, carry the Waystone to a dormant socket, and watch a ghost island across the mist become real — terrain, bridge, enemies and all. Amberfall's opens Veilspire; Veilspire's opens Cindervault Rise |
 | Sounding | A dig-hunt minigame: pings answer in rising pitch + screen warmth as you close on buried caches |
 | The Chime | A third tool won from a guardian in Veilspire: ring it (`C`) to resonate **sealed** stone open — visible-but-locked caches that auto-pin as "?" until you carry it back to them |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |

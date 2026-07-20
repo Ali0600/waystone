@@ -127,6 +127,32 @@ export const ENEMIES: Record<string, EnemyDef> = {
       },
     ],
   },
+  // Region 3 escalation: a Chorister whose dirge raises THREE locks at once —
+  // you must have inscribed all three glyph types to shatter it clean.
+  'cinder-chorister': {
+    id: 'cinder-chorister',
+    name: 'Cinder Chorister',
+    archetype: 'chorister',
+    color: '#c65a3f',
+    hp: 44,
+    lumenReward: 34,
+    attacks: [
+      {
+        name: 'Triune Dirge',
+        pattern: 'chant',
+        damage: 16,
+        windup: 1.7,
+        locks: ['ember', 'gale', 'stone'],
+      },
+      {
+        name: 'Scald',
+        pattern: 'melee',
+        damage: 5,
+        windup: 1.1,
+        beats: [0, 0.45, 0.9],
+      },
+    ],
+  },
 }
 
 export interface EnemySpawnDef {

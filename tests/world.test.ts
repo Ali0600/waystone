@@ -5,6 +5,7 @@ import { amberfall } from '../src/content/regions/amberfall'
 import { waystation } from '../src/content/regions/waystation'
 import { RECRUITS } from '../src/content/recruits'
 import { veilspire } from '../src/content/regions/veilspire'
+import { cindervault } from '../src/content/regions/cindervault'
 import { RecruitSystem } from '../src/hub/recruits'
 import { World } from '../src/world/world'
 import { PlayerSim } from '../src/player/controller'
@@ -77,6 +78,32 @@ describe('latent regions', () => {
   })
 })
 
+describe('the second waystone chain (Cindervault)', () => {
+  const defs = [amberfall, waystation, veilspire, cindervault]
+  const makeWorld = (manifested: string[]) =>
+    new World(defs, (id) => !defs.find((d) => d.id === id)?.latent || manifested.includes(id))
+
+  it('cindervault stays a ghost until its own waystone is planted', () => {
+    // Veilspire reached, but the second waystone not yet planted.
+    const world = makeWorld(['veilspire'])
+    expect(world.isManifested('cindervault')).toBe(false)
+    expect(world.heightAt(-160, -190)).toBe(0) // vault centre — not real
+    expect(world.discoverables.some((d) => d.id.startsWith('cv-'))).toBe(false)
+    expect(world.discoverables.some((d) => d.id === 'vs-waystone-deep')).toBe(true)
+
+    const region = world.manifest('cindervault')
+    expect(region).not.toBeNull()
+    expect(world.heightAt(-160, -190)).toBeCloseTo(6.5, 4) // vault plateau h
+    expect(world.discoverables.some((d) => d.id === 'cv-person-cardplayer')).toBe(true)
+  })
+
+  it('both latent regions can be real at once, each on its own island', () => {
+    const world = makeWorld(['veilspire', 'cindervault'])
+    expect(world.regionAt(-175, -45)?.def.id).toBe('veilspire')
+    expect(world.regionAt(-160, -190)?.def.id).toBe('cindervault')
+  })
+})
+
 describe('RecruitSystem', () => {
   function build(found: string[]) {
     const state = createInitialState()
@@ -101,6 +128,21 @@ describe('RecruitSystem', () => {
     state.discoveries['af-person-smith'] = 'found'
     bus.emit('discovery:found', { id: 'af-person-smith' })
     expect(sys.homeCount()).toBe(1)
+  })
+
+  it('stands up a latecomer recruit (manifested region) exactly once', () => {
+    // Boot with only an Amberfall recruit positioned; Cindervault is latent,
+    // so Tam has no world figure yet.
+    const state = createInitialState()
+    const bus = new EventBus()
+    const positions = new Map([['af-person-scribe', { x: 0, z: 0 }]])
+    const sys = new RecruitSystem(state, bus, () => 0, positions)
+    const before = sys.group.children.length
+    sys.addWorldFigures([{ id: 'cv-person-cardplayer', x: -134, z: -172 }])
+    expect(sys.group.children.length).toBe(before + 1)
+    // A second manifest of the same region must not duplicate the figure.
+    sys.addWorldFigures([{ id: 'cv-person-cardplayer', x: -134, z: -172 }])
+    expect(sys.group.children.length).toBe(before + 1)
   })
 
   it('offers a nearby home recruit for flavour lines', () => {

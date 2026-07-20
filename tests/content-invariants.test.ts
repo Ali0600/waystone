@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { amberfall } from '../src/content/regions/amberfall'
 import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
+import { cindervault } from '../src/content/regions/cindervault'
 import { RECRUITS } from '../src/content/recruits'
+import { ENEMIES } from '../src/content/enemies'
+import { GLYPHS } from '../src/content/glyphs'
 import type { RegionDef } from '../src/world/region'
 
 /**
  * The design pillars as executable tests. Authoring mistakes fail CI, not
  * playtests. Every region added to the game must join this list.
  */
-const REGIONS: RegionDef[] = [amberfall, waystation, veilspire]
+const REGIONS: RegionDef[] = [amberfall, waystation, veilspire, cindervault]
 
 describe.each(REGIONS.map((r) => [r.id, r] as const))('region %s', (_id, region) => {
   const defs = region.discoverables
@@ -77,12 +80,34 @@ describe('cross-region invariants', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('all six recruits exist as person discoverables', () => {
+  it('every recruit exists as exactly one person discoverable', () => {
     const persons = all.filter((d) => d.kind === 'person')
-    expect(persons).toHaveLength(6)
+    expect(persons).toHaveLength(RECRUITS.length)
     for (const r of RECRUITS) {
       const person = persons.find((p) => p.id === r.personId)
       expect(person, r.personId).toBeDefined()
+    }
+  })
+
+  it('every guarded discoverable is kept by a real enemy that guards it', () => {
+    const guarded = all.filter((d) => d.kind === 'guarded' || d.kind === 'waystone')
+    const guardedByCombat = guarded.filter((d) => d.prereq === 'combat')
+    const allEnemies = REGIONS.flatMap((r) => r.enemies)
+    for (const d of guardedByCombat) {
+      const guardian = allEnemies.find((e) => e.guards === d.id)
+      expect(guardian, `${d.id} needs a guardian`).toBeDefined()
+      expect(ENEMIES[guardian!.enemyId], `${guardian!.enemyId} is a real enemy`).toBeDefined()
+    }
+  })
+
+  it('every enemy chant-lock references a real glyph', () => {
+    const glyphIds = new Set(Object.keys(GLYPHS))
+    for (const e of Object.values(ENEMIES)) {
+      for (const atk of e.attacks) {
+        for (const lock of atk.locks ?? []) {
+          expect(glyphIds.has(lock), `${e.id} lock ${lock}`).toBe(true)
+        }
+      }
     }
   })
 

@@ -22,9 +22,13 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `manifest(id)`. `region.ts` builds islands from data. Collision = three-mesh-bvh
   static BVH + capsule collide-and-slide (`collision.ts`); the collider lives at world
   origin and never moves.
-- `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`),
-  glyphs, chains, enemies, recruits, cards.schema (deck game Phase 2 data model).
+- `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`,
+  `cindervault` — the last two latent, chained: Amberfall's waystone opens Veilspire,
+  Veilspire's opens Cindervault), glyphs, chains, enemies, recruits, cards.schema (deck
+  game Phase 2 data model).
   **All content coordinates are WORLD coordinates** (region.origin offsets the island).
+  A recruit inside a latent region gets its world figure via `RecruitSystem.addWorldFigures`
+  at manifest time (hub structure is always built at boot).
 - `src/discovery/` — registry/prereq gating/auto-pin "?" system (headless), view,
   canvas Survey Map. Prereq gate types: `lantern` (reveal latent) · `grapple` ·
   `sounding` (dig buried) · `chime` (resonate `sealed` open, `player/chime.ts`) ·

@@ -19,7 +19,7 @@ export class RecruitSystem {
   constructor(
     private state: GameState,
     bus: EventBus,
-    heightAt: (x: number, z: number) => number,
+    private heightAt: (x: number, z: number) => number,
     personPositions: Map<string, { x: number; z: number }>,
   ) {
     for (const def of RECRUITS) {
@@ -52,6 +52,20 @@ export class RecruitSystem {
         bus.emit('toast', { text: 'The Waystation grows…', flavor: 'reward' })
       }
     })
+  }
+
+  /** A region just manifested: stand up world figures for any recruits who
+   *  live on it (their hub structure already exists from construction). */
+  addWorldFigures(persons: { id: string; x: number; z: number }[]): void {
+    for (const p of persons) {
+      const def = RECRUITS.find((r) => r.personId === p.id)
+      if (!def || this.worldFigures.has(p.id)) continue
+      const fig = buildFigure(def.color)
+      fig.position.set(p.x, this.heightAt(p.x, p.z), p.z)
+      this.worldFigures.set(p.id, fig)
+      this.group.add(fig)
+    }
+    this.sync()
   }
 
   private isHome(id: string): boolean {

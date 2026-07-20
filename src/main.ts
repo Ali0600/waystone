@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { amberfall } from './content/regions/amberfall'
 import { veilspire } from './content/regions/veilspire'
 import { waystation } from './content/regions/waystation'
+import { cindervault } from './content/regions/cindervault'
 import { EventBus } from './core/events'
 import { createSaveSystem } from './core/save'
 import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
@@ -56,7 +57,7 @@ const camera = new THREE.PerspectiveCamera(
 
 // --- World: every island in one scene, joined across the mist ---
 const saves = createSaveSystem(localStorage)
-const worldDefs = [amberfall, waystation, veilspire]
+const worldDefs = [amberfall, waystation, veilspire, cindervault]
 const world = new World(
   worldDefs,
   (id) =>
@@ -272,6 +273,12 @@ function plantWaystone(def: (typeof worldDefs)[number]) {
   latentPaths.addDefs(def.latentPaths)
   world.rebuildCollider(latentPaths.solidGroups())
   worldEnemies.addSpawns(def.enemies)
+  // Stand up any recruits who live on the newly-real island.
+  recruits.addWorldFigures(
+    def.discoverables
+      .filter((d) => d.kind === 'person')
+      .map((d) => ({ id: d.id, x: d.x, z: d.z })),
+  )
   bus.emit('toast', { text: 'The Waystone takes root…', flavor: 'reward' })
   bus.emit('toast', {
     text: `The song remembers — ${def.name} is real.`,
