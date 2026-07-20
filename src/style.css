@@ -1,0 +1,57 @@
+:root {
+  --ui-bg: rgba(16, 14, 26, 0.82);
+  --ui-fg: #e8e2d4;
+  --ui-accent: #ffb347;
+  --ui-dim: #8a8398;
+  --ui-font: 'Georgia', 'Times New Roman', serif;
+  --ui-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1626;
+  font-family: var(--ui-font);
+  color: var(--ui-fg);
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#app canvas {
+  display: block;
+}
+
+.overlay-label {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.overlay-label.title {
+  top: 6%;
+  font-size: 2.4rem;
+  letter-spacing: 0.35em;
+  color: var(--ui-fg);
+}
+
+.overlay-label.subtitle {
+  top: calc(6% + 3.2rem);
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  color: var(--ui-dim);
+}
