@@ -112,6 +112,7 @@ describe('save v10 → v11 migration', () => {
       sounding: true,
       chime: true,
       mistwalker: false,
+      ferry: false,
     })
   })
 })

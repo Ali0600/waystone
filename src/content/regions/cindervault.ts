@@ -232,6 +232,7 @@ export const cindervault: RegionDef = {
       ],
     },
   ],
+  mooring: { x: -166, z: -140 }, // the bridge-landing mooring
   anglingSpots: [{ x: -134, z: -166 }], // the eastern terrace rim over the mist
   grapplePoints: [
     { x: -190.4, z: -206.4, dy: 6.6 }, // onto the spire-top perch

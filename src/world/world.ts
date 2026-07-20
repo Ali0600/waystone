@@ -130,4 +130,13 @@ export class World {
   get anglingSpots() {
     return this.active().flatMap((r) => r.def.anglingSpots ?? [])
   }
+
+  /** Ferry moorings on MANIFESTED regions — the fast-travel network. */
+  get moorings() {
+    return this.active().flatMap((r) =>
+      r.def.mooring
+        ? [{ regionId: r.def.id, name: r.def.name, x: r.def.mooring.x, z: r.def.mooring.z }]
+        : [],
+    )
+  }
 }

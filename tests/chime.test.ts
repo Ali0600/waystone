@@ -43,7 +43,7 @@ describe('the Chime (Tool 3)', () => {
   beforeEach(() => {
     state = createInitialState()
     bus = new EventBus()
-    caps = { lantern: true, grapple: false, sounding: false, chime: false, mistwalker: false }
+    caps = { lantern: true, grapple: false, sounding: false, chime: false, mistwalker: false, ferry: false }
     sys = new DiscoverySystem([sealed('near', 0, 0), sealed('far', 30, 0)], state, bus, caps, () => 0)
   })
 
@@ -93,6 +93,7 @@ describe('the Chime (Tool 3)', () => {
       sounding: false,
       chime: false,
       mistwalker: false,
+      ferry: false,
     })
   })
 })

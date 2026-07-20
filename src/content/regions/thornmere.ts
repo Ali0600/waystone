@@ -217,7 +217,22 @@ export const thornmere: RegionDef = {
         { meter: 'completion', amount: 1 },
       ],
     },
+    {
+      id: 'tm-tool-ferry',
+      kind: 'guarded',
+      x: -318,
+      z: -300,
+      label: 'The Ferryman’s Bell',
+      cue: 'a thorn-elder keeps a green bronze bell in the deep',
+      prereq: 'combat',
+      payouts: [
+        { meter: 'tool-ferry', amount: 1 },
+        { meter: 'lumen', amount: 30 },
+        { meter: 'completion', amount: 1 },
+      ],
+    },
   ],
+  mooring: { x: -300, z: -256 }, // the south-landing mooring
   anglingSpots: [{ x: -300, z: -348 }], // the deep southern rim over the mist
   grapplePoints: [
     // The mist-ascent: from the mist sea, grapple up onto the south rim. This
@@ -233,6 +248,8 @@ export const thornmere: RegionDef = {
     { enemyId: 'mist-warden', x: -290, z: -280, patrolR: 6 },
     { enemyId: 'chorister', x: -312, z: -288, patrolR: 5 },
     { enemyId: 'thorn-husk', x: -284, z: -312, patrolR: 5 },
+    // A Thorn Husk keeps the Ferryman's Bell in the deep.
+    { enemyId: 'thorn-husk', x: -318, z: -300, patrolR: 3, guards: 'tm-tool-ferry' },
   ],
   // No bridge and no waystone: the approach is the mist itself. Walk the sea
   // across the gap (Mistwalker) to below the south rim, then grapple up onto
