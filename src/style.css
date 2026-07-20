@@ -171,6 +171,12 @@ body {
 
 /* --- Map overlay --- */
 
+/* The display rule must not defeat the hidden attribute (specificity tie
+   otherwise silently un-hides the overlay — see docs/learnings.md). */
+.map-overlay[hidden] {
+  display: none;
+}
+
 .map-overlay {
   position: fixed;
   inset: 0;

@@ -13,6 +13,7 @@ export type DiscoveryKind =
   | 'buried' // Sounding minigame dig site (M8)
   | 'guarded' // drops after its elite falls (M6)
   | 'perch' // grapple-reachable ledge cache (M3)
+  | 'person' // a recruit — finding them grows the Waystation (M4)
 
 /**
  * What must be true before the discoverable can be collected. Anything the

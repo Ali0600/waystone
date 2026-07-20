@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { amberfall } from './content/regions/amberfall'
+import { waystation } from './content/regions/waystation'
 import { EventBus } from './core/events'
 import { createSaveSystem } from './core/save'
 import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
@@ -7,6 +8,7 @@ import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
 import { Input } from './engine/input'
 import { SIM_DT, startLoop } from './engine/loop'
+import { RecruitSystem } from './hub/recruits'
 import { Avatar } from './player/avatar'
 import { OrbitFollowCamera } from './player/camera'
 import { PlayerSim } from './player/controller'
@@ -14,7 +16,7 @@ import { GrappleVerb } from './player/grapple'
 import { LanternVerb } from './player/verbs'
 import { MasterySystem } from './progression/mastery'
 import { LatentPaths } from './world/latentpath'
-import { buildRegion } from './world/region'
+import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
 import { Hud } from './ui/hud'
@@ -37,17 +39,18 @@ const camera = new THREE.PerspectiveCamera(
   600,
 )
 
-// --- Region ---
-const region = buildRegion(amberfall)
-scene.add(region.group)
-scene.background = new THREE.Color(region.def.palette.sky)
-scene.fog = new THREE.Fog(region.def.palette.fog, region.def.fog.near, region.def.fog.far)
-scene.add(new THREE.HemisphereLight(region.def.palette.hemiSky, region.def.palette.hemiGround, 1.9))
-const sun = new THREE.DirectionalLight(region.def.palette.sun, 2.4)
-sun.position.set(...region.def.sunDir).multiplyScalar(60)
+// --- World: every island in one scene, joined across the mist ---
+const world = new World([amberfall, waystation])
+scene.add(world.group)
+const prime = world.regions[0].def
+scene.background = new THREE.Color(prime.palette.sky)
+scene.fog = new THREE.Fog(prime.palette.fog, prime.fog.near, prime.fog.far)
+scene.add(new THREE.HemisphereLight(prime.palette.hemiSky, prime.palette.hemiGround, 1.9))
+const sun = new THREE.DirectionalLight(prime.palette.sun, 2.4)
+sun.position.set(...prime.sunDir).multiplyScalar(80)
 scene.add(sun)
 
-const mist = new MistSea(region.def.palette.fog)
+const mist = new MistSea(prime.palette.fog)
 scene.add(mist.group)
 
 // --- Player ---
@@ -60,15 +63,15 @@ const player = new PlayerSim(undefined, {
   dashPower: () => (mastery.tier('dash') >= 2 ? 1.35 : 1),
 })
 player.params.fallY = MIST_Y - 4
-player.setSpawn(region.spawn)
+player.setSpawn(world.regions[0].spawn)
 // Restore a saved position only if it still sits on/above today's terrain —
 // a stale save from older world content must not bury the player in rock.
 const savedPos = saves.state.playerPos
+const savedRegion = world.regionAt(savedPos[0], savedPos[2])
 const savedValid =
   !saves.isFresh &&
-  saves.state.regionId === region.def.id &&
-  Math.hypot(savedPos[0], savedPos[2]) < region.def.island.radius &&
-  savedPos[1] > region.heightAt(savedPos[0], savedPos[2]) - 0.5
+  savedRegion !== null &&
+  savedPos[1] > world.heightAt(savedPos[0], savedPos[2]) - 0.5
 if (savedValid) {
   player.position.set(savedPos[0], savedPos[1] + 0.05, savedPos[2])
 } else {
@@ -85,43 +88,66 @@ const caps: PlayerCapabilities = {
   sounding: false,
 }
 const discovery = new DiscoverySystem(
-  region.def.discoverables,
+  world.discoverables,
   saves.state,
   bus,
   caps,
-  region.heightAt,
+  world.heightAt,
 )
-const discoveryView = new DiscoveryView(region.def.discoverables, discovery, bus)
+const discoveryView = new DiscoveryView(world.discoverables, discovery, bus)
 scene.add(discoveryView.group)
 
-// Latent paths (Lantern T2) — solid ones join the collider.
-const latentPaths = new LatentPaths(region.def.latentPaths, saves.state, bus)
+// Latent paths (Lantern T2) + the permanent hub bridge join the collider.
+const latentPaths = new LatentPaths(world.latentPaths, saves.state, bus, (x, z) =>
+  world.regionAt(x, z) ? world.heightAt(x, z) : null,
+)
 scene.add(latentPaths.group)
-if (latentPaths.solidGroups().length > 0) {
-  region.rebuildCollider(latentPaths.solidGroups())
-}
+world.rebuildCollider(latentPaths.solidGroups())
 const lantern = new LanternVerb(player, discovery, avatar.lanternLight, mastery, latentPaths, () =>
-  region.rebuildCollider(latentPaths.solidGroups()),
+  world.rebuildCollider(latentPaths.solidGroups()),
 )
 scene.add(lantern.ring)
 
 // Grapple pylons.
-const grapple = new GrappleVerb(region.def.grapplePoints, region.heightAt, player)
+const grapple = new GrappleVerb(world.grapplePoints, world.heightAt, player)
 scene.add(grapple.group)
 
-const map = new RegionMap(region.def, region.def.discoverables, saves.state)
+// The Waystation grows as people come home.
+const recruits = new RecruitSystem(
+  saves.state,
+  bus,
+  world.heightAt,
+  new Map(
+    world.discoverables
+      .filter((d) => d.kind === 'person')
+      .map((d) => [d.id, { x: d.x, z: d.z }]),
+  ),
+)
+scene.add(recruits.group)
+
+const map = new RegionMap(world, saves.state)
 
 const input = new Input()
 const orbit = new OrbitFollowCamera(camera, input)
 const hud = new Hud()
 const toasts = new Toasts(bus)
 void toasts
-hud.announceRegion(region.def.name)
 hud.setCounters(saves.state.lumen, saves.state.glyphStones)
 bus.on('lumen:changed', () => hud.setCounters(saves.state.lumen, saves.state.glyphStones))
 bus.on('glyphstone:changed', () =>
   hud.setCounters(saves.state.lumen, saves.state.glyphStones),
 )
+
+// Region banner on arrival (and at boot).
+let currentRegionId = ''
+function announceRegionAt(x: number, z: number) {
+  const r = world.regionAt(x, z)
+  if (r && r.def.id !== currentRegionId) {
+    currentRegionId = r.def.id
+    hud.announceRegion(r.def.name)
+  }
+}
+announceRegionAt(player.position.x, player.position.z)
 
 // --- Pointer lock (QA mode steers with arrow keys instead) ---
 if (!qaMode) {
@@ -147,7 +173,7 @@ window.addEventListener('resize', () => {
 // --- Autosave ---
 let saveTimer = 0
 function persist() {
-  saves.state.regionId = region.def.id
+  saves.state.regionId = currentRegionId || prime.id
   saves.state.playerPos = [player.position.x, player.position.y, player.position.z]
   saves.save()
 }
@@ -156,24 +182,27 @@ window.addEventListener('pagehide', persist)
 // --- Loop ---
 let fps = 60
 let lastRender = performance.now()
+let hubLineCooldown = 0
 
 function update(dt: number) {
   const snap = input.snapshot()
-  player.step(dt, snap, orbit.yaw, region.collider)
-  orbit.update(dt, snap, player.position, region.collider)
+  player.step(dt, snap, orbit.yaw, world.collider)
+  orbit.update(dt, snap, player.position, world.collider)
   mist.update(dt)
   const groundY = groundHeightBelow(
-    region.collider,
+    world.collider,
     player.position.x,
     player.position.y + 1.2,
     player.position.z,
   )
   avatar.update(dt, player, groundY)
+  recruits.update(dt)
+  announceRegionAt(player.position.x, player.position.z)
 
   // Verbs: lantern, grapple, dash mastery.
   if (snap.lantern) lantern.tryPulse()
   if (caps.grapple) {
-    grapple.updateTargeting(orbit.yaw, orbit.pitch, region.collider)
+    grapple.updateTargeting(orbit.yaw, orbit.pitch, world.collider)
     if (snap.grapple && grapple.tryLaunch()) mastery.record('grapple')
   }
   if (player.stepEvents.dashed) mastery.record('dash')
@@ -181,16 +210,31 @@ function update(dt: number) {
 
   // Discovery pass: pins, prompts, interaction, map.
   discovery.update(player.position.x, player.position.z)
-  if (snap.interact) {
-    discovery.interact(player.position.x, player.position.z, player.position.y)
-  }
-  if (snap.map) map.toggle()
+  hubLineCooldown = Math.max(0, hubLineCooldown - dt)
   const target = discovery.interactable(
     player.position.x,
     player.position.z,
     player.position.y,
   )
-  hud.setPrompt(target ? `E — ${target.label}` : null)
+  const homeRecruit = target
+    ? null
+    : recruits.nearbyHome(player.position.x, player.position.z)
+  if (snap.interact) {
+    if (target) {
+      discovery.interact(player.position.x, player.position.z, player.position.y)
+    } else if (homeRecruit && hubLineCooldown <= 0) {
+      hubLineCooldown = 2
+      bus.emit('toast', { text: homeRecruit.homeLine, flavor: 'info' })
+    }
+  }
+  if (snap.map) map.toggle()
+  hud.setPrompt(
+    target
+      ? `E — ${target.label}`
+      : homeRecruit
+        ? `E — talk to ${homeRecruit.name}`
+        : null,
+  )
   lantern.update(dt)
   discoveryView.update(dt)
   map.draw(player.position.x, player.position.z, orbit.yaw, discovery.completion())
@@ -227,12 +271,13 @@ if (qaMode || import.meta.env.DEV) {
     orbit,
     renderer,
     saves,
-    region,
+    world,
     scene,
     caps,
     grapple,
     discovery,
     mastery,
+    recruits,
     step(frames = 1) {
       for (let i = 0; i < frames; i++) update(SIM_DT)
       render()

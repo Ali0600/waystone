@@ -90,6 +90,9 @@ export class DiscoveryView {
         solid.add(patch)
         break
       }
+      case 'person':
+        // The figure itself is rendered by RecruitSystem; only the glint here.
+        break
     }
 
     // The glint: a small bobbing spark — the universal "something is here"
