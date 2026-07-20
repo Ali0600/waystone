@@ -10,6 +10,7 @@ export interface DebugInfo {
 export class Hud {
   private readonly root: HTMLElement
   private readonly regionBanner: HTMLElement
+  private readonly controls: HTMLElement
   private readonly clickHint: HTMLElement
   private readonly debugPanel: HTMLElement
   private readonly counters: HTMLElement
@@ -23,10 +24,11 @@ export class Hud {
     this.regionBanner = document.createElement('div')
     this.regionBanner.className = 'hud-region'
 
-    const controls = document.createElement('div')
-    controls.className = 'hud-controls'
-    controls.textContent =
-      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · E interact · M map · G glyphs'
+    this.controls = document.createElement('div')
+    this.controls.className = 'hud-controls'
+    this.controls.textContent =
+      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · C chime · E interact · M map · G glyphs'
+    const controls = this.controls
 
     this.clickHint = document.createElement('div')
     this.clickHint.className = 'hud-click-hint'
@@ -72,6 +74,15 @@ export class Hud {
 
   showClickHint(show: boolean): void {
     this.clickHint.style.display = show ? '' : 'none'
+  }
+
+  /** Hide the world HUD (controls hint, click hint, prompt) while a duel or
+   *  full-screen overlay owns the screen — otherwise the always-on controls
+   *  line bleeds under the combat cluster. Counters/region banner stay. */
+  setWorldUiVisible(visible: boolean): void {
+    this.controls.hidden = !visible
+    this.clickHint.hidden = !visible
+    if (!visible) this.prompt.hidden = true
   }
 
   setCounters(lumen: number, glyphStones: number): void {
