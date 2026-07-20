@@ -35,6 +35,12 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus
   events); arena scene + DOM overlay render it but own no rules. `timing.ts` pure.
+  Hidden Arts live in `content/chains.ts`; a longer Art's `sequence` must NOT end with a
+  shorter Art's sequence, or the recognizer fires the shorter one first (Undertow's tail
+  can't be `…↑ Space` = Emberwake).
+- `src/minigames/` — `sounding.ts` (dig) and `angling.ts` (pure `AnglingSim` + species +
+  `cookBestFish`/`mealShield`, all rng/time injected) with `anglingverb.ts` the DOM/input
+  wrapper. Angling pays fish (Cook → pre-fight shield) + points (Angler teaches Undertow).
 - `src/progression/` — use-based mastery (verbs) + glyph grid.
 - `src/hub/` — recruit figures/structures; hub state DERIVES from discovery state.
 

@@ -26,7 +26,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 8
+  version: 9
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -54,13 +54,19 @@ export interface GameState {
   waystones: number
   /** Latent regions completed by a planted waystone. */
   regionsManifested: string[]
+  /** Fish landed from the mist, by species id (consumed by the Cook). */
+  fishHeld: Record<string, number>
+  /** Cumulative angling points — unlock the Angler's technique at a threshold. */
+  anglingPoints: number
+  /** A cooked meal buff waiting to be spent on the next encounter. */
+  pendingMeal: string | null
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 8,
+    version: 9,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -78,6 +84,9 @@ export function createInitialState(): GameState {
     guardiansDefeated: [],
     waystones: 0,
     regionsManifested: [],
+    fishHeld: {},
+    anglingPoints: 0,
+    pendingMeal: null,
   }
 }
 
@@ -158,8 +167,15 @@ export function parseGameState(json: string): GameState | null {
     o.version = 8
     ;(o.tools as Record<string, unknown>).chime = false
   }
+  // v8 → v9: mist-angling (fish, points, cooked meal).
+  if (o.version === 8) {
+    o.version = 9
+    o.fishHeld = {}
+    o.anglingPoints = 0
+    o.pendingMeal = null
+  }
 
-  if (o.version !== 8) return null
+  if (o.version !== 9) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -217,8 +233,16 @@ export function parseGameState(json: string): GameState | null {
   if (!isFiniteNumber(o.waystones) || o.waystones < 0) return null
   if (!isStringArray(o.regionsManifested)) return null
 
+  const fishHeld = o.fishHeld as Record<string, unknown> | null
+  if (typeof fishHeld !== 'object' || fishHeld === null || Array.isArray(fishHeld)) return null
+  for (const v of Object.values(fishHeld)) {
+    if (!isFiniteNumber(v) || v < 0) return null
+  }
+  if (!isFiniteNumber(o.anglingPoints) || (o.anglingPoints as number) < 0) return null
+  if (o.pendingMeal !== null && typeof o.pendingMeal !== 'string') return null
+
   return {
-    version: 8,
+    version: 9,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -247,5 +271,8 @@ export function parseGameState(json: string): GameState | null {
     guardiansDefeated: [...o.guardiansDefeated],
     waystones: o.waystones,
     regionsManifested: [...o.regionsManifested],
+    fishHeld: { ...(fishHeld as Record<string, number>) },
+    anglingPoints: o.anglingPoints,
+    pendingMeal: o.pendingMeal,
   }
 }

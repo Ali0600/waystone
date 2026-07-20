@@ -65,6 +65,8 @@ export interface RegionDef {
   /** Where this latent region's waystone must be planted (world coords,
    *  usually inside another region). */
   socketAt?: { x: number; z: number }
+  /** Rim spots (world coords) where the player can cast into the mist. */
+  anglingSpots?: { x: number; z: number }[]
 }
 
 export interface BuiltRegion {

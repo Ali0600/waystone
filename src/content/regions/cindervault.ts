@@ -217,6 +217,7 @@ export const cindervault: RegionDef = {
       ],
     },
   ],
+  anglingSpots: [{ x: -134, z: -166 }], // the eastern terrace rim over the mist
   grapplePoints: [
     { x: -190.4, z: -206.4, dy: 6.6 }, // onto the spire-top perch
     { x: -178, z: -200, dy: 4.5 }, // mid-hop toward the western shelf

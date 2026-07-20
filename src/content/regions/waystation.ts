@@ -127,6 +127,7 @@ export const waystation: RegionDef = {
       ],
     },
   ],
+  anglingSpots: [{ x: 6, z: -114 }], // the dock edge by the bridge landing
   grapplePoints: [],
   enemies: [], // home is safe
   latentPaths: [

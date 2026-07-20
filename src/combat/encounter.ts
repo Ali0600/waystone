@@ -13,6 +13,7 @@ import type { GlyphSystem } from '../progression/glyphs'
 import type { MasterySystem } from '../progression/mastery'
 import { beatExpired, judgePress } from './timing'
 import { ArtRecognizer } from './arts'
+import { mealShield } from '../minigames/angling'
 
 export const PLAYER_MAX_HP = 30
 const GLYPH_DAMAGE = 4
@@ -76,6 +77,15 @@ export class Encounter {
     private guards?: string,
   ) {
     this.enemyHp = enemy.hp
+    // A cooked meal (from mist-angling) is a one-fight shield of over-max HP.
+    if (state.pendingMeal) {
+      const shield = mealShield(state.pendingMeal)
+      if (shield > 0) {
+        this.playerHp = PLAYER_MAX_HP + shield
+        bus.emit('toast', { text: `The meal steadies you (+${shield} vigour)`, flavor: 'reward' })
+      }
+      state.pendingMeal = null
+    }
     bus.emit('combat:start', { enemyName: enemy.name })
     this.setPhase('intro')
   }
@@ -203,7 +213,8 @@ export class Encounter {
             })
           }
           this.damageEnemy(art.damage)
-          if (this.phase === 'player') this.beginEnemyTurn()
+          // A staggering Art (Undertow) skips the enemy's next turn.
+          if (this.phase === 'player' && !art.stagger) this.beginEnemyTurn()
           break
         }
         // Chain selection.

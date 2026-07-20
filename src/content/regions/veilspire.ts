@@ -270,6 +270,7 @@ export const veilspire: RegionDef = {
       ],
     },
   ],
+  anglingSpots: [{ x: -146, z: -18 }], // the eastern shallows over the mist
   grapplePoints: [
     { x: -203.4, z: -69.4, dy: 9.6 },
     { x: -150.6, z: -31.6, dy: 5.6 },
