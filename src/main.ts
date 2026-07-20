@@ -4,6 +4,7 @@ import { veilspire } from './content/regions/veilspire'
 import { waystation } from './content/regions/waystation'
 import { cindervault } from './content/regions/cindervault'
 import { palegrove } from './content/regions/palegrove'
+import { thornmere } from './content/regions/thornmere'
 import { EventBus } from './core/events'
 import { createSaveSystem } from './core/save'
 import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
@@ -65,7 +66,7 @@ const camera = new THREE.PerspectiveCamera(
 
 // --- World: every island in one scene, joined across the mist ---
 const saves = createSaveSystem(localStorage)
-const worldDefs = [amberfall, waystation, veilspire, cindervault, palegrove]
+const worldDefs = [amberfall, waystation, veilspire, cindervault, palegrove, thornmere]
 const world = new World(
   worldDefs,
   (id) =>

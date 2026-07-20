@@ -5,6 +5,7 @@ import { RECRUITS } from '../src/content/recruits'
 import { amberfall } from '../src/content/regions/amberfall'
 import { cindervault } from '../src/content/regions/cindervault'
 import { palegrove } from '../src/content/regions/palegrove'
+import { thornmere } from '../src/content/regions/thornmere'
 import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
 
@@ -15,7 +16,7 @@ import { waystation } from '../src/content/regions/waystation'
  */
 describe('card library references', () => {
   const regionIds = new Set(
-    [amberfall, waystation, veilspire, cindervault, palegrove].map((r) => r.id),
+    [amberfall, waystation, veilspire, cindervault, palegrove, thornmere].map((r) => r.id),
   )
 
   it('cards have unique ids and positive stats', () => {

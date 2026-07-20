@@ -153,6 +153,32 @@ export const ENEMIES: Record<string, EnemyDef> = {
       },
     ],
   },
+  // Region 5 endgame: a Husk with a long four-beat string and a two-lock
+  // rootsong — the deepest melee test.
+  'thorn-husk': {
+    id: 'thorn-husk',
+    name: 'Thorn Husk',
+    archetype: 'husk',
+    color: '#3a6a4a',
+    hp: 48,
+    lumenReward: 36,
+    attacks: [
+      {
+        name: 'Bramble Flurry',
+        pattern: 'melee',
+        damage: 5,
+        windup: 1.0,
+        beats: [0, 0.4, 0.8, 1.2],
+      },
+      {
+        name: 'Rootsong',
+        pattern: 'chant',
+        damage: 14,
+        windup: 1.6,
+        locks: ['stone', 'tide'],
+      },
+    ],
+  },
   // Region 3 escalation: a Chorister whose dirge raises THREE locks at once —
   // you must have inscribed all three glyph types to shatter it clean.
   'cinder-chorister': {
