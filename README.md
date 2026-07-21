@@ -43,6 +43,7 @@ out there come home with you, and home gets bigger.
 | Thornmere Deep | A sixth island with no bridge and no Waystone — it just sits across open mist, visible and out of reach. The only way in is to **mist-walk** the gap and **grapple** up the shore (both endgame tools), into a verdant deep guarded by Thorn Husks (four-beat strings + a two-lock rootsong) |
 | The Ferry | A fifth tool won deep in Thornmere: ring the **Ferryman's Bell** at any region's mooring to fast-travel to another — a fade, and you step off at the far shore. Only manifested regions are on the network |
 | The Reward Board | A posted board that appears by the arch once four recruits are home: 10 bounties spanning every system (clear a region, fell a boss, land 30 fish, win 5 card matches, master a verb, learn two Hidden Arts, wake three isles) with live progress bars, each paying Lumen — some rare Glyph Stones or a card — once |
+| The Attunement screen | Press `P` anywhere: a full-screen progression chart in the spirit of **The Legend of Dragoon's** Addition menu — every verb tier, combat Chain (which level with use, 3→4→5 beats), tool, glyph, Hidden Art and Resonance, each with a "next" counter toward the next step. Unearned upgrades read `???` (knowledge stays a reward). Two skins you can toggle: **Dragoon** (navy / silver / gold) and **Surveyor** (the game's amber), the choice remembered between sessions |
 | The Surveyor's Ledger | Press `I` anywhere: an **Inventory** tab (what you hold — tools and what they do, catch, a **Treasures** collection listing every named find with the isle it came from and exactly what it yielded, cards, learned Arts with their key sequences, discovered resonances), a **100% Guide** tab kept by Fen the Archivist (everything still to do — remaining discoverables named only by their in-game **cue**, never spoiled; latent isles masked; Arts and fusions as counts), and a **Log** tab (`L`) — a running record of every message the world has shown you this session, kept even when the on-screen toasts scroll away |
 | Mist-angling | Once the Angler joins, cast (`E`) from rim spots: wait for a bite, strike, then reel against a tension see-saw. Fish are consumables the **Cook** turns into pre-fight shields; enough angling points earn the Angler's **Undertow** technique |
 | The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. A rules card greets you on your first sit-down (re-openable via "How to play"). Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 26 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
@@ -56,6 +57,7 @@ out there come home with you, and home gets bigger.
 `WASD` move · `Space` jump · `Shift` dash · mouse look (click to lock) ·
 `F` lantern pulse · `Q` grapple · `T` sounding ping · `C` chime · `E` interact ·
 `M` survey map · `G` glyph grid · `I` ledger (inventory + guide) · `L` message log ·
+`P` attunement (progression chart) ·
 `Esc` close the open panel, or open the menu (save / export / import)
 
 ## Stack
@@ -65,7 +67,7 @@ out there come home with you, and home gets bigger.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 328 tests, including a **content-invariant suite** that enforces the design
+- Vitest: 336 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests

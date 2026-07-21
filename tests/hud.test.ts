@@ -61,6 +61,7 @@ describe('controlsLine — tool keys appear only once owned', () => {
     expect(line).not.toContain('Q grapple')
     expect(line).not.toContain('T sounding')
     expect(line).not.toContain('C chime')
+    expect(line).toContain('P attune') // the progression screen is always available
     expect(line).toContain('Esc close/menu')
   })
 

@@ -57,10 +57,12 @@ silently drift from the suite.
 - [x] **Per-glyph use counters** · `tests/glyphs.test.ts`
 - [x] **Inscription guidance** — three-state scribe status (find her in Amberfall / stand with her at the Waystation / quill ready) + a "select an empty cell" affordance · `tests/glyphpanel.test.ts` · `browser-QA`
 
-## Mastery (use-based; tiers grant properties, no XP screen)
+## Mastery (use-based; tiers grant properties)
 
 - [x] **Verb tiers** (strike/parry/dash/grapple/lantern) from hidden use counters · `tests/mastery.test.ts`
 - [x] **Tier thresholds** → new property unlocks · `tests/mastery.test.ts`
+- [x] **Attunement screen** (`P`) — LoD-style progression chart: verb tiers, chain levels, tools, glyph use, Arts/Resonances, each with a next-step counter; unearned entries read `???` (knowledge stays a reward) · `tests/attunement.test.ts`
+- [x] **Attunement skins** — toggle between the Dragoon (navy/silver/gold, LoD) and Surveyor (amber) looks; choice persists in localStorage · `browser-QA`
 
 ## Combat (touch an enemy → a duel)
 
