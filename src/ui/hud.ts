@@ -42,6 +42,7 @@ export function controlsLine(caps: { grapple: boolean; sounding: boolean; chime:
     'G glyphs',
     'I ledger',
     'L log',
+    'P attune',
     'Esc close/menu',
   ]
     .filter((p): p is string => p !== null)

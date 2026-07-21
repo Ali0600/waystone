@@ -3,7 +3,7 @@
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
 PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
 per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
-command menu, grapple-to-engage. 328 tests, save v15.
+command menu, grapple-to-engage, LoD-style Attunement screen. 336 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -78,7 +78,21 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
 - `src/progression/` — use-based mastery (verbs) + glyph grid + `bounties.ts` (pure
   Reward-Board evaluator; bounty DATA in `content/bounties.ts`, UI in `ui/rewardboard.ts`) +
   `guide.ts` (pure `guideModel` — the 100% Guide; remaining discoverables carry the `cue`
-  only, NEVER the `label` — spoiler gate pinned by `guide.test.ts`).
+  only, NEVER the `label` — spoiler gate pinned by `guide.test.ts`) +
+  `attunement.ts` (pure `attunementModel` — the M30 LoD-style progression chart on key `P`:
+  verb tiers, chain levels, tools, glyph uses, Arts/Resonances, each with a next-step counter).
+  **Attunement spoiler rule** (pinned by `attunement.test.ts`): an unearned tier property,
+  a locked chain, an unowned tool, an unlearned Art/undiscovered Resonance carry NO
+  name/label/sequence — the model masks them (UI shows `???`). This DELIBERATELY revises v1's
+  "no XP screen" (the designer asked for it), but keeps knowledge-as-reward via masking. The
+  `ui/attunement.ts` `AttunementPanel` renders only; it's a self-toggling overlay like the
+  Ledger (P toggles, sibling-blocked so it never stacks with the Ledger; in `uiOpen`;
+  constructed BEFORE EscMenu for Escape-order). It's a full-screen cover, so — like `.esc-overlay`
+  / `.map-overlay` — it is deliberately NOT in the auditFrame SELECTORS (a full-screen modal
+  always AABB-overlaps the HUD beneath it; audit it by screenshot, not geometry). Two skins (`.attune-overlay`
+  vs `.attune-overlay.lod`, CSS-var palettes: Surveyor amber vs Dragoon navy/silver/gold),
+  toggled + persisted in a standalone localStorage key `waystone:attunement-style` (the
+  `waystone:look-hint-seen` precedent — no save-schema change).
 - `src/hub/` — recruit figures/structures; hub state DERIVES from discovery state.
 - Tools: `content/tools.ts` `TOOL_INFO` is the single source of truth for tool
   names/keys/blurbs (reused by the acquire toasts AND the Ledger); `ACQUIRABLE_TOOL_IDS`

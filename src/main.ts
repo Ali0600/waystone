@@ -42,6 +42,7 @@ import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
 import { AtmosphereRig } from './world/atmosphere'
 import { LedgerPanel } from './ui/ledger'
+import { AttunementPanel } from './ui/attunement'
 import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
 import { ShopPanel } from './ui/shop'
@@ -200,6 +201,9 @@ const messageLog = new MessageLog()
 // can share its retire-once gate; each shown message also lands in the Ledger Log.
 const hints = new HintSystem(saves.state, HINTS, (text) => messageLog.push(text, 'info'))
 const ledger = new LedgerPanel(world, saves.state, messageLog)
+// The Attunement screen (P) — the LoD-style progression chart. Constructed
+// before EscMenu so its Escape handler closes it first (immediate-stop).
+const attunement = new AttunementPanel(saves.state)
 const cardTable = new CardTable(saves.state, bus, hints)
 const shop = new ShopPanel(saves.state, bus)
 
@@ -638,9 +642,13 @@ function update(dt: number) {
   // `otherOverlayOpen` excludes the Ledger so `I` can still close it; `uiOpen`
   // includes it so E-interact and M/G stay blocked while any panel owns the screen.
   const otherOverlayOpen = cardTable.visible || shop.visible || ferry.visible || rewardBoard.visible
-  const uiOpen = otherOverlayOpen || ledger.visible
-  if (snap.inventory && !angling.active && !otherOverlayOpen) ledger.toggle('inventory')
-  if (snap.log && !angling.active && !otherOverlayOpen) ledger.toggle('log')
+  const uiOpen = otherOverlayOpen || ledger.visible || attunement.visible
+  // The Ledger and the Attunement screen each toggle on their own key but must
+  // not open over one another (otherOverlayOpen excludes both; the sibling flag
+  // blocks the stack). E-interact / M / G stay gated on the full uiOpen.
+  if (snap.inventory && !angling.active && !otherOverlayOpen && !attunement.visible) ledger.toggle('inventory')
+  if (snap.log && !angling.active && !otherOverlayOpen && !attunement.visible) ledger.toggle('log')
+  if (snap.attunement && !angling.active && !otherOverlayOpen && !ledger.visible) attunement.toggle()
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
   } else if (snap.interact && !uiOpen) {
@@ -769,6 +777,7 @@ if (qaMode || import.meta.env.DEV) {
     ferry,
     rewardBoard,
     ledger,
+    attunement,
     worldEnemies,
     hints,
     discovery,

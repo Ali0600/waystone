@@ -20,6 +20,8 @@ export interface InputSnapshot {
   inventory: boolean
   /** Open the Surveyor's Ledger on the Log tab. */
   log: boolean
+  /** Open the Attunement screen (progression chart). */
+  attunement: boolean
   /** Every key code freshly pressed this step (combat menus, hidden arts). */
   codes: string[]
   lookDX: number
@@ -73,6 +75,7 @@ export class Input {
       chime: this.pressed.has('KeyC'),
       inventory: this.pressed.has('KeyI'),
       log: this.pressed.has('KeyL'),
+      attunement: this.pressed.has('KeyP'),
       codes: [...this.pressed],
       lookDX: this.lookDX,
       lookDY: this.lookDY,
