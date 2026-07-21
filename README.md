@@ -23,8 +23,9 @@ out there come home with you, and home gets bigger.
   hidden use-counters; tiers grant new *properties* — the lantern learns to solidify
   ghost walkways, the grapple learns to fire mid-air. No XP screen. The world is the trainer.
 - **Every discoverable pays at least two meters** (item + Lumen + completion), every secret
-  has a visible cue, and anything you can't reach yet auto-pins as a **?** on the Survey
-  Map — backtracking is a shopping list, never a memory test.
+  has a visible cue, and anything you can't reach yet auto-pins as a **?** on your maps
+  (a zoomed **isle map** and a whole **World Map**) — backtracking is a shopping list,
+  never a memory test.
 - **Knowledge is a reward.** Glyph adjacency combos appear in no tooltip; Hidden Arts are
   input sequences the game never documents; enemy chants are puzzles your glyphs answer.
 
@@ -56,7 +57,7 @@ out there come home with you, and home gets bigger.
 
 `WASD` move · `Space` jump · `Shift` dash · mouse look (click to lock) ·
 `F` lantern pulse · `Q` grapple · `T` sounding ping · `C` chime · `E` interact ·
-`M` survey map · `G` glyph grid · `I` ledger (inventory + guide) · `L` message log ·
+`M` isle map · `N` world map · `G` glyph grid · `I` ledger (inventory + guide) · `L` message log ·
 `P` attunement (progression chart) ·
 `Esc` close the open panel, or open the menu (save / export / import)
 
@@ -67,7 +68,7 @@ out there come home with you, and home gets bigger.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 340 tests, including a **content-invariant suite** that enforces the design
+- Vitest: 345 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests

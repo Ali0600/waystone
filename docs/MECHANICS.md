@@ -39,7 +39,7 @@ silently drift from the suite.
 - [x] **Prereq gating** (lantern/grapple/sounding/chime/combat) · `tests/discovery.test.ts`
 - [x] **Completion counter** (found / total) · `tests/discovery.test.ts`
 - [x] **Content invariants** (payout layering, cue coverage, density, world-space bounds, unique ids) · `tests/content-invariants.test.ts`
-- [x] **Survey Map** (`M`) — canvas render of pins, isles, player · `browser-QA`
+- [x] **Maps** (`M` isle · `N` world) — the local isle view (titled by the isle, zoomed in) and the World Map (all islands + latent ghosts); M/N switch while open, same key closes; framing math is pure · `tests/map.test.ts` · `browser-QA`
 
 ## Waystones & World
 

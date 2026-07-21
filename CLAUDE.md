@@ -3,7 +3,7 @@
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
 PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
 per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
-command menu, grapple-to-engage, LoD-style Attunement screen, Perfect signal. 340 tests, save v15.
+command menu, grapple-to-engage, LoD-style Attunement screen, Perfect signal, dual maps (isle/world). 345 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -34,7 +34,13 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   A recruit inside a latent region gets its world figure via `RecruitSystem.addWorldFigures`
   at manifest time (hub structure is always built at boot).
 - `src/discovery/` — registry/prereq gating/auto-pin "?" system (headless), view,
-  canvas Survey Map. Prereq gate types: `lantern` (reveal latent) · `grapple` ·
+  canvas Survey Map (`map.ts` `RegionMap`, M32): TWO scopes — **local** (`M`, frames the
+  isle you're on, titled by its name) and **world** (`N`, all islands, "World Map"); M/N
+  switch while open, same key closes (Ledger-tab UX; `map.visible` stays OUT of `uiOpen`).
+  Framing is the pure `frameRegions(regions, canvasW, margin)` (origin±radius fold →
+  cx/cz/scale, larger-axis span), recomputed PER DRAW from the scope (`tests/map.test.ts`);
+  the local frame follows the player between isles via `currentRegion()` (main passes
+  `currentRegionId → def, ?? prime`). Prereq gate types: `lantern` (reveal latent) · `grapple` ·
   `sounding` (dig buried) · `chime` (resonate `sealed` open, `player/chime.ts`) ·
   `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus
