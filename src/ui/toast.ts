@@ -1,5 +1,10 @@
 import type { EventBus } from '../core/events'
 
+/** How long a toast stays fully visible before it begins to fade. */
+export const TOAST_VISIBLE_MS = 5200
+/** The fade-out animation length once it starts. */
+const TOAST_FADE_MS = 600
+
 /** Bottom-left stacking toasts for rewards and info. */
 export class Toasts {
   private container: HTMLElement
@@ -27,7 +32,7 @@ export class Toasts {
     }
     setTimeout(() => {
       el.classList.add('fading')
-      setTimeout(() => el.remove(), 600)
-    }, 3200)
+      setTimeout(() => el.remove(), TOAST_FADE_MS)
+    }, TOAST_VISIBLE_MS)
   }
 }

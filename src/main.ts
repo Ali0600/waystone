@@ -482,6 +482,10 @@ function endEncounter() {
   combatUi = null
   combatContact = null
   hud.setWorldUiVisible(true) // the world resumes; restore the HUD
+  // Grace before the next touch registers, so a neighbouring patrol can't chain
+  // you straight into a second duel the instant this one ends — walk away, or
+  // step back in deliberately.
+  worldEnemies.suppress(2)
   persist()
 }
 
@@ -696,6 +700,7 @@ if (qaMode || import.meta.env.DEV) {
     ferry,
     rewardBoard,
     ledger,
+    worldEnemies,
     discovery,
     mastery,
     recruits,
