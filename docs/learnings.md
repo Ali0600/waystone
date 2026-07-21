@@ -84,3 +84,42 @@ bloom+vignette composer silently turned the metric into garbage.
 call `renderer.info.reset()` once at frame start — then the counters describe the whole
 frame again. A metric that keeps reporting after a pipeline change is not necessarily
 still measuring the same thing.
+
+## Two writers + two CSS mechanisms = a desynced element
+
+`element.hidden = true` and `element.style.display = 'none'` are independent switches for
+the same outcome (visibility). If one code path toggles an element via `style.display`
+and another toggles it via the `hidden` attribute, the two states drift: inline
+`display` always beats the `hidden` attribute, so `hidden = false` can't reveal an element
+that a different path left at `display:none`, and vice-versa.
+
+**Why it came up:** the "Click to look around" hint was written by *two* owners — the
+pointer-lock handler (`showClickHint` → `style.display`) and the combat overlay
+(`setWorldUiVisible` → `hidden`). Combat-end blindly set `hidden = false`, so the centered
+box snapped back after every battle. Fixed by making one pure function
+(`clickHintHidden(want, suppressed, learned)`) the single source of truth and one private
+`applyClickHint()` the only writer, using the `hidden` attribute alone.
+
+**Takeaway:** an element's visibility must have exactly one owner and one mechanism. When a
+second concern needs to hide it, feed that concern into the *same* applier as an input —
+don't reach in with a different property. (Related: the `[hidden]{display:none}` guard —
+same family, a `display:` rule silently out-ranking the `hidden` attribute.)
+
+## Verify a bug on a surface that can actually exhibit it
+
+A QA/automation surface can be *structurally incapable* of showing the bug you're chasing.
+Waystone's `?qa=1` mode deliberately disables pointer lock (automation steers with keys),
+so the pointer-lock-driven hint bug simply cannot occur there — and a headless browser
+won't grant a real pointer lock from a synthesized click either. Worse, the in-app QA
+browser reports a **0×0 JS viewport**, so `getBoundingClientRect`-based overlap audits
+collapse every box onto the origin and report phantom overlaps.
+
+**Why it came up:** verifying the M20 fix, QA mode showed the hint always-hidden (can't
+reproduce), and `auditFrame` flagged a `.hud-counters ∩ .hud-region` overlap that was pure
+0×0-viewport garbage (the region banner was `opacity:0` and, at real desktop width, nowhere
+near the counters). The screenshot — which renders at a real size — showed a clean frame.
+
+**Takeaway:** match the verification surface to the defect. Drive pointer-lock/layout bugs
+in NON-QA at a real viewport; trust rendered screenshots over JS geometry when the JS
+viewport is degenerate; and cover the paths automation can't reach with unit tests over
+pure logic + attribute assertions, not live-browser theatrics.

@@ -249,7 +249,18 @@ const glyphPanel = new GlyphPanel(glyphs, saves.state, nearScribe, bus)
 
 const input = new Input()
 const orbit = new OrbitFollowCamera(camera, input)
-const hud = new Hud()
+// Learn-once: the "click to look around" hint retires after the first pointer
+// lock. Persisted in its own localStorage key (not the game save — no schema
+// coupling) so returning players who know the control never see it again.
+const LOOK_HINT_KEY = 'waystone:look-hint-seen'
+const lookHintSeen = (() => {
+  try {
+    return localStorage.getItem(LOOK_HINT_KEY) === '1'
+  } catch {
+    return false
+  }
+})()
+const hud = new Hud(document.body, lookHintSeen)
 const toasts = new Toasts(bus)
 void toasts
 hud.setCounters(saves.state.lumen, saves.state.glyphStones)
@@ -277,7 +288,16 @@ if (!qaMode) {
     }
   })
   document.addEventListener('pointerlockchange', () => {
-    hud.showClickHint(!document.pointerLockElement)
+    const locked = !!document.pointerLockElement
+    hud.showClickHint(!locked)
+    if (locked) {
+      // First lock = the player learned to look around: retire the hint for good.
+      try {
+        localStorage.setItem(LOOK_HINT_KEY, '1')
+      } catch {
+        // Storage disabled (private mode): learn-once still holds for the session.
+      }
+    }
   })
   hud.showClickHint(true)
 } else {

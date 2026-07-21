@@ -6,6 +6,23 @@ export interface DebugInfo {
   onGround: boolean
 }
 
+/**
+ * Single source of truth for the "Click to look around" hint — pure so it can be
+ * unit-tested without a DOM. The pointer-lock path and the combat/overlay path
+ * once fought over this element with two different CSS mechanisms (`style.display`
+ * vs the `hidden` attribute) and desynced it; both now funnel through here.
+ * - `wantClickHint`   — the pointer is unlocked (mouse-look needs a click).
+ * - `worldUiSuppressed` — a duel or full-screen overlay owns the screen.
+ * - `lookLearned`     — the player has locked at least once; retire the hint for good.
+ */
+export function clickHintHidden(
+  wantClickHint: boolean,
+  worldUiSuppressed: boolean,
+  lookLearned: boolean,
+): boolean {
+  return lookLearned || worldUiSuppressed || !wantClickHint
+}
+
 /** DOM overlay: region banner, control hints, pointer-lock prompt, F3 debug. */
 export class Hud {
   private readonly root: HTMLElement
@@ -18,8 +35,12 @@ export class Hud {
   private readonly mistMeter: HTMLElement
   private readonly mistFill: HTMLElement
   private debugVisible = false
+  private wantClickHint = false
+  private worldUiSuppressed = false
+  private lookLearned = false
 
-  constructor(parent: HTMLElement = document.body) {
+  constructor(parent: HTMLElement = document.body, initialLookLearned = false) {
+    this.lookLearned = initialLookLearned
     this.root = document.createElement('div')
     this.root.className = 'hud'
 
@@ -72,6 +93,9 @@ export class Hud {
         this.debugPanel.hidden = !this.debugVisible
       }
     })
+
+    // Start hidden until the pointer-lock wiring decides (avoids a boot flash).
+    this.applyClickHint()
   }
 
   announceRegion(name: string): void {
@@ -82,17 +106,37 @@ export class Hud {
     this.regionBanner.classList.add('visible')
   }
 
+  /** Reflect pointer-lock state: `show` = pointer unlocked, so "click to look
+   *  around" is relevant. The first lock (`show === false`) retires the hint for
+   *  good (learn-once) so it never nags again — including after every battle. */
   showClickHint(show: boolean): void {
-    this.clickHint.style.display = show ? '' : 'none'
+    this.wantClickHint = show
+    if (!show) this.lookLearned = true
+    this.applyClickHint()
   }
 
   /** Hide the world HUD (controls hint, click hint, prompt) while a duel or
    *  full-screen overlay owns the screen — otherwise the always-on controls
-   *  line bleeds under the combat cluster. Counters/region banner stay. */
+   *  line bleeds under the combat cluster. Counters/region banner stay.
+   *  Restoring does NOT force the click hint on: it re-derives from real state,
+   *  so a fight can't resurrect it. */
   setWorldUiVisible(visible: boolean): void {
     this.controls.hidden = !visible
-    this.clickHint.hidden = !visible
+    this.worldUiSuppressed = !visible
     if (!visible) this.prompt.hidden = true
+    this.applyClickHint()
+  }
+
+  /** The one writer for the click hint — never toggle it from two places with
+   *  two CSS mechanisms (that desync shipped once). Uses the `hidden` attribute
+   *  only; `.hud-click-hint` has no `display:` rule, so UA `[hidden]{display:none}`
+   *  hides it cleanly. Add the guard here if a `display:` rule is ever added. */
+  private applyClickHint(): void {
+    this.clickHint.hidden = clickHintHidden(
+      this.wantClickHint,
+      this.worldUiSuppressed,
+      this.lookLearned,
+    )
   }
 
   setCounters(lumen: number, glyphStones: number): void {

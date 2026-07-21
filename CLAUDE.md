@@ -66,6 +66,10 @@ authored in island-local coords before it ever loaded.
 - `makeToonMaterial` is the only way to create materials (gradientMap NearestFilter
   gotcha lives there). Every `display:` rule on a `hidden`-toggled element needs the
   `[hidden] { display: none }` guard (bit us once).
+- Never toggle ONE element's visibility from two places with two CSS mechanisms
+  (`style.display` in one path, the `hidden` attribute in another) — they desync
+  (the click hint snapped back after every battle, M20). Funnel through a single
+  applier that writes one property (see `Hud.applyClickHint` + the pure `clickHintHidden`).
 - Verbs/UI keys live in `engine/input.ts` snapshot; tests use `tests/helpers.ts
   idleInput()` — grow it there.
 - QA: `?qa=1` + `window.__game` (step(n), teleport, startFight, saves, world…).
@@ -75,6 +79,11 @@ authored in island-local coords before it ever loaded.
   (combat, angling, card table, shop, any new overlay) — it flags visible-element
   overlaps + "world HUD during combat". Screenshot states you only proved headlessly.
   Overlap detector is pure (`ui/framecheck.ts`), tested against the real bug's rects.
+  Caveat: the in-app QA browser reports a 0×0 JS viewport, so `auditFrame` geometry
+  false-positives there (boxes collapse to the origin) — trust screenshots for layout;
+  auditFrame's geometry is for real-sized browsers. Pointer-lock bugs need NON-QA
+  (`?qa=1` disables pointer lock), and headless can't grant the lock — verify those
+  paths by unit-testing the logic + attribute checks, not a live lock.
 - Branch + PR + merge-on-green (`gh pr checks N --watch --fail-fast`, unpiped); main
   push deploys to Pages after tests.
 - Save schema changes: bump version, chain a migration, extend validation, update the
