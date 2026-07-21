@@ -16,6 +16,8 @@ export interface InputSnapshot {
   glyphs: boolean
   sounding: boolean
   chime: boolean
+  /** Open the Surveyor's Ledger (Inventory + Guide). */
+  inventory: boolean
   /** Every key code freshly pressed this step (combat menus, hidden arts). */
   codes: string[]
   lookDX: number
@@ -67,6 +69,7 @@ export class Input {
       glyphs: this.pressed.has('KeyG'),
       sounding: this.pressed.has('KeyT'),
       chime: this.pressed.has('KeyC'),
+      inventory: this.pressed.has('KeyI'),
       codes: [...this.pressed],
       lookDX: this.lookDX,
       lookDY: this.lookDY,

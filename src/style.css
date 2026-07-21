@@ -560,6 +560,103 @@ body {
   border-bottom: 1px dotted rgba(138, 131, 152, 0.5);
 }
 
+/* --- The Surveyor's Ledger (Inventory + Guide) --- */
+
+.ledger-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.ledger-tab.active {
+  background: rgba(255, 179, 71, 0.22);
+  border-color: var(--ui-accent);
+  color: var(--ui-fg);
+}
+
+.ledger-panel {
+  width: min(520px, 92vw);
+  max-height: 68vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 8px;
+  font-size: 0.95rem;
+}
+
+.ledger-section-title {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-accent);
+}
+
+.ledger-desc {
+  line-height: 1.35;
+}
+
+.ledger-desc-head {
+  color: var(--ui-fg);
+}
+
+.ledger-desc-body {
+  color: var(--ui-dim);
+  font-size: 0.88rem;
+}
+
+.ledger-remaining {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 4px 6px;
+}
+
+.ledger-remaining-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--ui-dim);
+}
+
+.ledger-kind {
+  width: 1.1em;
+  text-align: center;
+  color: var(--ui-accent);
+  flex: none;
+}
+
+.ledger-tag {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #8fd0d8;
+  flex: none;
+}
+
+.ledger-gated {
+  width: min(420px, 86vw);
+  text-align: center;
+  line-height: 1.5;
+  color: var(--ui-dim);
+  font-style: italic;
+}
+
+.ledger-bar {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ledger-bar-fill {
+  height: 100%;
+  background: var(--ui-accent);
+  transition: width 0.2s ease;
+}
+
 /* --- Mist-angling --- */
 
 .angling-bar {

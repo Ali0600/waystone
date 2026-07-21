@@ -112,6 +112,34 @@ describe('GlyphSystem', () => {
     sys.recordUse('tide')
     expect(state.glyphUses.tide).toBe(2)
   })
+
+  it('persists a discovered resonance — it survives clearing the grid', () => {
+    state.glyphStones = 5
+    state.lumen = 1000
+    home = REINSCRIBE_RECRUITS
+    sys.inscribe(5, 'ember')
+    expect(state.combosDiscovered).toEqual([]) // no pair yet
+    sys.inscribe(6, 'gale') // ember|gale adjacent → Levin
+    expect(state.combosDiscovered).toEqual(['levin'])
+    expect(sys.discovered().map((c) => c.id)).toEqual(['levin'])
+    // Clear both slots — the live grid forgets, the discovery does not.
+    sys.clearSlot(5)
+    sys.clearSlot(6)
+    expect(sys.combos()).toHaveLength(0)
+    expect(state.combosDiscovered).toEqual(['levin'])
+    expect(sys.discovered().map((c) => c.id)).toEqual(['levin'])
+  })
+
+  it('does not double-record a resonance re-formed later', () => {
+    state.glyphStones = 5
+    state.lumen = 1000
+    home = REINSCRIBE_RECRUITS
+    sys.inscribe(5, 'ember')
+    sys.inscribe(6, 'gale')
+    sys.clearSlot(6)
+    sys.inscribe(6, 'gale') // re-forms Levin
+    expect(state.combosDiscovered).toEqual(['levin']) // still exactly one
+  })
 })
 
 describe('glyph content invariants', () => {

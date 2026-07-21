@@ -1,5 +1,6 @@
 import type { EventBus } from '../core/events'
 import type { GameState } from '../core/state'
+import { TOOL_INFO, type AcquirableToolId } from '../content/tools'
 import {
   INTERACT_RADIUS,
   PIN_RADIUS,
@@ -198,46 +199,16 @@ export class DiscoverySystem {
           text: 'A Waystone — heavy with an unfinished note. The socket waits.',
           flavor: 'reward',
         })
-      } else if (p.meter === 'tool-sounding') {
-        this.state.tools.sounding = true
-        this.caps.sounding = true
-        this.bus.emit('tool:acquired', { tool: 'sounding' })
-        this.bus.emit('toast', {
-          text: 'The Sounding Rod — press T; the buried world answers in pitch',
-          flavor: 'reward',
-        })
-      } else if (p.meter === 'tool-grapple') {
-        this.state.tools.grapple = true
-        this.caps.grapple = true
-        this.bus.emit('tool:acquired', { tool: 'grapple' })
-        this.bus.emit('toast', {
-          text: 'The Surveyor’s Grapple — aim at a crystal pylon and press Q',
-          flavor: 'reward',
-        })
-      } else if (p.meter === 'tool-chime') {
-        this.state.tools.chime = true
-        this.caps.chime = true
-        this.bus.emit('tool:acquired', { tool: 'chime' })
-        this.bus.emit('toast', {
-          text: 'The Resonant Chime — press C to ring sealed stone open',
-          flavor: 'reward',
-        })
-      } else if (p.meter === 'tool-mistwalker') {
-        this.state.tools.mistwalker = true
-        this.caps.mistwalker = true
-        this.bus.emit('tool:acquired', { tool: 'mistwalker' })
-        this.bus.emit('toast', {
-          text: 'The Mistwalker — the mist sea holds your weight, while the charge lasts',
-          flavor: 'reward',
-        })
-      } else if (p.meter === 'tool-ferry') {
-        this.state.tools.ferry = true
-        this.caps.ferry = true
-        this.bus.emit('tool:acquired', { tool: 'ferry' })
-        this.bus.emit('toast', {
-          text: 'The Ferryman’s Bell — ring it at any mooring to sail between the isles',
-          flavor: 'reward',
-        })
+      } else if (p.meter.startsWith('tool-')) {
+        // One branch for every acquirable tool — name/blurb live in TOOL_INFO
+        // (the single source of truth reused by the Inventory ledger). The
+        // meter suffix is exactly a GameState.tools key (pinned by tools.test).
+        const toolId = p.meter.slice('tool-'.length) as AcquirableToolId
+        this.state.tools[toolId] = true
+        ;(this.caps as Record<AcquirableToolId, boolean>)[toolId] = true
+        this.bus.emit('tool:acquired', { tool: toolId })
+        const info = TOOL_INFO[toolId]
+        this.bus.emit('toast', { text: `${info.name} — ${info.desc}`, flavor: 'reward' })
       }
     }
     this.bus.emit('discovery:found', { id: def.id })

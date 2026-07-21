@@ -43,6 +43,27 @@ describe('parseGameState', () => {
     expect(parsed!.mastery).toEqual({ strike: 0, parry: 0, dash: 0, grapple: 0, lantern: 0 })
     expect(parsed!.tools).toEqual({ grapple: false, sounding: false, chime: false, mistwalker: false, ferry: false })
     expect(parsed!.pathsRevealed).toEqual([])
+    expect(parsed!.combosDiscovered).toEqual([])
+  })
+
+  it('v13 → v14 derives discovered combos from the migrated grid', () => {
+    // An existing save with a resonance already inscribed must keep knowing it.
+    const grid = Array(16).fill(null)
+    grid[5] = 'ember'
+    grid[6] = 'gale' // orthogonally adjacent → Levin
+    const v13: Record<string, unknown> = { ...createInitialState(), version: 13, glyphGrid: grid }
+    delete v13.combosDiscovered
+    const parsed = parseGameState(JSON.stringify(v13))
+    expect(parsed).not.toBeNull()
+    expect(parsed!.version).toBe(14)
+    expect(parsed!.combosDiscovered).toEqual(['levin'])
+  })
+
+  it('v13 → v14 defaults combosDiscovered to [] when the grid holds no resonance', () => {
+    const v13: Record<string, unknown> = { ...createInitialState(), version: 13 }
+    delete v13.combosDiscovered
+    const parsed = parseGameState(JSON.stringify(v13))
+    expect(parsed!.combosDiscovered).toEqual([])
   })
 
   it('rejects malformed discoveries map', () => {
