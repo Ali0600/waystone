@@ -123,3 +123,22 @@ near the counters). The screenshot — which renders at a real size — showed a
 in NON-QA at a real viewport; trust rendered screenshots over JS geometry when the JS
 viewport is degenerate; and cover the paths automation can't reach with unit tests over
 pure logic + attribute assertions, not live-browser theatrics.
+
+## Test the ABSENCE, not just the presence (spoiler gates & redaction)
+
+When a feature's correctness is partly about what it must NOT show — a spoiler-safe guide
+that lists remaining content by hint but never by name, a log that redacts secrets, an API
+that omits internal fields — assert the absence directly, and drive it from the real data.
+
+**Why it came up:** the 100% Guide surfaces unfound discoverables by their in-game `cue`
+and must never leak their `label`. The gate is a pure function (`guideModel`), and the test
+serializes its output and asserts that *every* real discoverable's label is absent from the
+JSON while its cue is present — then proves fail-first by making the model emit the label
+(3 rows go red). The same assertion was re-run against the live rendered DOM in QA
+(`labelsLeaked: []`), because a model that redacts is worthless if the view re-derives the
+name some other way.
+
+**Takeaway:** for redaction/spoiler requirements, write a test that would FAIL if the
+forbidden value appeared (`expect(serialized.includes(secret)).toBe(false)`), iterate it
+over the actual dataset (not one hand-picked case), and verify the same absence one layer
+downstream (the DOM the user sees), not only in the model you control.
