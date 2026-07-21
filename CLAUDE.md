@@ -69,11 +69,20 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   ferry hop. The rig owns `scene.background`. NOTE: each isle's palette is now really
   applied for the first time — before this, all isles wore Amberfall's mood.
 - The Surveyor's Ledger (`ui/ledger.ts`, key `I`, replaces the old archivist panel): an
-  `.esc-overlay` with an Inventory tab (always) + a Guide tab gated on Fen the Archivist
-  being home. Talking to Fen opens it on the Guide tab. Add it to `uiOpen` in main; note
-  `otherOverlayOpen` (excludes the Ledger) lets `I` still close it. Glyph combos now
-  persist in `state.combosDiscovered` (save v14) so a resonance survives a grid clear —
-  `GlyphSystem.inscribe` records + announces each once; `.discovered()` reads the list.
+  `.esc-overlay` with three tabs — Inventory (always), Guide (gated on Fen the Archivist
+  being home), and Log (`L`). Talking to Fen opens it on the Guide tab. Add it to `uiOpen`
+  in main; note `otherOverlayOpen` (excludes the Ledger) lets `I`/`L` still close it.
+  `toggle(tab)` closes only if that same tab is already showing, else switches — so `I`↔`L`
+  hop tabs. Glyph combos persist in `state.combosDiscovered` (save v14) so a resonance
+  survives a grid clear — `GlyphSystem.inscribe` records + announces each once.
+- Inventory's **Treasures** section (pure `progression/inventory.ts` `treasureModel`) is a
+  collection record: every `found` discoverable (minus `person` and tool-payout finds)
+  re-joined to its def → name + isle + exact yield. Found-only, so it leaks no spoilers
+  (pinned by `inventory.test.ts`); the game otherwise keeps only `discoveries[id]='found'`.
+- The **Message Log** (pure `ui/messagelog.ts` `MessageLog`, cap 100, session-only) records
+  every bottom-left message at the SINGLE `Toasts.push` choke point — so it keeps messages
+  the 5-toast stack evicts. `Toasts` takes an optional `MessageLog`; construct the log in
+  main before both `Toasts` and `LedgerPanel` and pass it to each.
 
 ## Invariants enforced by tests (tests/content-invariants.test.ts)
 

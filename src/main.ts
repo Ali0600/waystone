@@ -51,6 +51,7 @@ import { grantStarterDeck } from './cards/game'
 import { Hud } from './ui/hud'
 import { EscMenu } from './ui/menu'
 import { Toasts } from './ui/toast'
+import { MessageLog } from './ui/messagelog'
 import './style.css'
 
 const qaMode = new URLSearchParams(location.search).has('qa')
@@ -190,7 +191,10 @@ scene.add(recruits.group)
 
 const map = new RegionMap(world, saves.state)
 const postfx = new PostFx(renderer, scene, camera)
-const ledger = new LedgerPanel(world, saves.state)
+// Session message log — the Toasts choke point records every bottom-left
+// message here, and the Ledger's Log tab renders it (survives the 5-toast cap).
+const messageLog = new MessageLog()
+const ledger = new LedgerPanel(world, saves.state, messageLog)
 const cardTable = new CardTable(saves.state, bus)
 const shop = new ShopPanel(saves.state, bus)
 
@@ -269,7 +273,7 @@ const lookHintSeen = (() => {
   }
 })()
 const hud = new Hud(document.body, lookHintSeen)
-const toasts = new Toasts(bus)
+const toasts = new Toasts(bus, document.body, messageLog)
 void toasts
 hud.setCounters(saves.state.lumen, saves.state.glyphStones)
 bus.on('lumen:changed', () => hud.setCounters(saves.state.lumen, saves.state.glyphStones))
@@ -589,6 +593,7 @@ function update(dt: number) {
   const otherOverlayOpen = cardTable.visible || shop.visible || ferry.visible || rewardBoard.visible
   const uiOpen = otherOverlayOpen || ledger.visible
   if (snap.inventory && !angling.active && !otherOverlayOpen) ledger.toggle('inventory')
+  if (snap.log && !angling.active && !otherOverlayOpen) ledger.toggle('log')
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
   } else if (snap.interact && !uiOpen) {

@@ -1,4 +1,5 @@
 import type { EventBus } from '../core/events'
+import type { MessageLog } from './messagelog'
 
 /** How long a toast stays fully visible before it begins to fade. */
 export const TOAST_VISIBLE_MS = 5200
@@ -9,7 +10,11 @@ const TOAST_FADE_MS = 600
 export class Toasts {
   private container: HTMLElement
 
-  constructor(bus: EventBus, parent: HTMLElement = document.body) {
+  constructor(
+    bus: EventBus,
+    parent: HTMLElement = document.body,
+    private log?: MessageLog,
+  ) {
     this.container = document.createElement('div')
     this.container.className = 'toasts'
     parent.appendChild(this.container)
@@ -23,6 +28,9 @@ export class Toasts {
   }
 
   push(text: string, flavor: 'reward' | 'info' = 'info'): void {
+    // The single choke point for every bottom-left message — record it into the
+    // session Log before the 5-toast stack can evict it.
+    this.log?.push(text, flavor)
     const el = document.createElement('div')
     el.className = `toast toast-${flavor}`
     el.textContent = text

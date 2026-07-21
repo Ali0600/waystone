@@ -93,11 +93,13 @@ silently drift from the suite.
 - [x] **Reward Board** — 10 cross-system bounties, live progress, claim-once payout · `tests/bounties.test.ts`
 - [x] **Hub structures & services** (Scribe/Smith/Cartographer/Cook/Merchant render + wiring) · `browser-QA`
 
-## The Surveyor's Ledger (`I`, and at Fen the Archivist)
+## The Surveyor's Ledger (`I` ledger · `L` log · and at Fen the Archivist)
 
 - [x] **Guide model** — remaining content by CUE, never name (spoiler gate); latent isles masked · `tests/guide.test.ts`
 - [x] **Guide counts & % rollup** across every category · `tests/guide.test.ts`
-- [x] **Ledger panel UI** — Inventory/Guide tabs, Fen gate, tool blurbs · `browser-QA`
+- [x] **Treasures** — collected named finds with their isle + exact yield; found-only (no spoilers), recruits/tools excluded · `tests/inventory.test.ts`
+- [x] **Message Log** (`L`) — session record of every bottom-left message, newest-first; survives the 5-toast stack cap · `tests/messagelog.test.ts`
+- [x] **Ledger panel UI** — Inventory (+ Treasures) / Guide / Log tabs, Fen gate, tool blurbs · `browser-QA`
 
 ## World Presentation
 

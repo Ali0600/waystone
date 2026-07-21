@@ -18,6 +18,8 @@ export interface InputSnapshot {
   chime: boolean
   /** Open the Surveyor's Ledger (Inventory + Guide). */
   inventory: boolean
+  /** Open the Surveyor's Ledger on the Log tab. */
+  log: boolean
   /** Every key code freshly pressed this step (combat menus, hidden arts). */
   codes: string[]
   lookDX: number
@@ -70,6 +72,7 @@ export class Input {
       sounding: this.pressed.has('KeyT'),
       chime: this.pressed.has('KeyC'),
       inventory: this.pressed.has('KeyI'),
+      log: this.pressed.has('KeyL'),
       codes: [...this.pressed],
       lookDX: this.lookDX,
       lookDY: this.lookDY,

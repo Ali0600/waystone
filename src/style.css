@@ -681,6 +681,24 @@ body {
   transition: width 0.2s ease;
 }
 
+.ledger-log {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ledger-log-row {
+  font-size: 0.86rem;
+  line-height: 1.32;
+  color: var(--ui-dim);
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(138, 131, 152, 0.14);
+}
+
+.ledger-log-row.reward {
+  color: #ffe8c0;
+}
+
 /* --- Mist-angling --- */
 
 .angling-bar {

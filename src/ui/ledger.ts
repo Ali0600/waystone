@@ -1,14 +1,16 @@
 import type { GameState } from '../core/state'
 import type { World } from '../world/world'
 import { guideModel, guidePercent, type GuideRegion } from '../progression/guide'
+import { treasureModel } from '../progression/inventory'
 import { TOOL_IDS, TOOL_INFO, type ToolId } from '../content/tools'
 import { RECRUITS } from '../content/recruits'
 import { ARTS } from '../content/chains'
 import { COMBOS } from '../content/glyphs'
 import { FISH, mealShield } from '../minigames/angling'
 import type { DiscoveryKind } from '../discovery/types'
+import type { MessageLog } from './messagelog'
 
-type LedgerTab = 'inventory' | 'guide'
+type LedgerTab = 'inventory' | 'guide' | 'log'
 
 const ARCHIVIST_ID = RECRUITS.find((r) => r.role === 'archivist')!.personId
 
@@ -55,6 +57,7 @@ export class LedgerPanel {
   constructor(
     private world: World,
     private state: GameState,
+    private messageLog: MessageLog,
   ) {
     this.overlay = document.createElement('div')
     this.overlay.className = 'esc-overlay'
@@ -103,8 +106,10 @@ export class LedgerPanel {
     this.overlay.hidden = true
   }
 
+  /** A tab key toggles its OWN tab shut, but switches to it from another tab —
+   *  so `I` (inventory) and `L` (log) hop between tabs instead of closing. */
   toggle(tab: LedgerTab = 'inventory'): void {
-    if (this.visible) this.close()
+    if (this.visible && this.tab === tab) this.close()
     else this.open(tab)
   }
 
@@ -112,6 +117,7 @@ export class LedgerPanel {
     this.renderTabs()
     this.panelEl.replaceChildren()
     if (this.tab === 'inventory') this.renderInventory()
+    else if (this.tab === 'log') this.renderLog()
     else this.renderGuide()
   }
 
@@ -129,6 +135,7 @@ export class LedgerPanel {
     }
     mk('inventory', 'Inventory')
     mk('guide', 'Guide')
+    mk('log', 'Log')
   }
 
   // --- helpers ---------------------------------------------------------------
@@ -206,6 +213,19 @@ export class LedgerPanel {
       }
     }
 
+    // Treasures — the named finds you've collected, and what each one yielded.
+    const treasures = treasureModel(s, this.world.regions.map((r) => r.def))
+    if (treasures.length > 0) {
+      this.sectionTitle(`Treasures (${treasures.length})`)
+      for (const t of treasures) {
+        const bits = [t.regionName]
+        if (t.yields.lumen > 0) bits.push(`◆ ${t.yields.lumen}`)
+        if (t.yields.glyphStones > 0) bits.push(`⬡ ${t.yields.glyphStones}`)
+        if (t.yields.waystones > 0) bits.push(`◎ ${t.yields.waystones}`)
+        this.descRow(`${KIND_ICON[t.kind]} ${t.label}`, bits.join(' · '))
+      }
+    }
+
     // Cards — the collection lives at the Painted Table.
     this.sectionTitle('Deck')
     this.line('Cards collected', `${s.cardsOwned.length}`)
@@ -235,6 +255,34 @@ export class LedgerPanel {
   private hasTool(id: ToolId): boolean {
     if (id === 'lantern') return true // innate
     return this.state.tools[id]
+  }
+
+  // --- Log tab ---------------------------------------------------------------
+
+  /** Every bottom-left message this session, newest first — including ones the
+   *  5-toast stack evicted before they could be read. */
+  private renderLog(): void {
+    const entries = this.messageLog.entries()
+    if (entries.length === 0) {
+      const empty = document.createElement('div')
+      empty.className = 'ledger-gated'
+      empty.textContent = 'Nothing logged yet — messages you see will gather here.'
+      this.panelEl.appendChild(empty)
+      this.hintEl.textContent = ''
+      return
+    }
+    this.sectionTitle(`Messages (${entries.length})`)
+    const list = document.createElement('div')
+    list.className = 'ledger-log'
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const e = entries[i]
+      const row = document.createElement('div')
+      row.className = 'ledger-log-row' + (e.flavor === 'reward' ? ' reward' : '')
+      row.textContent = e.text
+      list.appendChild(row)
+    }
+    this.panelEl.appendChild(list)
+    this.hintEl.textContent = 'Fen: "Every word the world has said to you, kept in order."'
   }
 
   // --- Guide tab -------------------------------------------------------------
