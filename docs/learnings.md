@@ -164,3 +164,23 @@ surfaced one genuinely untested system (`WorldEnemies`).
 index, a coverage map), back it with a test that enforces the mirror both ways — refs must
 resolve AND every real item must be listed. A one-directional check silently permits the
 omission that matters most.
+
+## A modal state that freezes the world re-evaluates stale proximity on resume
+
+When a modal state (combat, a cutscene, a pause menu) freezes the simulation, every
+proximity/trigger condition that was true at freeze time is still true on the resume
+frame — the player hasn't moved, and neither has anything else. Any trigger checked
+per-frame with no grace fires *instantly* on resume.
+
+**Why it came up:** Waystone's duels freeze the world; contact with an enemy starts a duel
+with no cooldown. Ending a fight resumed the world with the player standing exactly where
+the first enemy touched them — and in isles where patrol arcs overlap the 1.7u touch
+radius, a *second* enemy was already in range, so a new duel started the very next frame
+("my enemy changed into another one"). Fixed with a `suppress(seconds)` grace applied at
+encounter end (patrols keep animating; deliberate re-engagement still works), plus
+nearest-wins contact selection instead of first-by-array-order.
+
+**Takeaway:** pair every enter-modal trigger with a resume-side grace (a cooldown, a
+must-leave-the-zone latch, or a require-re-approach), and when several triggers overlap,
+resolve by *nearest/most-relevant*, never by iteration order. Test the exact resume frame:
+"condition still true on the frame after the modal ends" must NOT re-fire.

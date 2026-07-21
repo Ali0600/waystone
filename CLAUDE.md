@@ -1,7 +1,8 @@
 # Waystone — agent notes
 
-Browser exploration RPG (Three.js + TS + Vite). MVP vertical slice complete (M0–M9);
-Phase 2 in progress (M10–M13: Chime, Region 3, mist-angling, deck game).
+Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M25,
+PRs #1–#26): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
+per-isle atmosphere, parry signposting. 269 tests, save v14.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design

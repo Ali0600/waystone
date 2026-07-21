@@ -8,8 +8,9 @@ out there come home with you, and home gets bigger.
 
 **Play (latest main build): <https://ali0600.github.io/waystone/>**
 
-> Status: **MVP vertical slice complete** — three islands, six recruits, the full
-> discovery/mastery/combat loop, and the Waystone planting ritual.
+> Status: **Phases 1–3 complete, live and playable** — six islands, eight recruits, five
+> tools, the full discovery/mastery/combat loop, three minigames, a collectible deck game,
+> the Reward Board, a spoiler-safe 100% guide, and per-isle atmosphere.
 
 ## The pillar
 
@@ -30,7 +31,7 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| Discovery | 88 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
+| Discovery | 84 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
 | The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
 | Combat | Touch an enemy → a duel: timed beat **Chains** that level with use, per-hit **Parry** — signposted by an incoming-strike bar whose markers light **gold** in the parry window while the enemy glows (`SPACE` to parry: block → reflect → lock-shatter by tier), Chorister **Locks** broken by matching glyphs, 3 undocumented **Hidden Arts** (one taught by the Angler). 6 enemy variants across 3 readable silhouettes (the Cinder Chorister raises three Locks; the Mist Warden throws two parryable bolts) |
@@ -43,7 +44,7 @@ out there come home with you, and home gets bigger.
 | The Reward Board | A posted board that appears by the arch once four recruits are home: 10 bounties spanning every system (clear a region, fell a boss, land 30 fish, win 5 card matches, master a verb, learn two Hidden Arts, wake three isles) with live progress bars, each paying Lumen — some rare Glyph Stones or a card — once |
 | The Surveyor's Ledger | Press `I` anywhere: an **Inventory** tab (what you hold — tools and what they do, catch, cards, learned Arts with their key sequences, discovered resonances) and a **100% Guide** tab kept by Fen the Archivist. The Guide lists everything still to do — remaining discoverables named only by their in-game **cue** (never spoiled), latent isles masked, Hidden Arts and fusions shown as counts — a guided shopping list, not a walkthrough |
 | Mist-angling | Once the Angler joins, cast (`E`) from rim spots: wait for a bite, strike, then reel against a tension see-saw. Fish are consumables the **Cook** turns into pre-fight shields; enough angling points earn the Angler's **Undertow** technique |
-| The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 22 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
+| The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 26 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
 | Atmosphere | Each isle has its own authored sky, fog, hemisphere, sun and mist colour — amber night, teal dusk, ember-violet, bone-pale dawn, verdant deep — and the scene eases between them as you cross the mist (frame-rate-independent blend; a discrete ferry hop snaps) |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |
 | Saves | Autosave to localStorage + validated JSON export/import (corrupt saves are parked, never destroyed) |
@@ -57,13 +58,14 @@ out there come home with you, and home gets bigger.
 ## Stack
 
 - [Three.js](https://threejs.org/) — WebGL renderer, `MeshToonMaterial` toon shading,
-  `BatchedMesh` scenery (~53 draw calls with all three islands live)
+  `BatchedMesh` scenery (~52 draw calls with all six isles live)
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 127 tests, including a **content-invariant suite** that enforces the design
+- Vitest: 269 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
-  coordinate bounds) — authoring mistakes fail CI, not playtests
+  coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
+  drift from the suite) — authoring mistakes fail CI, not playtests
 - GitHub Actions CI → GitHub Pages, deploy gated on green tests
 
 ## Development
@@ -94,7 +96,7 @@ test suite left off the list, and no mechanic listed without coverage.
   authoring mistakes into CI failures instead of playtest bugs (caught a whole region
   authored in the wrong coordinate space before it was ever loaded).
 - Built a deterministic, headless-testable simulation core (fixed-timestep loop, pure
-  timing math, event-bus-decoupled combat) with 127 unit/integration tests, including
+  timing math, event-bus-decoupled combat) with 269 unit/integration tests, including
   capsule-vs-BVH physics regression tests that run in Node.
 - Implemented a browser automation QA harness (`?qa=1` + `window.__game.step`) and used it
   to drive scripted end-to-end playthroughs — catching rendering, physics and UX bugs a
