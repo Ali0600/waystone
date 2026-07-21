@@ -91,6 +91,9 @@ export class EscMenu {
       // If another overlay (the Ledger) is up, its own handler just closed
       // it — don't open the menu underneath in the same press.
       if (!this.visible && this.otherOverlayOpen()) return
+      // In a duel, Escape means "back out of the command submenu" (the battle
+      // menu reads it) — never pop the pause menu over live combat.
+      if (!this.visible && document.querySelector('.combat-ui')) return
       this.toggle()
     })
   }

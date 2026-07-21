@@ -70,6 +70,9 @@ silently drift from the suite.
 - [x] **Parry visibility** — incoming-strike bar (markers gold in-window) + enemy glow + teach line · `browser-QA` + `tests/combat.test.ts` (bar geometry)
 - [x] **Chorister Locks** — broken by matching inscribed glyph types · `tests/combat.test.ts`
 - [x] **Hidden Arts** — undocumented input sequences, permanent once performed · `tests/combat.test.ts`
+- [x] **Command menu** — classic JRPG box (Attack / Glyphs / Defend / Item): arrows navigate, **Enter** confirms/descends, **Esc** backs out, with cursor memory · `tests/menu.test.ts`
+- [x] **Defend (Brace)** — halves the next enemy turn's damage and widens the parry window · `tests/combat.test.ts`
+- [x] **Item** — eat a held fish to heal in battle (species-scaled, capped at max HP, costs the turn) · `tests/combat.test.ts`
 - [x] **Victory / defeat** — rewards on win; defeat costs nothing (respawn, keep everything) · `tests/combat.test.ts`
 
 ## Minigames

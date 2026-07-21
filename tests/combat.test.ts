@@ -8,6 +8,7 @@ import { EventBus } from '../src/core/events'
 import { createInitialState, type GameState } from '../src/core/state'
 import { GlyphSystem } from '../src/progression/glyphs'
 import { MasterySystem, TIER_THRESHOLDS } from '../src/progression/mastery'
+import { mealShield } from '../src/minigames/angling'
 
 const DT = 1 / 60
 
@@ -224,6 +225,89 @@ describe('chorister locks', () => {
     idle(enc, 4)
     expect(enc.playerHp).toBe(PLAYER_MAX_HP - ENEMIES.chorister.attacks[0].damage)
     expect(enc.chantLocks).toBeNull()
+  })
+})
+
+describe('command menu — Attack / Defend / Item', () => {
+  // A fresh state has no inscribed glyphs, so the root is [Attack, Defend, Item].
+  function brace(enc: Encounter) {
+    untilPhase(enc, 'player')
+    enc.update(DT, ['ArrowDown'], false) // Attack → Defend
+    enc.update(DT, ['Enter'], false) // commit Defend
+  }
+
+  it('Defend braces: the next enemy turn hits for HALF, and the brace is spent', () => {
+    const { enc } = makeEncounter(ENEMIES.husk)
+    brace(enc)
+    expect(enc.braced).toBe(true)
+    expect(enc.phase).toBe('enemyWindup')
+    untilPhase(enc, 'enemyStrikes')
+    const attack = ENEMIES.husk.attacks[0]
+    idle(enc, (attack.beats!.at(-1) ?? 0) + PARRY_WINDOW * 1.6 + 0.4)
+    const perHit = Math.ceil(attack.damage / 2)
+    expect(enc.playerHp).toBe(PLAYER_MAX_HP - perHit * attack.beats!.length)
+    expect(enc.phase).toBe('player')
+    expect(enc.braced).toBe(false) // one turn only
+  })
+
+  it('bracing widens the parry window so a late press still parries', () => {
+    const { enc } = makeEncounter(ENEMIES.husk)
+    brace(enc)
+    untilPhase(enc, 'enemyStrikes')
+    expect(enc.parryWindow).toBeCloseTo(PARRY_WINDOW * 1.6, 6)
+    const hitT = enc.strikeRun!.hitTimes[0]
+    // 1.25× the normal window late: a miss unbraced, a hit while braced.
+    const late = hitT + PARRY_WINDOW * 1.25
+    while (enc.t < late - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, [], true)
+    expect(enc.strikeRun!.parried[0]).toBe(true)
+  })
+
+  it('Item eats a fish to heal, consumes it, and passes the turn', () => {
+    const { enc, state } = makeEncounter(ENEMIES.husk, (s) => {
+      s.fishHeld = { veilcarp: 2 }
+    })
+    untilPhase(enc, 'player')
+    enc.playerHp = 10
+    enc.update(DT, ['ArrowDown'], false) // Defend
+    enc.update(DT, ['ArrowDown'], false) // Item
+    enc.update(DT, ['Enter'], false) // open Item submenu
+    enc.update(DT, ['Enter'], false) // eat the veilcarp
+    const heal = Math.max(3, Math.ceil(mealShield('veilcarp') * 0.6))
+    expect(enc.playerHp).toBe(10 + heal)
+    expect(state.fishHeld['veilcarp']).toBe(1) // one consumed
+    expect(enc.phase).toBe('enemyWindup') // costs the turn
+  })
+
+  it('an Item heal is capped at maxHp', () => {
+    const { enc } = makeEncounter(ENEMIES.husk, (s) => {
+      s.fishHeld = { 'ember-eel': 1 }
+    })
+    untilPhase(enc, 'player')
+    enc.playerHp = enc.maxHp - 1
+    enc.update(DT, ['ArrowDown'], false) // Defend
+    enc.update(DT, ['ArrowDown'], false) // Item
+    enc.update(DT, ['Enter'], false)
+    enc.update(DT, ['Enter'], false)
+    expect(enc.playerHp).toBe(enc.maxHp)
+  })
+
+  it('a Hidden Art still fires while the command menu is active', () => {
+    const { enc, state, events } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    // Emberwake = Down, Up, Space — the arrows wiggle the cursor, Space fires it.
+    enc.update(DT, ['ArrowDown'], false)
+    enc.update(DT, ['ArrowUp'], false)
+    enc.update(DT, ['Space'], true)
+    expect(events).toContain('art:Emberwake')
+    expect(state.artsUnlocked).toContain('emberwake')
+  })
+
+  it('the Digit shortcuts still start a chain (retained fast path)', () => {
+    const { enc } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    expect(enc.phase).toBe('playerChain')
   })
 })
 

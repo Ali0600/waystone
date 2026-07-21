@@ -4,7 +4,6 @@ import type { EventBus } from '../core/events'
 import { makeToonMaterial } from '../engine/toon'
 import { buildEnemyMesh } from './worldenemies'
 import { inWindow } from './timing'
-import { PARRY_WINDOW } from '../content/chains'
 import type { Encounter } from './encounter'
 
 /**
@@ -116,7 +115,7 @@ export class Arena {
     const run = encounter.strikeRun
     const parryNow =
       !!run &&
-      run.hitTimes.some((h, i) => i >= run.hitIndex && inWindow(encounter.t, h, PARRY_WINDOW))
+      run.hitTimes.some((h, i) => i >= run.hitIndex && inWindow(encounter.t, h, encounter.parryWindow))
     if (this.flashT > 0) this.setEnemyEmissive('#ffffff', 0.7)
     else if (parryNow) this.setEnemyEmissive('#ffb347', 0.35 + 0.3 * Math.sin(this.t * 26))
     else this.setEnemyEmissive('#000000', 0)
