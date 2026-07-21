@@ -142,3 +142,25 @@ name some other way.
 forbidden value appeared (`expect(serialized.includes(secret)).toBe(false)`), iterate it
 over the actual dataset (not one hand-picked case), and verify the same absence one layer
 downstream (the DOM the user sees), not only in the model you control.
+
+## A doc that must track the code should be a TESTED artifact — enforced both directions
+
+A checklist/index/coverage doc rots the moment it's only prose: someone adds a feature or a
+test file and forgets the doc, and now it lies. The fix is to make the doc machine-checkable
+against the code, in BOTH directions, so neither side can drift silently.
+
+**Why it came up:** `docs/MECHANICS.md` lists every game mechanic with its covering test.
+`tests/mechanics-doc.test.ts` asserts (1) every `tests/*.test.ts` the doc cites exists,
+(2) every real test suite is cited by ≥1 row — so a new suite *forces* a new doc row — and
+(3) every row cites a test or a `browser-QA` tag. The forward-only check (refs resolve)
+would still let a whole new suite go unlisted; the reverse check (no orphan suites) is what
+makes the doc stay complete. Two implementation notes that generalize: read the repo files
+the test needs via Vite's `import.meta.glob('./*.test.ts')` + `import doc from '...md?raw'`
+(no `@types/node` in a browser tsconfig — and Vite's glob omits the importing module, so
+union it back in); and mapping the doc against the suite is itself a coverage audit — it
+surfaced one genuinely untested system (`WorldEnemies`).
+
+**Takeaway:** when a doc's whole value is that it mirrors the code (a mechanics list, an API
+index, a coverage map), back it with a test that enforces the mirror both ways — refs must
+resolve AND every real item must be listed. A one-directional check silently permits the
+omission that matters most.
