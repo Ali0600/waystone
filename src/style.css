@@ -234,6 +234,28 @@ body {
   max-width: 86vw;
 }
 
+/* --- The always-on minimap (M34) --- */
+
+/* Guard: the display rule below must not defeat the hidden attribute. */
+.hud-minimap[hidden] {
+  display: none;
+}
+
+.hud-minimap {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  width: 150px;
+  height: 150px;
+  display: block;
+  border-radius: 50%;
+  border: 1px solid rgba(138, 131, 152, 0.55);
+  background: rgba(12, 10, 20, 0.55);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* --- Glyph Grid panel --- */
 
 .glyph-overlay[hidden] {
