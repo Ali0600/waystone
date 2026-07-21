@@ -136,6 +136,31 @@ body {
   letter-spacing: 0.06em;
 }
 
+/* Teaching-hint banner (M27) — sits above the prompt, centred. Explicit
+   [hidden] guard even though the base rule sets no display: (the project got
+   bitten twice by a display: rule out-ranking the hidden attribute). */
+.hud-hint[hidden] {
+  display: none;
+}
+
+.hud-hint {
+  position: absolute;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(440px, 84vw);
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(12, 10, 20, 0.82);
+  border: 1px solid var(--ui-accent);
+  border-radius: 6px;
+  color: #ffe8c0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
 /* --- Toasts --- */
 
 .toasts {
@@ -477,11 +502,23 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
   align-items: center;
   font-size: 0.8rem;
   letter-spacing: 0.16em;
   color: var(--ui-dim);
+}
+
+/* One-time lock counterplay teach line — its own row below the chips. */
+.combat-lock-teach {
+  flex-basis: 100%;
+  text-align: center;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: #ffd98a;
 }
 
 .combat-locks[hidden] {
@@ -903,6 +940,27 @@ button.pcard {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.card-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-width: min(520px, 88vw);
+  margin: 4px auto 10px;
+}
+
+.card-rules-row {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ui-fg);
+  padding-left: 14px;
+  text-indent: -14px;
+}
+
+.card-rules-row::before {
+  content: '◇ ';
+  color: var(--ui-accent);
 }
 
 .card-result {

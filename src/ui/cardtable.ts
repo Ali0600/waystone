@@ -22,8 +22,9 @@ import {
   type MatchState,
 } from '../cards/rules'
 import { mulberry32 } from '../core/rng'
+import { CARD_RULES } from '../content/cardhelp'
 
-type Mode = 'menu' | 'play' | 'deck' | 'result'
+type Mode = 'menu' | 'play' | 'deck' | 'result' | 'rules'
 
 /**
  * The Painted Table — the deck game's UI. Opens beside Tam. Drives the pure
@@ -45,6 +46,9 @@ export class CardTable {
   constructor(
     private state: GameState,
     private bus: EventBus,
+    /** Retire-once teaching gate (shared HintSystem) — the rules card auto-shows
+     *  on the first-ever visit. Optional so tests/QA can build a bare table. */
+    private hints?: { seen(id: string): boolean; markSeen(id: string): void },
   ) {
     this.overlay = document.createElement('div')
     this.overlay.className = 'esc-overlay card-overlay'
@@ -73,9 +77,15 @@ export class CardTable {
   open(): void {
     this.visible = true
     this.overlay.hidden = false
-    this.mode = 'menu'
     this.match = null
     this.opp = null
+    // First-ever sit-down: teach the rules once (re-openable via "How to play").
+    if (this.hints && !this.hints.seen('cards-rules')) {
+      this.hints.markSeen('cards-rules')
+      this.mode = 'rules'
+    } else {
+      this.mode = 'menu'
+    }
     document.exitPointerLock?.()
     this.render()
   }
@@ -98,6 +108,7 @@ export class CardTable {
     else if (this.mode === 'play') this.renderPlay()
     else if (this.mode === 'deck') this.renderDeck()
     else if (this.mode === 'result') this.renderResult()
+    else if (this.mode === 'rules') this.renderRules()
   }
 
   private button(label: string, onClick: () => void, cls = 'glyph-pick'): HTMLButtonElement {
@@ -160,7 +171,38 @@ export class CardTable {
         this.mode = 'deck'
         this.render()
       }),
+      this.button('How to play', () => {
+        this.mode = 'rules'
+        this.render()
+      }),
       this.button('Leave', () => this.close()),
+    )
+    this.body.appendChild(foot)
+  }
+
+  private renderRules(): void {
+    const intro = document.createElement('div')
+    intro.className = 'glyph-status'
+    intro.textContent = 'The Painted Table — how it plays:'
+    this.body.appendChild(intro)
+
+    const list = document.createElement('div')
+    list.className = 'card-rules'
+    for (const line of CARD_RULES) {
+      const row = document.createElement('div')
+      row.className = 'card-rules-row'
+      row.textContent = line
+      list.appendChild(row)
+    }
+    this.body.appendChild(list)
+
+    const foot = document.createElement('div')
+    foot.className = 'card-foot'
+    foot.append(
+      this.button(this.state.deck.length > 0 ? 'Back' : 'Deal me in', () => {
+        this.mode = 'menu'
+        this.render()
+      }),
     )
     this.body.appendChild(foot)
   }

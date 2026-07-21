@@ -32,7 +32,9 @@ import { ChimeVerb } from './player/chime'
 import { MistCharge } from './player/mistwalker'
 import { LanternVerb } from './player/verbs'
 import { GlyphSystem } from './progression/glyphs'
-import { MasterySystem } from './progression/mastery'
+import { MasterySystem, VERB_IDS, tierOf } from './progression/mastery'
+import { HintSystem } from './progression/hints'
+import { HINTS, type HintContext } from './content/hints'
 import { GlyphPanel } from './ui/glyphpanel'
 import { LatentPaths } from './world/latentpath'
 import { World } from './world/world'
@@ -194,8 +196,11 @@ const postfx = new PostFx(renderer, scene, camera)
 // Session message log — the Toasts choke point records every bottom-left
 // message here, and the Ledger's Log tab renders it (survives the 5-toast cap).
 const messageLog = new MessageLog()
+// Contextual teaching hints (M27). Constructed early so the card table + combat
+// can share its retire-once gate; each shown message also lands in the Ledger Log.
+const hints = new HintSystem(saves.state, HINTS, (text) => messageLog.push(text, 'info'))
 const ledger = new LedgerPanel(world, saves.state, messageLog)
-const cardTable = new CardTable(saves.state, bus)
+const cardTable = new CardTable(saves.state, bus, hints)
 const shop = new ShopPanel(saves.state, bus)
 
 // The Ferry: fast travel between region moorings, once the Bell is won.
@@ -280,6 +285,14 @@ bus.on('lumen:changed', () => hud.setCounters(saves.state.lumen, saves.state.gly
 bus.on('glyphstone:changed', () =>
   hud.setCounters(saves.state.lumen, saves.state.glyphStones),
 )
+
+// Hint retirement via bus events (data-driven over HINTS), and the controls
+// line grows as tools are acquired.
+for (const h of HINTS) {
+  if (h.retireOn) bus.on(h.retireOn, () => hints.markSeen(h.id))
+}
+hud.setControls(caps)
+bus.on('tool:acquired', () => hud.setControls(caps))
 
 // Region banner on arrival (and at boot).
 let currentRegionId = ''
@@ -458,7 +471,7 @@ function startEncounter(contact: EnemyContact) {
     contact.guards,
   )
   arena = new Arena(contact.def, bus, window.innerWidth / window.innerHeight)
-  combatUi = new CombatUi(bus, contact.def.name, contact.def.hp)
+  combatUi = new CombatUi(bus, contact.def.name, contact.def.hp, hints)
   player.velocity.set(0, 0, 0)
   player.mode = 'normal'
   hud.setPrompt(null)
@@ -541,7 +554,14 @@ function update(dt: number) {
   if (snap.lantern) {
     if (lantern.tryPulse()) audio.chord([392, 494, 587], 0.35, 'triangle')
   }
-  if (snap.sounding && caps.sounding) sounding.tryPing()
+  if (snap.sounding && caps.sounding) {
+    const ping = sounding.tryPing()
+    // First empty ping: a dull thock alone reads as a broken key — say so once.
+    if (ping.kind === 'miss' && !hints.seen('sounding-nothing')) {
+      hints.markSeen('sounding-nothing')
+      bus.emit('toast', { text: 'Only a dull thock — nothing buried within reach.', flavor: 'info' })
+    }
+  }
   sounding.update(dt)
   if (snap.chime && caps.chime) {
     if (chime.tryResonate()) audio.chord([587, 784, 988], 0.5, 'sine')
@@ -583,6 +603,12 @@ function update(dt: number) {
       : null
   // The board appears once the Waystation has visibly grown (≥4 recruits home).
   boardProp.visible = recruits.homeCount() >= 4
+  // Announce it the first time it's raised — else it appears silently and a
+  // player can finish the game never knowing it exists.
+  if (boardProp.visible && !hints.seen('board-raised')) {
+    hints.markSeen('board-raised')
+    bus.emit('toast', { text: 'A notice board has been raised beside the arch.', flavor: 'info' })
+  }
   const nearBoard =
     !target &&
     !nearMooring &&
@@ -647,6 +673,21 @@ function update(dt: number) {
                   ? `E — talk to ${homeRecruit.name}`
                   : null),
   )
+  // Contextual hints: same-frame context the prompt chain used. Suppressed
+  // while any panel owns the screen; combat is handled by the early return +
+  // setWorldUiVisible force-hide, so inCombat is false here.
+  const st = saves.state
+  const hintCtx: HintContext = {
+    lanternUses: st.mastery.lantern,
+    totalVerbUses: VERB_IDS.reduce((n, v) => n + st.mastery[v], 0),
+    reachedAnyTier: VERB_IDS.some((v) => tierOf(v, st.mastery[v]) >= 2),
+    glyphStones: st.glyphStones,
+    gridEmpty: st.glyphGrid.every((c) => c === null),
+    onMist: caps.mistwalker && player.position.y < MIST_Y + 1,
+    uiOpen: uiOpen || map.visible || glyphPanel.visible || escMenu.visible,
+    inCombat: false,
+  }
+  hud.setHint(hints.update(hintCtx, dt))
   lantern.update(dt)
   discoveryView.update(dt)
   map.draw(player.position.x, player.position.z, orbit.yaw, discovery.completion())
@@ -706,6 +747,7 @@ if (qaMode || import.meta.env.DEV) {
     rewardBoard,
     ledger,
     worldEnemies,
+    hints,
     discovery,
     mastery,
     recruits,
@@ -750,6 +792,7 @@ if (qaMode || import.meta.env.DEV) {
         '.mist-meter',
         '.card-overlay',
         '.toasts',
+        '.hud-hint',
       ]
       const boxes: Box[] = []
       const shown: string[] = []
@@ -766,20 +809,21 @@ if (qaMode || import.meta.env.DEV) {
       }
       const overlaps = findOverlappingPairs(boxes)
       const combatActive = !!document.querySelector('.combat-ui')
-      const worldControls = document.querySelector<HTMLElement>('.hud-controls')
-      const worldHudDuringCombat =
-        combatActive &&
-        !!worldControls &&
-        !worldControls.hidden &&
-        getComputedStyle(worldControls).display !== 'none'
+      // The world HUD (controls line AND teaching hint) must be hidden in a duel.
+      const worldHudVisibleInCombat = (sel: string): boolean => {
+        if (!combatActive) return false
+        const el = document.querySelector<HTMLElement>(sel)
+        return !!el && !el.hidden && getComputedStyle(el).display !== 'none'
+      }
+      const combatLeaks = ['.hud-controls', '.hud-hint'].filter(worldHudVisibleInCombat)
       return {
         visible: shown,
         overlaps,
         problems: [
           ...overlaps.map((o) => `overlap: ${o}`),
-          ...(worldHudDuringCombat ? ['world HUD visible during combat'] : []),
+          ...combatLeaks.map((s) => `world HUD (${s}) visible during combat`),
         ],
-        clean: overlaps.length === 0 && !worldHudDuringCombat,
+        clean: overlaps.length === 0 && combatLeaks.length === 0,
       }
     },
   }

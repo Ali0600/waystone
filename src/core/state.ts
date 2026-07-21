@@ -27,7 +27,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 14
+  version: 15
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -74,13 +74,16 @@ export interface GameState {
   /** Glyph adjacency combos ever discovered (permanent — survives clearing
    *  the grid, unlike the live `activeCombos` read; powers the Ledger). */
   combosDiscovered: string[]
+  /** Contextual-hint ids the player has seen/retired (the teaching pass, M27).
+   *  Per-save: hints trigger off per-save progression, so this rides the save. */
+  hintsSeen: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 14,
+    version: 15,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -107,6 +110,7 @@ export function createInitialState(): GameState {
     enemiesFelled: {},
     bountiesClaimed: [],
     combosDiscovered: [],
+    hintsSeen: [],
   }
 }
 
@@ -260,8 +264,13 @@ export function parseGameState(json: string): GameState | null {
     o.version = 14
     o.combosDiscovered = combosOnGrid(o.glyphGrid)
   }
+  // v14 → v15: the teaching pass records which contextual hints were seen.
+  if (o.version === 14) {
+    o.version = 15
+    o.hintsSeen = []
+  }
 
-  if (o.version !== 14) return null
+  if (o.version !== 15) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -349,9 +358,10 @@ export function parseGameState(json: string): GameState | null {
   }
   if (!isStringArray(o.bountiesClaimed)) return null
   if (!isStringArray(o.combosDiscovered)) return null
+  if (!isStringArray(o.hintsSeen)) return null
 
   return {
-    version: 14,
+    version: 15,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -395,5 +405,6 @@ export function parseGameState(json: string): GameState | null {
     enemiesFelled: { ...(enemiesFelled as Record<string, number>) },
     bountiesClaimed: [...(o.bountiesClaimed as string[])],
     combosDiscovered: [...(o.combosDiscovered as string[])],
+    hintsSeen: [...(o.hintsSeen as string[])],
   }
 }
