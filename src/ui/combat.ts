@@ -105,6 +105,9 @@ export class CombatUi {
         else if (result !== 'pending') this.flash(result, 'bad')
       }),
       bus.on('combat:art', ({ name }) => this.flash(name + '!', 'art')),
+      bus.on('combat:entry', ({ dmg }) => {
+        this.showBanner(`Crashing entry!  −${dmg}`, 1.6)
+      }),
       bus.on('combat:damage', ({ target, amount }) => {
         if (target === 'player') this.flash(`-${amount}`, 'bad')
       }),

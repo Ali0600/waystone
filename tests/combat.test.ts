@@ -12,17 +12,22 @@ import { mealShield } from '../src/minigames/angling'
 
 const DT = 1 / 60
 
-function makeEncounter(enemy: EnemyDef, prep?: (state: GameState) => void) {
+function makeEncounter(
+  enemy: EnemyDef,
+  prep?: (state: GameState) => void,
+  opts: { grappleEntry?: boolean } = {},
+) {
   const state = createInitialState()
   prep?.(state)
   const bus = new EventBus()
   const mastery = new MasterySystem(state, bus)
   const glyphs = new GlyphSystem(state, bus, () => 0)
-  const enc = new Encounter(enemy, state, bus, mastery, glyphs, undefined)
+  const enc = new Encounter(enemy, state, bus, mastery, glyphs, undefined, opts.grappleEntry ?? false)
   const events: string[] = []
   bus.on('combat:parry', ({ result }) => events.push(`parry:${result}`))
   bus.on('combat:lock', ({ remaining }) => events.push(`locks:${remaining.length}`))
   bus.on('combat:art', ({ name }) => events.push(`art:${name}`))
+  bus.on('combat:entry', ({ dmg }) => events.push(`entry:${dmg}`))
   bus.on('combat:end', ({ victory }) => events.push(`end:${victory}`))
   return { enc, state, bus, mastery, glyphs, events }
 }
@@ -372,6 +377,36 @@ describe('angling ties into combat', () => {
     untilPhase(enc, 'player')
     for (const code of ['ArrowDown', 'ArrowUp', 'Space']) enc.update(DT, [code], false)
     expect(enc.phase).toBe('enemyWindup') // contrast with Undertow's stagger
+  })
+})
+
+describe('grapple entry — crashing into the duel', () => {
+  it('deals a tier-scaled opening blow once, mid-intro, and announces it', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk, undefined, { grappleEntry: true })
+    // Tier 1 grapple (fresh) → the smallest blow.
+    idle(enc, 1.0) // still in the intro (transitions at 1.2), entry lands at 0.4
+    expect(enc.enemyHp).toBe(ENEMIES.husk.hp - 2)
+    expect(events.filter((e) => e === 'entry:2')).toHaveLength(1) // exactly once
+  })
+
+  it('scales with grapple mastery — tier 3 crashes in harder', () => {
+    const { enc, events } = makeEncounter(
+      ENEMIES.husk,
+      (s) => {
+        s.mastery.grapple = TIER_THRESHOLDS.grapple[1] // 28 uses → tier 3
+      },
+      { grappleEntry: true },
+    )
+    idle(enc, 1.0)
+    expect(enc.enemyHp).toBe(ENEMIES.husk.hp - 5)
+    expect(events).toContain('entry:5')
+  })
+
+  it('a normal (walked-into) duel deals no opening blow', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    idle(enc, 1.0)
+    expect(enc.enemyHp).toBe(ENEMIES.husk.hp)
+    expect(events.some((e) => e.startsWith('entry:'))).toBe(false)
   })
 })
 

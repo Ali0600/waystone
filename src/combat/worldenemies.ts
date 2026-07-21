@@ -22,6 +22,20 @@ interface WorldEnemy {
   defeated: boolean
 }
 
+/** Set the emissive on every toon sub-mesh of a group (skips MeshBasicMaterial
+ *  eyes/mouths, which have no emissive). ONE owner of an enemy's glow, so the
+ *  grapple-aim highlight can't fight a future flash (the M23 single-owner rule). */
+function setGroupEmissive(group: THREE.Group, color: string, intensity: number): void {
+  group.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    const mat = mesh.material as THREE.MeshToonMaterial
+    if (mesh.isMesh && mat && mat.emissive) {
+      mat.emissive.set(color)
+      mat.emissiveIntensity = intensity
+    }
+  })
+}
+
 /** Builds an archetype silhouette — readable at a glance. */
 export function buildEnemyMesh(def: EnemyDef): THREE.Group {
   const g = new THREE.Group()
@@ -82,6 +96,8 @@ export class WorldEnemies {
   private enemies: WorldEnemy[] = []
   private t = 0
   private suppressT = 0
+  /** The enemy the grapple is currently aimed at (glows gold), or none. */
+  private highlightIndex: number | null = null
 
   private rng = mulberry32(31337)
 
@@ -121,6 +137,34 @@ export class WorldEnemies {
     if (!e) return
     e.defeated = true
     e.group.visible = false
+    if (this.highlightIndex === spawnIndex) this.highlightIndex = null
+  }
+
+  /** Chest-height world positions of every LIVE enemy — grapple targeting scores
+   *  these alongside the crystal pylons. Positions are current because the frame
+   *  calls update() (which moves the patrols) before this. */
+  liveTargets(): { spawnIndex: number; pos: THREE.Vector3 }[] {
+    const out: { spawnIndex: number; pos: THREE.Vector3 }[] = []
+    for (const [i, e] of this.enemies.entries()) {
+      if (e.defeated) continue
+      const p = e.group.position
+      out.push({ spawnIndex: i, pos: new THREE.Vector3(p.x, p.y + 1.1, p.z) })
+    }
+    return out
+  }
+
+  /** Highlight the grapple-aimed enemy with a gold glow (null = none). The single
+   *  owner of enemy emissive: switching targets un-glows the previous one. The
+   *  live pulse is applied each frame in update(). */
+  setGrappleHighlight(spawnIndex: number | null): void {
+    const next =
+      spawnIndex !== null && !this.enemies[spawnIndex]?.defeated ? spawnIndex : null
+    if (next === this.highlightIndex) return
+    if (this.highlightIndex !== null) {
+      const prev = this.enemies[this.highlightIndex]
+      if (prev) setGroupEmissive(prev.group, '#000000', 0)
+    }
+    this.highlightIndex = next
   }
 
   /** After a duel, ignore contacts for a grace period so a neighbouring patrol
@@ -156,6 +200,14 @@ export class WorldEnemies {
           bestDist = d
           contact = { def: e.def, spawnIndex: i, guards: e.spawn.guards }
         }
+      }
+    }
+    // The grapple-aim glow — a breathing gold, applied to the one highlighted
+    // enemy (setGrappleHighlight already cleared any previous target's glow).
+    if (this.highlightIndex !== null) {
+      const e = this.enemies[this.highlightIndex]
+      if (e && !e.defeated) {
+        setGroupEmissive(e.group, '#ffd98a', 0.7 + 0.4 * Math.sin(this.t * 12))
       }
     }
     return contact

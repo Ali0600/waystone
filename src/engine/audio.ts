@@ -90,6 +90,11 @@ export class GameAudio {
       else this.thud()
     })
     bus.on('combat:art', () => this.chord([262, 330, 392, 523], 0.8, 'sawtooth'))
+    // The grapple crash-in: a low impact hit with weight behind it.
+    bus.on('combat:entry', () => {
+      this.tone(160, 0.14, 'square', 0.8, 70)
+      this.thud()
+    })
     bus.on('combat:end', ({ victory }) => {
       if (victory) {
         this.tone(523, 0.15)

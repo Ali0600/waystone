@@ -26,6 +26,10 @@ export interface HintContext {
   gridEmpty: boolean
   /** Standing on the mist sea (Mistwalker floor holding the player). */
   onMist: boolean
+  /** The player owns the grapple. */
+  hasGrapple: boolean
+  /** The player has felled at least one enemy — combat is a known thing now. */
+  felledAnyEnemy: boolean
   /** A panel owns the screen — suppress hints. */
   uiOpen: boolean
   /** A duel owns the screen — suppress world hints (combat teaches itself). */
@@ -78,6 +82,14 @@ export const HINTS: HintDef[] = [
     id: 'mist-charge',
     text: 'The mist bears your weight only while the charge lasts — reach solid ground to refill it.',
     when: (c) => c.onMist,
+    showOnce: true,
+  },
+  {
+    // Grapple-to-engage: the tool teaches "pull to a pylon", never that a foe is
+    // a valid anchor. Fires once the player owns it AND has fought at least once.
+    id: 'grapple-foe',
+    text: 'Your grapple catches more than ledges — aim it at a prowling foe to pull yourself into the fight.',
+    when: (c) => c.hasGrapple && c.felledAnyEnemy,
     showOnce: true,
   },
 ]

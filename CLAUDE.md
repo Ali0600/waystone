@@ -3,7 +3,7 @@
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
 PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
 per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
-command menu. 315 tests, save v15.
+command menu, grapple-to-engage. 328 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -57,6 +57,16 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `readonly maxHp` (= PLAYER_MAX_HP + meal shield). HP bar divides by `maxHp`. EscMenu skips
   opening while `.combat-ui` exists (Esc = menu-back in a duel). `.combat-menu` is in the
   auditFrame SELECTORS.
+  **Grapple-to-engage (M29):** `GrappleVerb.updateTargeting` scores the crystal pylons AND a
+  per-frame `dynamic: DynamicTarget[]` (a foe's chest position) in ONE aim cone; a foe wins by
+  score → `dynamicTargetId()`. `WorldEnemies.liveTargets()` supplies them and `setGrappleHighlight`
+  glows the aimed foe gold (the SINGLE owner of enemy emissive — same rule as `arena.ts`). On a
+  launch at a foe, main arms `grappleEngage={spawnIndex,t}`; the flight carries the player in and
+  the normal contact check fires MID-FLIGHT — if it's the armed spawn, `startEncounter(contact,
+  true)`. The `grappleEntry` flag makes `Encounter` deal a tier-scaled opening blow (`GRAPPLE_ENTRY_DAMAGE
+  [2,3,5]` by grapple tier) once at `intro` `phaseT≥0.4` (after CombatUi mounts — `combat:start`
+  fires in the ctor, too early for the banner), emitting `combat:entry {dmg}` (banner + arena kick +
+  audio thump). Grapple targeting was untested before this — `tests/grapple.test.ts` covers it.
 - `src/minigames/` — `sounding.ts` (dig) and `angling.ts` (pure `AnglingSim` + species +
   `cookBestFish`/`mealShield`, all rng/time injected) with `anglingverb.ts` the DOM/input
   wrapper. Angling pays fish (Cook → pre-fight shield) + points (Angler teaches Undertow).

@@ -33,7 +33,7 @@ export const TOOL_INFO: Record<ToolId, ToolInfo> = {
     id: 'grapple',
     name: 'The Surveyor’s Grapple',
     key: 'Q',
-    desc: 'Aim at a crystal pylon and press Q to pull yourself across.',
+    desc: 'Aim at a crystal pylon — or a prowling foe — and press Q to pull yourself across.',
   },
   sounding: {
     id: 'sounding',
