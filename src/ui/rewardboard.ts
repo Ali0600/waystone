@@ -32,7 +32,7 @@ export class RewardBoardPanel {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.visible) {
         this.close()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
       }
     })
   }

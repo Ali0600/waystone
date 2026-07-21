@@ -102,6 +102,13 @@ authored in island-local coords before it ever loaded.
   (`style.display` in one path, the `hidden` attribute in another) — they desync
   (the click hint snapped back after every battle, M20). Funnel through a single
   applier that writes one property (see `Hud.applyClickHint` + the pure `clickHintHidden`).
+- Full-screen overlays (Ledger, map, glyph grid, shop, ferry, board) close on `Esc`
+  via their OWN `window` keydown handler that calls `close()` + `e.stopImmediatePropagation()`
+  (NOT `stopPropagation` — same-target window listeners aren't stopped by it, so the
+  EscMenu's later-registered handler would still fire and pop the pause menu open beneath
+  the closing panel). All overlays are constructed before `EscMenu`, so immediate-stop
+  reaches it. The pure-CSS `.esc-overlay/.map-overlay/.glyph-overlay::after` renders the
+  "Esc · close" hint. New overlay ⇒ copy this exact handler.
 - Verbs/UI keys live in `engine/input.ts` snapshot; tests use `tests/helpers.ts
   idleInput()` — grow it there.
 - QA: `?qa=1` + `window.__game` (step(n), teleport, startFight, saves, world…).

@@ -48,11 +48,25 @@ export class RegionMap {
     this.cz = (minZ + maxZ) / 2
     const span = Math.max(maxX - minX, maxZ - minZ)
     this.scale = (this.canvas.width - 56) / span
+
+    // Escape closes the map like every other panel. Immediate-stop so the
+    // EscMenu (registered later) doesn't pop open beneath the closing map.
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.visible) {
+        this.close()
+        e.stopImmediatePropagation()
+      }
+    })
   }
 
   toggle(): void {
     this.visible = !this.visible
     this.overlay.hidden = !this.visible
+  }
+
+  close(): void {
+    this.visible = false
+    this.overlay.hidden = true
   }
 
   private toCanvas(x: number, z: number): [number, number] {

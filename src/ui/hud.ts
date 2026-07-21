@@ -50,7 +50,7 @@ export class Hud {
     this.controls = document.createElement('div')
     this.controls.className = 'hud-controls'
     this.controls.textContent =
-      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · C chime · E interact · M map · G glyphs · I ledger · L log'
+      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · C chime · E interact · M map · G glyphs · I ledger · L log · Esc close/menu'
     const controls = this.controls
 
     this.clickHint = document.createElement('div')

@@ -100,6 +100,7 @@ silently drift from the suite.
 - [x] **Treasures** — collected named finds with their isle + exact yield; found-only (no spoilers), recruits/tools excluded · `tests/inventory.test.ts`
 - [x] **Message Log** (`L`) — session record of every bottom-left message, newest-first; survives the 5-toast stack cap · `tests/messagelog.test.ts`
 - [x] **Ledger panel UI** — Inventory (+ Treasures) / Guide / Log tabs, Fen gate, tool blurbs · `browser-QA`
+- [x] **Close any panel** (`Esc`) — closes the open overlay (Ledger, map, glyph grid, shop, ferry, board) without popping the pause menu underneath; every overlay shows a faint "Esc · close" hint · `browser-QA`
 
 ## World Presentation
 

@@ -84,7 +84,9 @@ export class LedgerPanel {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.visible) {
         this.close()
-        e.stopPropagation()
+        // Immediate-stop so the EscMenu's window listener (registered later)
+        // doesn't also fire and pop the pause menu open beneath us.
+        e.stopImmediatePropagation()
       }
     })
   }
