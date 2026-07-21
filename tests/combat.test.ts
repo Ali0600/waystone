@@ -163,6 +163,22 @@ describe('enemy turns and parry', () => {
     expect(tiered.events).toContain('parry:reflected')
     expect(enc.enemyHp).toBeLessThan(hpBefore)
   })
+
+  it('the parry bar has a sound geometry: startT origin, windup-anchored ordered hits', () => {
+    // The incoming-strike bar (M23) positions each marker at (hitT - startT).
+    // Pin that contract so the bar can't silently mis-place a strike.
+    const { enc } = makeEncounter(ENEMIES.husk)
+    toEnemyStrike(enc)
+    const run = enc.strikeRun!
+    const beats = run.attack.beats ?? [0]
+    expect(run.hitTimes.length).toBe(beats.length)
+    for (let i = 0; i < run.hitTimes.length; i++) {
+      // every hit is exactly windup + its beat after the telegraph origin
+      expect(run.hitTimes[i] - run.startT).toBeCloseTo(run.attack.windup + beats[i], 6)
+      if (i > 0) expect(run.hitTimes[i]).toBeGreaterThan(run.hitTimes[i - 1])
+    }
+    expect(run.startT).toBeLessThan(run.hitTimes[0])
+  })
 })
 
 describe('chorister locks', () => {

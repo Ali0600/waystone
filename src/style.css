@@ -432,6 +432,30 @@ body {
   color: var(--ui-dim);
 }
 
+/* Parry variant — the enemy's INCOMING strikes. Distinct from the player's own
+   chain beats so the two read differently: ember-red incoming, gold at the
+   parry window, green when parried, dim-red when the hit lands. */
+.combat-beatbar.parry .beat {
+  border-color: #e0653f;
+  background: rgba(224, 101, 63, 0.18);
+}
+
+.combat-beatbar.parry .beat.live {
+  border-color: var(--ui-accent);
+  background: rgba(255, 179, 71, 0.6);
+  box-shadow: 0 0 10px 2px rgba(255, 179, 71, 0.7);
+}
+
+.combat-beatbar.parry .beat.done.parried {
+  border-color: #9fd8a0;
+  background: #9fd8a0;
+}
+
+.combat-beatbar.parry .beat.done.missed {
+  border-color: #7a5555;
+  background: #3a2626;
+}
+
 .combat-banner {
   position: absolute;
   top: 22%;

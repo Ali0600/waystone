@@ -39,6 +39,8 @@ interface ChainRun {
 
 interface StrikeRun {
   attack: EnemyAttack
+  /** Encounter-clock time the telegraph (windup) began — the parry bar's origin. */
+  startT: number
   /** Absolute clock times of each hit. */
   hitTimes: number[]
   hitIndex: number
@@ -285,6 +287,7 @@ export class Encounter {
           } else {
             this.strikeRun = {
               attack,
+              startT: this.t,
               hitTimes: (attack.beats ?? [0]).map(
                 (b) => this.t + attack.windup + b,
               ),
