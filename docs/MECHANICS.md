@@ -55,6 +55,7 @@ silently drift from the suite.
 - [x] **Discovered combos persist** — a resonance survives clearing the grid · `tests/glyphs.test.ts`
 - [x] **Re-inscription** (clear a slot for Lumen; gated on hub growth) · `tests/glyphs.test.ts`
 - [x] **Per-glyph use counters** · `tests/glyphs.test.ts`
+- [x] **Inscription guidance** — three-state scribe status (find her in Amberfall / stand with her at the Waystation / quill ready) + a "select an empty cell" affordance · `tests/glyphpanel.test.ts` · `browser-QA`
 
 ## Mastery (use-based; tiers grant properties, no XP screen)
 

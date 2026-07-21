@@ -1,11 +1,25 @@
 import { COMBOS, GLYPHS, GLYPH_IDS, type GlyphId } from '../content/glyphs'
 import type { GameState } from '../core/state'
 import type { EventBus } from '../core/events'
+import { RECRUITS } from '../content/recruits'
 import {
   GRID_SIZE,
   REINSCRIBE_COST,
   type GlyphSystem,
 } from '../progression/glyphs'
+
+const SCRIBE_ID = RECRUITS.find((r) => r.role === 'scribe')!.personId
+
+/**
+ * The status line under the stones count — pure so the three distinct player
+ * situations stay distinct (one merged "requires Iole" message left players
+ * with a dead-feeling panel and no idea whether to FIND her or GO to her).
+ */
+export function scribeStatusLine(scribeFound: boolean, near: boolean): string {
+  if (near) return 'Iole watches over your shoulder, quill ready.'
+  if (scribeFound) return 'Stand with Iole at her Waystation hut to inscribe.'
+  return 'The grid waits for a scribe’s hand — Iole is still somewhere in Amberfall.'
+}
 
 /**
  * The Glyph Grid (G). Viewing is free anywhere; inscription requires
@@ -107,10 +121,20 @@ export class GlyphPanel {
     const near = this.nearScribe()
     const status = document.createElement('div')
     status.className = 'glyph-status'
-    status.textContent = near
-      ? 'Iole watches over your shoulder, quill ready.'
-      : 'Inscription requires Iole the Scribe at the Waystation.'
+    status.textContent = scribeStatusLine(
+      this.state.discoveries[SCRIBE_ID] === 'found',
+      near,
+    )
     this.sideEl.appendChild(status)
+
+    // First-interaction affordance: sixteen unlabeled cells read as decoration
+    // until something says they're clickable.
+    if (this.selectedSlot === null && grid.some((g) => g === null)) {
+      const nudge = document.createElement('div')
+      nudge.className = 'glyph-picker-label'
+      nudge.textContent = 'Select an empty cell to inscribe a glyph.'
+      this.sideEl.appendChild(nudge)
+    }
 
     if (this.selectedSlot !== null) {
       const slotGlyph = grid[this.selectedSlot]

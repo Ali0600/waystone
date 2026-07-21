@@ -62,7 +62,7 @@ export const HINTS: HintDef[] = [
   {
     // First blank stone in hand, nothing inscribed — point at the Scribe/grid.
     id: 'stone-scribe',
-    text: 'A blank Glyph Stone. Iole the Scribe teaches stones to speak — inscribe one on the grid (G).',
+    text: 'A blank Glyph Stone. Iole the Scribe teaches stones to speak — stand with her at the Waystation and open the grid (G).',
     when: (c) => c.glyphStones >= 1 && c.gridEmpty,
     retireOn: 'glyph:inscribed',
   },
