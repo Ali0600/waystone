@@ -90,6 +90,12 @@ export class GameAudio {
       else this.thud()
     })
     bus.on('combat:art', () => this.chord([262, 330, 392, 523], 0.8, 'sawtooth'))
+    // A flawless chain or a fully-parried string: a bright ascending sting.
+    bus.on('combat:perfect', () => {
+      this.tone(784, 0.07, 'square', 0.5)
+      setTimeout(() => this.tone(1047, 0.09, 'square', 0.5), 70)
+      setTimeout(() => this.chord([1047, 1319, 1568], 0.35), 150)
+    })
     // The grapple crash-in: a low impact hit with weight behind it.
     bus.on('combat:entry', () => {
       this.tone(160, 0.14, 'square', 0.8, 70)

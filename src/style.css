@@ -607,6 +607,7 @@ body {
 .combat-flash.good { color: #9fd8a0; }
 .combat-flash.bad { color: #e06a45; }
 .combat-flash.art { color: #c8e8ff; font-size: 1.5rem; }
+.combat-flash.perfect { color: #ffd98a; font-size: 1.4rem; letter-spacing: 0.18em; }
 
 @keyframes combat-float {
   0% { opacity: 0; transform: translateY(6px); }

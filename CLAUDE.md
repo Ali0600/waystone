@@ -3,7 +3,7 @@
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
 PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
 per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
-command menu, grapple-to-engage, LoD-style Attunement screen. 336 tests, save v15.
+command menu, grapple-to-engage, LoD-style Attunement screen, Perfect signal. 340 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -46,6 +46,11 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   Hidden Arts live in `content/chains.ts`; a longer Art's `sequence` must NOT end with a
   shorter Art's sequence, or the recognizer fires the shorter one first (Undertow's tail
   can't be `…↑ Space` = Emberwake).
+  **Perfect signal (M31):** a completed chain (`finishChain(true)` — the only way to finish
+  one) emits `combat:perfect {kind:'chain'}`; a strike string where every hit was parried
+  emits `{kind:'guard'}`. NB `strikeRun.parried` is SPARSE (set only on a parry), so test it
+  densely — `hitTimes.every((_, i) => parried[i] === true)`, never `parried.every(Boolean)`.
+  `ui/combat.ts` flashes gold (`.combat-flash.perfect`), `audio.ts` plays a rising sting.
   **Command menu (M28):** the classic JRPG box is a pure `combat/menu.ts` `BattleMenu`
   (arrows + Enter + Esc, cursor memory) driven from the `player` phase — the encounter builds
   `menuRoot()` (DATA: Attack→chains, Glyphs→inscribed, Defend, Item→held fish) and
