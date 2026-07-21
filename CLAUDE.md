@@ -45,7 +45,12 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   (unseen, OR a `found` **person** — they walked home, so the found-dot at the meeting
   spot is dropped and they're redrawn as a resident ☺ at `RECRUITS[].home`). A static
   `.map-legend` sits under the canvas. So the map never shows a solid dot with nothing
-  there. Prereq gate types: `lantern` (reveal latent) · `grapple` ·
+  there. **Minimap (M34)**: `discovery/minimap.ts` `MiniMap` — an always-on circular
+  top-left canvas framing the current isle, reusing `frameRegions` + `markerFor` (the two
+  surfaces can't disagree); visibility has ONE owner (`setVisible`, hidden attr), called
+  from startEncounter/endEncounter beside `hud.setWorldUiVisible`; in the auditFrame
+  SELECTORS **and** the world-HUD-during-combat invariant. Prereq gate types: `lantern`
+  (reveal latent) · `grapple` ·
   `sounding` (dig buried) · `chime` (resonate `sealed` open, `player/chime.ts`) ·
   `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus

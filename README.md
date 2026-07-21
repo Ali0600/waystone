@@ -24,8 +24,8 @@ out there come home with you, and home gets bigger.
   ghost walkways, the grapple learns to fire mid-air. No XP screen. The world is the trainer.
 - **Every discoverable pays at least two meters** (item + Lumen + completion), every secret
   has a visible cue, and anything you can't reach yet auto-pins as a **?** on your maps
-  (a zoomed **isle map** and a whole **World Map**) — backtracking is a shopping list,
-  never a memory test.
+  (an always-on **minimap**, a zoomed **isle map**, and a whole **World Map**) —
+  backtracking is a shopping list, never a memory test.
 - **Knowledge is a reward.** Glyph adjacency combos appear in no tooltip; Hidden Arts are
   input sequences the game never documents; enemy chants are puzzles your glyphs answer.
 

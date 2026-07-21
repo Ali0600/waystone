@@ -10,6 +10,7 @@ import { createSaveSystem } from './core/save'
 import { DiscoverySystem, type PlayerCapabilities } from './discovery/system'
 import { DiscoveryView } from './discovery/view'
 import { RegionMap } from './discovery/map'
+import { MiniMap } from './discovery/minimap'
 import { GameAudio } from './engine/audio'
 import { PostFx } from './engine/postfx'
 import { Input } from './engine/input'
@@ -192,13 +193,13 @@ const recruits = new RecruitSystem(
 )
 scene.add(recruits.group)
 
-const map = new RegionMap(
-  world,
-  saves.state,
-  // The isle to frame in the LOCAL scope — the one last entered (never null over
-  // mist), falling back to the prime isle before the first region is tracked.
-  () => world.regions.find((r) => r.def.id === currentRegionId)?.def ?? prime,
-)
+// The isle to frame for local views — the one last entered (never null over
+// mist), falling back to the prime isle before the first region is tracked.
+const currentRegionDef = () =>
+  world.regions.find((r) => r.def.id === currentRegionId)?.def ?? prime
+const map = new RegionMap(world, saves.state, currentRegionDef)
+// The always-on top-left minimap shares the map's framing + marker semantics.
+const minimap = new MiniMap(world, saves.state, currentRegionDef)
 const postfx = new PostFx(renderer, scene, camera)
 // Session message log — the Toasts choke point records every bottom-left
 // message here, and the Ledger's Log tab renders it (survives the 5-toast cap).
@@ -490,6 +491,7 @@ function startEncounter(contact: EnemyContact, grappleEntry = false) {
   player.mode = 'normal'
   hud.setPrompt(null)
   hud.setWorldUiVisible(false) // the duel owns the screen; hide the world HUD
+  minimap.setVisible(false)
 }
 
 function endEncounter() {
@@ -513,6 +515,7 @@ function endEncounter() {
   combatUi = null
   combatContact = null
   hud.setWorldUiVisible(true) // the world resumes; restore the HUD
+  minimap.setVisible(true)
   // Grace before the next touch registers, so a neighbouring patrol can't chain
   // you straight into a second duel the instant this one ends — walk away, or
   // step back in deliberately.
@@ -729,6 +732,7 @@ function update(dt: number) {
   lantern.update(dt)
   discoveryView.update(dt)
   map.draw(player.position.x, player.position.z, orbit.yaw, discovery.completion())
+  minimap.draw(player.position.x, player.position.z, orbit.yaw)
 
   saveTimer += dt
   if (saveTimer >= 5) {
@@ -786,6 +790,7 @@ if (qaMode || import.meta.env.DEV) {
     ledger,
     attunement,
     map,
+    minimap,
     worldEnemies,
     hints,
     discovery,
@@ -837,6 +842,7 @@ if (qaMode || import.meta.env.DEV) {
         '.card-overlay',
         '.toasts',
         '.hud-hint',
+        '.hud-minimap',
       ]
       const boxes: Box[] = []
       const shown: string[] = []
@@ -844,7 +850,15 @@ if (qaMode || import.meta.env.DEV) {
         for (const el of document.querySelectorAll<HTMLElement>(sel)) {
           const cs = getComputedStyle(el)
           const r = el.getBoundingClientRect()
-          if (cs.display === 'none' || cs.visibility === 'hidden' || r.width < 1 || r.height < 1) {
+          // Faded-out elements (the region banner idles at opacity 0) aren't
+          // visible — auditing them produced phantom overlaps (M20 follow-up).
+          if (
+            cs.display === 'none' ||
+            cs.visibility === 'hidden' ||
+            parseFloat(cs.opacity) < 0.05 ||
+            r.width < 1 ||
+            r.height < 1
+          ) {
             continue
           }
           boxes.push({ name: sel, top: r.top, bottom: r.bottom, left: r.left, right: r.right })
@@ -859,7 +873,9 @@ if (qaMode || import.meta.env.DEV) {
         const el = document.querySelector<HTMLElement>(sel)
         return !!el && !el.hidden && getComputedStyle(el).display !== 'none'
       }
-      const combatLeaks = ['.hud-controls', '.hud-hint'].filter(worldHudVisibleInCombat)
+      const combatLeaks = ['.hud-controls', '.hud-hint', '.hud-minimap'].filter(
+        worldHudVisibleInCombat,
+      )
       return {
         visible: shown,
         overlaps,
