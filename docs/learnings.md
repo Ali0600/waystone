@@ -207,3 +207,28 @@ the tool — and it only preempts listeners registered *after* it, so registrati
 part of the contract. `stopPropagation()` is for cross-element bubbling, a different job.
 Verify by reproducing the exact double-fire first (dispatch the real event, assert the
 second listener's effect is absent), not just that the first one's effect happened.
+
+## Contextual hints teach best when they retire on *doing*, not on a timer
+
+The tutorial-design literature (CHI 2012 A/B study; the IUI 2017 hint experiment where 81% of
+players rated hints unhelpful, mostly for "stating the obvious") converges on: teach a mechanic
+*just-in-time* when it first becomes relevant, show one at a time, rate-limit, and **retire the
+hint the instant the tracked behaviour proves the player learned it** — an over-firing hint
+trains players to ignore the whole channel (hint fatigue).
+
+**Why it came up:** Waystone's teaching pass (M27). Encoded as a pure `HintSystem` whose trigger
+is a `when(ctx)` predicate over live state; a hint retires the frame `when()` goes false — i.e.
+the player did the thing (pulsed the lantern, inscribed a stone). "Learned" is a *behaviour*
+(`mastery.lantern > 0`), not a timer or a view-count. Informational one-shots (no action to
+detect) get a `showOnce` flag and retire after a hold. Seen ids persist in the save so a retired
+hint never returns. A `retireOn` bus event covers "player did it before the hint could fire".
+
+**Takeaway:** model a hint as `{when, retireOn?, showOnce?}` and drive retirement off the same
+signal that proves competence — never a fixed number of shows. Keep the scheduler pure so the
+"one at a time / gap / retire" logic is unit-tested, and pin a spoiler gate if the game hides
+knowledge (assert no hint text contains a secret sequence/recipe). Corollary for browser QA of
+*transient* UI: with `requestAnimationFrame` free-running in the preview pane, a banner that
+appears then auto-hides can't be reliably screenshot-synced (the sim advances between your JS
+probe and the capture). Verify such elements by attribute + **real-viewport** `getBoundingClientRect`
+(resize to 1280×800 first — the in-app QA browser's default geometry is degenerate), the same way
+pointer-lock/combat-only UI is verified without a live screenshot.
