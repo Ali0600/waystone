@@ -558,6 +558,25 @@ body {
   z-index: 30;
 }
 
+/* A faint "Esc · close" affordance in the corner of every full-screen overlay
+   — the panels never told you how to dismiss them. All three overlay roots are
+   position:fixed, so this anchors to the viewport; pointer-events:none so it
+   never eats a click. Hidden overlays are display:none, so it only shows when
+   the panel is open. */
+.esc-overlay::after,
+.map-overlay::after,
+.glyph-overlay::after {
+  content: 'Esc · close';
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  color: var(--ui-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .esc-box {
   display: flex;
   flex-direction: column;

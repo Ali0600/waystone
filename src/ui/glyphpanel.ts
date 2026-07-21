@@ -44,6 +44,15 @@ export class GlyphPanel {
     bus.on('glyphstone:changed', () => this.render())
     bus.on('glyph:inscribed', () => this.render())
     bus.on('lumen:changed', () => this.render())
+
+    // Escape closes the grid like every other panel. Immediate-stop so the
+    // EscMenu (registered later) doesn't pop open beneath the closing grid.
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.visible) {
+        this.close()
+        e.stopImmediatePropagation()
+      }
+    })
   }
 
   toggle(): void {
@@ -54,6 +63,11 @@ export class GlyphPanel {
       this.render()
       document.exitPointerLock?.()
     }
+  }
+
+  close(): void {
+    this.visible = false
+    this.overlay.hidden = true
   }
 
   private render(): void {

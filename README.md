@@ -53,7 +53,8 @@ out there come home with you, and home gets bigger.
 
 `WASD` move · `Space` jump · `Shift` dash · mouse look (click to lock) ·
 `F` lantern pulse · `Q` grapple · `T` sounding ping · `C` chime · `E` interact ·
-`M` survey map · `G` glyph grid · `I` ledger (inventory + guide) · `L` message log · `Esc` menu / save
+`M` survey map · `G` glyph grid · `I` ledger (inventory + guide) · `L` message log ·
+`Esc` close the open panel, or open the menu (save / export / import)
 
 ## Stack
 
