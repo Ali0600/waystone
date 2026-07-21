@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ALL_CARDS, STARTER_CARDS } from '../src/content/cards.schema'
+import { CARD_RULES } from '../src/content/cardhelp'
 import { ENEMIES } from '../src/content/enemies'
 import { RECRUITS } from '../src/content/recruits'
 import { amberfall } from '../src/content/regions/amberfall'
@@ -69,6 +70,20 @@ describe('card library references', () => {
     expect(STARTER_CARDS).toHaveLength(8)
     for (const c of STARTER_CARDS) {
       expect(ALL_CARDS.includes(c), c?.id).toBe(true)
+    }
+  })
+})
+
+describe('the rules card explains every ability in the schema', () => {
+  it('names each ability keyword a card can carry', () => {
+    // A new ability can't ship undocumented — derive the set from the cards.
+    const abilities = new Set(
+      ALL_CARDS.map((c) => c.ability).filter((a): a is NonNullable<typeof a> => a !== undefined),
+    )
+    expect(abilities.size).toBeGreaterThan(0)
+    const rulesText = CARD_RULES.join(' \n ').toLowerCase()
+    for (const a of abilities) {
+      expect(rulesText.includes(String(a).toLowerCase()), `rules card omits "${a}"`).toBe(true)
     }
   })
 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clickHintHidden } from '../src/ui/hud'
+import { clickHintHidden, controlsLine } from '../src/ui/hud'
 
 /**
  * The "Click to look around" hint had two writers (pointer-lock via
@@ -51,5 +51,31 @@ describe('clickHintHidden', () => {
         }
       }
     }
+  })
+})
+
+describe('controlsLine — tool keys appear only once owned', () => {
+  it('a fresh player sees no Q/T/C (no dead keys)', () => {
+    const line = controlsLine({ grapple: false, sounding: false, chime: false })
+    expect(line).toContain('F lantern') // innate, always shown
+    expect(line).not.toContain('Q grapple')
+    expect(line).not.toContain('T sounding')
+    expect(line).not.toContain('C chime')
+    expect(line).toContain('Esc close/menu')
+  })
+
+  it('acquiring a tool adds its key, in its natural slot (after F, before E)', () => {
+    const line = controlsLine({ grapple: true, sounding: false, chime: false })
+    expect(line).toContain('Q grapple')
+    expect(line.indexOf('F lantern')).toBeLessThan(line.indexOf('Q grapple'))
+    expect(line.indexOf('Q grapple')).toBeLessThan(line.indexOf('E interact'))
+    expect(line).not.toContain('T sounding') // still unowned
+  })
+
+  it('all three tools owned lists all three keys', () => {
+    const line = controlsLine({ grapple: true, sounding: true, chime: true })
+    expect(line).toContain('Q grapple')
+    expect(line).toContain('T sounding')
+    expect(line).toContain('C chime')
   })
 })

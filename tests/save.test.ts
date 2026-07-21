@@ -44,6 +44,16 @@ describe('parseGameState', () => {
     expect(parsed!.tools).toEqual({ grapple: false, sounding: false, chime: false, mistwalker: false, ferry: false })
     expect(parsed!.pathsRevealed).toEqual([])
     expect(parsed!.combosDiscovered).toEqual([])
+    expect(parsed!.hintsSeen).toEqual([])
+  })
+
+  it('v14 → v15 defaults hintsSeen to []', () => {
+    const v14: Record<string, unknown> = { ...createInitialState(), version: 14 }
+    delete v14.hintsSeen
+    const parsed = parseGameState(JSON.stringify(v14))
+    expect(parsed).not.toBeNull()
+    expect(parsed!.version).toBe(15)
+    expect(parsed!.hintsSeen).toEqual([])
   })
 
   it('v13 → v14 derives discovered combos from the migrated grid', () => {
@@ -55,7 +65,7 @@ describe('parseGameState', () => {
     delete v13.combosDiscovered
     const parsed = parseGameState(JSON.stringify(v13))
     expect(parsed).not.toBeNull()
-    expect(parsed!.version).toBe(14)
+    expect(parsed!.version).toBe(15) // chains v13 → v14 → v15
     expect(parsed!.combosDiscovered).toEqual(['levin'])
   })
 

@@ -44,9 +44,10 @@ out there come home with you, and home gets bigger.
 | The Reward Board | A posted board that appears by the arch once four recruits are home: 10 bounties spanning every system (clear a region, fell a boss, land 30 fish, win 5 card matches, master a verb, learn two Hidden Arts, wake three isles) with live progress bars, each paying Lumen — some rare Glyph Stones or a card — once |
 | The Surveyor's Ledger | Press `I` anywhere: an **Inventory** tab (what you hold — tools and what they do, catch, a **Treasures** collection listing every named find with the isle it came from and exactly what it yielded, cards, learned Arts with their key sequences, discovered resonances), a **100% Guide** tab kept by Fen the Archivist (everything still to do — remaining discoverables named only by their in-game **cue**, never spoiled; latent isles masked; Arts and fusions as counts), and a **Log** tab (`L`) — a running record of every message the world has shown you this session, kept even when the on-screen toasts scroll away |
 | Mist-angling | Once the Angler joins, cast (`E`) from rim spots: wait for a bite, strike, then reel against a tension see-saw. Fish are consumables the **Cook** turns into pre-fight shields; enough angling points earn the Angler's **Undertow** technique |
-| The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 26 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
+| The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. A rules card greets you on your first sit-down (re-openable via "How to play"). Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 26 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
 | Atmosphere | Each isle has its own authored sky, fog, hemisphere, sun and mist colour — amber night, teal dusk, ember-violet, bone-pale dawn, verdant deep — and the scene eases between them as you cross the mist (frame-rate-independent blend; a discrete ferry hop snaps) |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |
+| Signposts | Just-in-time teaching hints that appear when a mechanic first becomes relevant and retire the moment you perform it — the lantern pulse, your first Glyph Stone, the mist charge, that verbs deepen with use. One at a time, rate-limited, and re-readable in the Ledger's Log. The controls line grows as you acquire tools; hidden content (Arts, combos) is never spoiled |
 | Saves | Autosave to localStorage + validated JSON export/import (corrupt saves are parked, never destroyed) |
 
 ## Controls
@@ -63,7 +64,7 @@ out there come home with you, and home gets bigger.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 269 tests, including a **content-invariant suite** that enforces the design
+- Vitest: 294 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests

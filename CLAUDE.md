@@ -2,7 +2,7 @@
 
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M25,
 PRs #1–#26): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
-per-isle atmosphere, parry signposting. 269 tests, save v14.
+per-isle atmosphere, parry signposting, contextual teaching hints. 294 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -74,6 +74,7 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   in main; note `otherOverlayOpen` (excludes the Ledger) lets `I`/`L` still close it.
   `toggle(tab)` closes only if that same tab is already showing, else switches — so `I`↔`L`
   hop tabs. Glyph combos persist in `state.combosDiscovered` (save v14) so a resonance
+  survives a grid clear. Save is now **v15** (`hintsSeen`, M27).
   survives a grid clear — `GlyphSystem.inscribe` records + announces each once.
 - Inventory's **Treasures** section (pure `progression/inventory.ts` `treasureModel`) is a
   collection record: every `found` discoverable (minus `person` and tool-payout finds)
@@ -83,6 +84,20 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   every bottom-left message at the SINGLE `Toasts.push` choke point — so it keeps messages
   the 5-toast stack evicts. `Toasts` takes an optional `MessageLog`; construct the log in
   main before both `Toasts` and `LedgerPanel` and pass it to each.
+- **Contextual teaching hints (M27)**: DATA in `content/hints.ts` (each `{id, text, when(ctx),
+  minElapsedSec?, showOnce?, retireOn?}`), scheduled by the pure `progression/hints.ts`
+  `HintSystem` (one at a time, `GAP`-limited, retired the instant `when()` goes false = the
+  player did it; `showOnce` retires after `HOLD`). Rendered by `Hud.setHint` into `.hud-hint`
+  (single writer, `hidden` attr only, force-hidden by `setWorldUiVisible` like the prompt;
+  it's in the auditFrame SELECTORS + combat invariant). Seen ids persist in `state.hintsSeen`
+  (v15). Construct `hints` early (after `messageLog`) so `CardTable` + `CombatUi` can share its
+  `{seen,markSeen}` gate; `retireOn` bus wiring loops over `HINTS` in main. Spoiler rule
+  (pinned by `hints.test.ts`): a hint may teach a verb/tool/system but NEVER an Art sequence
+  or combo recipe. One-shot toasts (sounding thock, board-raised) reuse `hints.markSeen(id)`.
+- `Hud.controlsLine(caps)` (pure, tested) grows the controls line as tools are acquired (no
+  dead Q/T/C keys); refreshed at boot + on `tool:acquired`. The deck game's rules are taught
+  by `content/cardhelp.ts` `CARD_RULES` (wording derived from `cards/rules.ts`, ability
+  coverage pinned) — auto-shown on the first table open, re-openable via "How to play".
 
 ## Invariants enforced by tests (tests/content-invariants.test.ts)
 

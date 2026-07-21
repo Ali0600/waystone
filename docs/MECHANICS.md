@@ -102,6 +102,14 @@ silently drift from the suite.
 - [x] **Ledger panel UI** — Inventory (+ Treasures) / Guide / Log tabs, Fen gate, tool blurbs · `browser-QA`
 - [x] **Close any panel** (`Esc`) — closes the open overlay (Ledger, map, glyph grid, shop, ferry, board) without popping the pause menu underneath; every overlay shows a faint "Esc · close" hint · `browser-QA`
 
+## Teaching & Onboarding (M27)
+
+- [x] **Contextual hints** — just-in-time, one at a time, rate-limited, retired the moment the player does the thing; persisted per-save (`hintsSeen`, v15); every hint re-readable in the Ledger Log. Spoiler-safe (no Art sequence / combo recipe) · `tests/hints.test.ts`
+- [x] **Controls line grows with tools** — Q/T/C appear only once their tool is owned (no dead keys) · `tests/hud.test.ts`
+- [x] **Deck-game rules card** — auto-shows on the first sit at the Painted Table, re-openable via "How to play"; every ability keyword documented · `tests/cards.test.ts` (ability coverage) · `browser-QA`
+- [x] **Ferry moorings on the Survey Map** — a teal ⚓ per manifested region so a mooring is findable · `browser-QA`
+- [x] **Silent-appearance announcements** — first empty Sounding ping, the Reward Board being raised, and lock counterplay in combat each teach once · `browser-QA`
+
 ## World Presentation
 
 - [x] **Per-region atmosphere** — sky/fog/hemi/sun/mist blend to each isle (frame-rate-independent) · `tests/atmosphere.test.ts`

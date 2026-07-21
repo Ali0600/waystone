@@ -23,6 +23,31 @@ export function clickHintHidden(
   return lookLearned || worldUiSuppressed || !wantClickHint
 }
 
+/**
+ * The world controls line — pure so it's unit-tested. Tool keys appear ONLY
+ * once their tool is owned (no dead keys for a new player; acquiring a tool
+ * visibly grows the line). Lantern is innate; the Ferry rides the E key.
+ */
+export function controlsLine(caps: { grapple: boolean; sounding: boolean; chime: boolean }): string {
+  return [
+    'WASD move',
+    'Space jump',
+    'Shift dash',
+    'F lantern',
+    caps.grapple ? 'Q grapple' : null,
+    caps.sounding ? 'T sounding' : null,
+    caps.chime ? 'C chime' : null,
+    'E interact',
+    'M map',
+    'G glyphs',
+    'I ledger',
+    'L log',
+    'Esc close/menu',
+  ]
+    .filter((p): p is string => p !== null)
+    .join(' · ')
+}
+
 /** DOM overlay: region banner, control hints, pointer-lock prompt, F3 debug. */
 export class Hud {
   private readonly root: HTMLElement
@@ -32,6 +57,7 @@ export class Hud {
   private readonly debugPanel: HTMLElement
   private readonly counters: HTMLElement
   private readonly prompt: HTMLElement
+  private readonly hint: HTMLElement
   private readonly mistMeter: HTMLElement
   private readonly mistFill: HTMLElement
   private debugVisible = false
@@ -49,8 +75,8 @@ export class Hud {
 
     this.controls = document.createElement('div')
     this.controls.className = 'hud-controls'
-    this.controls.textContent =
-      'WASD move · Space jump · Shift dash · F lantern · Q grapple · T sounding · C chime · E interact · M map · G glyphs · I ledger · L log · Esc close/menu'
+    // Starts tool-less; main refreshes via setControls(caps) at boot + on acquire.
+    this.controls.textContent = controlsLine({ grapple: false, sounding: false, chime: false })
     const controls = this.controls
 
     this.clickHint = document.createElement('div')
@@ -63,6 +89,10 @@ export class Hud {
     this.prompt = document.createElement('div')
     this.prompt.className = 'hud-prompt'
     this.prompt.hidden = true
+
+    this.hint = document.createElement('div')
+    this.hint.className = 'hud-hint'
+    this.hint.hidden = true
 
     this.mistMeter = document.createElement('div')
     this.mistMeter.className = 'mist-meter'
@@ -81,6 +111,7 @@ export class Hud {
       this.clickHint,
       this.counters,
       this.prompt,
+      this.hint,
       this.mistMeter,
       this.debugPanel,
     )
@@ -123,7 +154,13 @@ export class Hud {
   setWorldUiVisible(visible: boolean): void {
     this.controls.hidden = !visible
     this.worldUiSuppressed = !visible
-    if (!visible) this.prompt.hidden = true
+    // Force-hide the prompt and the teaching hint while combat/an overlay owns
+    // the screen. Restoring does NOT force either back on — the per-frame
+    // setPrompt/setHint re-derive, so a fight can't strand a stale one.
+    if (!visible) {
+      this.prompt.hidden = true
+      this.hint.hidden = true
+    }
     this.applyClickHint()
   }
 
@@ -146,6 +183,19 @@ export class Hud {
   setPrompt(text: string | null): void {
     this.prompt.hidden = text === null
     if (text !== null) this.prompt.textContent = text
+  }
+
+  /** The single writer for the teaching-hint banner (mirrors setPrompt: one
+   *  owner, `hidden` attribute only). Fed each world frame from the HintSystem;
+   *  suppressed under combat/overlays via setWorldUiVisible. */
+  setHint(text: string | null): void {
+    this.hint.hidden = text === null
+    if (text !== null) this.hint.textContent = text
+  }
+
+  /** Refresh the controls line for the current tools (keys appear as acquired). */
+  setControls(caps: { grapple: boolean; sounding: boolean; chime: boolean }): void {
+    this.controls.textContent = controlsLine(caps)
   }
 
   /** Mistwalker charge (0..1), or null to hide the meter (unowned or full). */

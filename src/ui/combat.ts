@@ -22,7 +22,14 @@ export class CombatUi {
   private unsubs: (() => void)[] = []
   private bannerTimer: ReturnType<typeof setTimeout> | null = null
 
-  constructor(bus: EventBus, enemyName: string, enemyHp: number) {
+  constructor(
+    bus: EventBus,
+    enemyName: string,
+    enemyHp: number,
+    /** Retire-once teaching gate (shared HintSystem). Optional so tests/QA can
+     *  construct a bare CombatUi. */
+    private hints?: { seen(id: string): boolean; markSeen(id: string): void },
+  ) {
     this.enemyMaxHp = enemyHp
     this.root = document.createElement('div')
     this.root.className = 'combat-ui'
@@ -85,6 +92,9 @@ export class CombatUi {
                 ? 'Lock shattered!'
                 : ''
         if (text) this.flash(text, 'good')
+        // First lock broken → the player has learned the counterplay; retire
+        // the teach line for good.
+        if (result === 'lockbroken') this.hints?.markSeen('lock-break')
       }),
       bus.on('combat:beat', ({ result }) => {
         if (result === 'hit') this.flash('●', 'good')
@@ -120,6 +130,13 @@ export class CombatUi {
       chip.style.color = g.color
       chip.textContent = `${g.rune} ${g.name}`
       this.locksEl.appendChild(chip)
+    }
+    // One-time counterplay hint: how to break a lock (retired on first break).
+    if (this.hints && !this.hints.seen('lock-break')) {
+      const teach = document.createElement('span')
+      teach.className = 'combat-lock-teach'
+      teach.textContent = 'Cancel a lock with its matching glyph action (keys 3+).'
+      this.locksEl.appendChild(teach)
     }
   }
 

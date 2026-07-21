@@ -134,6 +134,13 @@ export class RegionMap {
           lm.kind === 'socket' ? '◎' : lm.kind === 'spire' ? '▲' : lm.kind === 'arch' ? '∩' : '•'
         ctx.fillText(icon, lx, ly + 4)
       }
+      // Ferry mooring — the fast-travel node (teal anchor), so it's findable.
+      if (region.def.mooring) {
+        const [mx, my] = this.toCanvas(region.def.mooring.x, region.def.mooring.z)
+        ctx.fillStyle = 'rgba(143, 208, 216, 0.9)'
+        ctx.font = '13px Georgia'
+        ctx.fillText('⚓', mx, my + 4)
+      }
     }
 
     // Discoveries: pinned "?", found dots.

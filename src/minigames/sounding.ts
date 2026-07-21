@@ -5,6 +5,11 @@ import type { PlayerSim } from '../player/controller'
 export const SOUNDING_RANGE = 30
 const PING_COOLDOWN = 0.45
 
+/** A ping's outcome — `miss` (fired, nothing in range) is distinct from
+ *  `cooldown` (no ping happened) so a one-shot "nothing here" hint fires only on
+ *  a real empty ping, never on rapid re-presses. */
+export type PingResult = { kind: 'cooldown' } | { kind: 'miss' } | { kind: 'hit'; dist: number }
+
 /**
  * Sounding (Chocobo Hot & Cold): press T to ping. The nearest buried cache
  * answers — pitch rises and the screen warms as you close in; on top of it,
@@ -26,9 +31,9 @@ export class SoundingVerb {
     document.body.appendChild(this.warmth)
   }
 
-  /** Returns the answered distance (null = no cache in range). */
-  tryPing(): number | null {
-    if (this.cooldown > 0) return null
+  /** Ping the buried world. See PingResult — `miss` vs `cooldown` are distinct. */
+  tryPing(): PingResult {
+    if (this.cooldown > 0) return { kind: 'cooldown' }
     this.cooldown = PING_COOLDOWN
     const near = this.discovery.nearestBuried(
       this.player.position.x,
@@ -38,7 +43,7 @@ export class SoundingVerb {
     if (!near) {
       this.audio.tone(140, 0.12, 'triangle', 0.5) // dull thock: nothing here
       this.warmthLevel = 0
-      return null
+      return { kind: 'miss' }
     }
     const pitch = pitchForDistance(near.dist, SOUNDING_RANGE)
     if (near.dist < 3) {
@@ -47,7 +52,7 @@ export class SoundingVerb {
       this.audio.tone(pitch, 0.16, 'sine', 0.8)
     }
     this.warmthLevel = 1 - near.dist / SOUNDING_RANGE
-    return near.dist
+    return { kind: 'hit', dist: near.dist }
   }
 
   update(dt: number): void {
