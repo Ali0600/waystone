@@ -80,6 +80,11 @@ Append `?qa=1` to the URL for the QA harness: no pointer lock, and a `window.__g
 handle with a deterministic `step(n)` that advances the fixed-timestep simulation even in
 hidden tabs — the same hook the automated browser QA drives.
 
+**[`docs/MECHANICS.md`](docs/MECHANICS.md)** is the complete mechanic checklist — every
+system, the key that triggers it, and its covering tests. A meta-test
+(`tests/mechanics-doc.test.ts`) keeps it honest in both directions: no dead test refs, no
+test suite left off the list, and no mechanic listed without coverage.
+
 ## Experience Gained
 
 - Designed and shipped a complete CI/CD pipeline: typecheck + test + build on every PR,

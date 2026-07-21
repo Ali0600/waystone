@@ -110,6 +110,9 @@ authored in island-local coords before it ever loaded.
   push deploys to Pages after tests.
 - Save schema changes: bump version, chain a migration, extend validation, update the
   v1-migration test, and never let a failed parse destroy the stored bytes.
+- A new mechanic lands with a row in `docs/MECHANICS.md` (name · key · covering test, or
+  the `browser-QA` tag). `tests/mechanics-doc.test.ts` enforces both sides — every new
+  `tests/*.test.ts` suite must be cited by a row, and every row must cite a test or QA tag.
 
 ## Verify in prod after ship
 
