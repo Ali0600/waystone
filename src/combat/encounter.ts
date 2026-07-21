@@ -21,6 +21,9 @@ const GLYPH_DAMAGE = 4
 const REFLECT_DAMAGE = 4
 /** Bracing (Defend) widens the parry window this much on the next enemy turn. */
 const BRACE_WINDOW_MULT = 1.6
+/** Opening blow when you crash into a foe by grapple — indexed by grapple tier
+ *  (1/2/3). Max 5 < the weakest enemy's 26 HP, so it can never one-shot. */
+export const GRAPPLE_ENTRY_DAMAGE = [2, 3, 5]
 
 export type EncounterPhase =
   | 'intro'
@@ -77,6 +80,8 @@ export class Encounter {
   private outroT = 0
   private arts = new ArtRecognizer()
   private telegraphed = false
+  /** The grapple-entry blow lands once, mid-intro. */
+  private entryApplied = false
 
   constructor(
     private enemy: EnemyDef,
@@ -86,6 +91,9 @@ export class Encounter {
     private glyphs: GlyphSystem,
     /** Guarded discoverable id this enemy protects, if any. */
     private guards?: string,
+    /** True when the duel was opened by grappling into the foe — deals a
+     *  tier-scaled opening blow during the intro. */
+    private grappleEntry = false,
   ) {
     this.enemyHp = enemy.hp
     // A cooked meal (from mist-angling) is a one-fight shield of over-max HP.
@@ -308,7 +316,18 @@ export class Encounter {
 
     switch (this.phase) {
       case 'intro': {
-        if (this.phaseT >= 1.2) this.setPhase('player')
+        // Crash-in damage lands a beat into the intro (after the UI has mounted
+        // and can show the banner), reading as the impact of the tackle.
+        if (this.grappleEntry && !this.entryApplied && this.phaseT >= 0.4) {
+          this.entryApplied = true
+          const tier = this.mastery.tier('grapple')
+          const dmg = GRAPPLE_ENTRY_DAMAGE[Math.min(tier, GRAPPLE_ENTRY_DAMAGE.length) - 1]
+          this.bus.emit('combat:entry', { dmg })
+          this.damageEnemy(dmg)
+        }
+        // Guard the transition on the phase so a (theoretical) intro win isn't
+        // clobbered back to 'player'.
+        if (this.phase === 'intro' && this.phaseT >= 1.2) this.setPhase('player')
         break
       }
       case 'player': {

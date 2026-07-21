@@ -252,6 +252,9 @@ let encounter: Encounter | null = null
 let arena: Arena | null = null
 let combatUi: CombatUi | null = null
 let combatContact: EnemyContact | null = null
+// Set when a grapple launches at an enemy; a duel begun against that spawn while
+// the flag is live opens with a crash-in blow. Expires (flight can't reach) via t.
+let grappleEngage: { spawnIndex: number; t: number } | null = null
 
 // The Glyph Grid — inscription happens beside Iole the Scribe.
 const glyphs = new GlyphSystem(saves.state, bus, () => recruits.homeCount())
@@ -460,7 +463,7 @@ function talkToNerei() {
   }
 }
 
-function startEncounter(contact: EnemyContact) {
+function startEncounter(contact: EnemyContact, grappleEntry = false) {
   combatContact = contact
   encounter = new Encounter(
     contact.def,
@@ -469,6 +472,7 @@ function startEncounter(contact: EnemyContact) {
     mastery,
     glyphs,
     contact.guards,
+    grappleEntry,
   )
   arena = new Arena(contact.def, bus, window.innerWidth / window.innerHeight)
   combatUi = new CombatUi(bus, contact.def.name, contact.def.hp, hints)
@@ -543,10 +547,20 @@ function update(dt: number) {
   mooringPosts.update(dt)
   announceRegionAt(player.position.x, player.position.z)
 
+  // A grapple aimed at a foe stays "hot" for a short window (its flight, plus a
+  // margin) — a duel begun against that same spawn while it's live crashes in.
+  if (grappleEngage) {
+    grappleEngage.t -= dt
+    if (grappleEngage.t <= 0) grappleEngage = null
+  }
+
   // Touching an enemy begins a duel.
   const contact = worldEnemies.update(dt, player.position.x, player.position.z)
   if (contact) {
-    startEncounter(contact)
+    const viaGrapple = grappleEngage?.spawnIndex === contact.spawnIndex
+    grappleEngage = null
+    worldEnemies.setGrappleHighlight(null) // drop the aim glow before the duel
+    startEncounter(contact, viaGrapple)
     return
   }
 
@@ -568,11 +582,18 @@ function update(dt: number) {
   }
   chime.update(dt)
   if (caps.grapple) {
-    grapple.updateTargeting(orbit.yaw, orbit.pitch, world.collider)
+    const foes = worldEnemies.liveTargets().map((t) => ({ id: t.spawnIndex, pos: t.pos }))
+    grapple.updateTargeting(orbit.yaw, orbit.pitch, world.collider, foes)
+    worldEnemies.setGrappleHighlight(grapple.dynamicTargetId())
     if (snap.grapple && grapple.tryLaunch()) {
       mastery.record('grapple')
       audio.tone(240, 0.3, 'sawtooth', 0.5, 720)
+      // Zipping at a foe arms the crash-in; contact (mid-flight) reads the flag.
+      const foe = grapple.dynamicTargetId()
+      grappleEngage = foe !== null ? { spawnIndex: foe, t: 2.8 } : null
     }
+  } else {
+    worldEnemies.setGrappleHighlight(null)
   }
   if (player.stepEvents.dashed) mastery.record('dash')
   grapple.update(dt)
@@ -684,6 +705,8 @@ function update(dt: number) {
     glyphStones: st.glyphStones,
     gridEmpty: st.glyphGrid.every((c) => c === null),
     onMist: caps.mistwalker && player.position.y < MIST_Y + 1,
+    hasGrapple: caps.grapple,
+    felledAnyEnemy: Object.values(st.enemiesFelled).some((n) => n > 0),
     uiOpen: uiOpen || map.visible || glyphPanel.visible || escMenu.visible,
     inCombat: false,
   }
@@ -756,14 +779,17 @@ if (qaMode || import.meta.env.DEV) {
     get encounter() {
       return encounter
     },
-    startFight(enemyId: string) {
+    startFight(enemyId: string, grappleEntry = false) {
       const idx = world.enemies.findIndex((e) => e.enemyId === enemyId)
       if (idx < 0) return false
-      startEncounter({
-        def: ENEMIES[enemyId],
-        spawnIndex: idx,
-        guards: world.enemies[idx].guards,
-      })
+      startEncounter(
+        {
+          def: ENEMIES[enemyId],
+          spawnIndex: idx,
+          guards: world.enemies[idx].guards,
+        },
+        grappleEntry,
+      )
       return true
     },
     step(frames = 1) {

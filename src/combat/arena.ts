@@ -87,6 +87,11 @@ export class Arena {
       bus.on('combat:telegraph', () => {
         this.enemyLunge = 0.5
       }),
+      // The grapple crash-in: the foe recoils hard (the white hurt-flash comes
+      // free with the combat:damage the entry blow emits).
+      bus.on('combat:entry', () => {
+        this.enemyLunge = 1
+      }),
     )
   }
 

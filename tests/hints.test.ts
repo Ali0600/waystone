@@ -13,6 +13,8 @@ function ctx(over: Partial<HintContext> = {}): HintContext {
     glyphStones: 0,
     gridEmpty: true,
     onMist: false,
+    hasGrapple: false,
+    felledAnyEnemy: false,
     uiOpen: false,
     inCombat: false,
     ...over,

@@ -15,6 +15,7 @@ export interface GameEvents {
   'combat:telegraph': { name: string; pattern: string; locks: string[] }
   'combat:lock': { remaining: string[] }
   'combat:art': { name: string; unlocked: boolean }
+  'combat:entry': { dmg: number }
   'combat:end': { victory: boolean }
   'tool:acquired': { tool: string }
   'path:revealed': { id: string }

@@ -10,6 +10,13 @@ export interface GrapplePointDef {
   dy: number
 }
 
+/** A moving grapple target supplied each frame (a prowling enemy). Scored in the
+ *  same pass as the fixed crystal pylons; `id` lets the caller act on the choice. */
+export interface DynamicTarget {
+  id: number
+  pos: THREE.Vector3
+}
+
 const RANGE = 20
 const AIM_CONE = Math.cos(0.7) // ~40°
 
@@ -26,6 +33,8 @@ export class GrappleVerb {
   readonly group = new THREE.Group()
   private pylons: { pos: THREE.Vector3; crystal: THREE.Mesh }[] = []
   private target: number = -1
+  /** The aimed enemy (mutually exclusive with a pylon target), or null. */
+  private dynTarget: DynamicTarget | null = null
   private rope: THREE.Line
   private t = 0
 
@@ -67,13 +76,48 @@ export class GrappleVerb {
     }
   }
 
-  /** Current highlighted pylon position (null if none aimable). */
+  /** Current highlighted target position — an aimed enemy wins over a pylon,
+   *  but they're mutually exclusive (only one is set). Null if none aimable. */
   targetPoint(): THREE.Vector3 | null {
+    if (this.dynTarget) return this.dynTarget.pos
     return this.target >= 0 ? this.pylons[this.target].pos : null
   }
 
-  /** Pick the pylon the player is looking toward. */
-  updateTargeting(cameraYaw: number, cameraPitch: number, collider: Collider): void {
+  /** spawnIndex of the currently-aimed enemy, or null (a pylon, or nothing). */
+  dynamicTargetId(): number | null {
+    return this.dynTarget ? this.dynTarget.id : null
+  }
+
+  /** Aim-cone/range/line-of-sight score for a candidate world point, or null if
+   *  it fails a gate. Shared by pylons and enemies so both target identically. */
+  private scoreTarget(pos: THREE.Vector3, collider: Collider): number | null {
+    // Aim chest → target, straight line.
+    tmpToPylon.subVectors(pos, this.player.position)
+    tmpToPylon.y -= 1.2
+    const dist = tmpToPylon.length()
+    if (dist > RANGE || dist < 2) return null
+    tmpToPylon.normalize()
+    const dot = tmpToPylon.dot(tmpForward)
+    if (dot < AIM_CONE) return null
+    // Line of sight from the player's chest. Anything within 3.2u of the target
+    // counts as its own ledge/mount (or the ground at a foe's feet), not an
+    // obstruction: a crystal above a perch disc (r 2.3) ALWAYS has its sightline
+    // graze the rim — measured live at dist-2.9. Blockers sit mid-ray, not at the end.
+    tmpRay.origin.copy(this.player.position)
+    tmpRay.origin.y += 1.2
+    tmpRay.direction.copy(tmpToPylon)
+    const hit = collider.bvh.raycastFirst(tmpRay, THREE.DoubleSide)
+    if (hit && hit.distance < dist - 3.2) return null
+    return dot - dist / RANGE / 4
+  }
+
+  /** Pick the pylon OR enemy the player is looking toward (most-aimed-at wins). */
+  updateTargeting(
+    cameraYaw: number,
+    cameraPitch: number,
+    collider: Collider,
+    dynamic: DynamicTarget[] = [],
+  ): void {
     tmpForward.set(
       -Math.sin(cameraYaw) * Math.cos(cameraPitch),
       -Math.sin(cameraPitch) * 0.4,
@@ -81,32 +125,26 @@ export class GrappleVerb {
     )
     tmpForward.normalize()
     let best = -1
+    let bestDyn: DynamicTarget | null = null
     let bestScore = -Infinity
     for (let i = 0; i < this.pylons.length; i++) {
-      // Aim chest → crystal, straight line.
-      tmpToPylon.subVectors(this.pylons[i].pos, this.player.position)
-      tmpToPylon.y -= 1.2
-      const dist = tmpToPylon.length()
-      if (dist > RANGE || dist < 2) continue
-      tmpToPylon.normalize()
-      const dot = tmpToPylon.dot(tmpForward)
-      if (dot < AIM_CONE) continue
-      // Line of sight from the player's chest. Anything within 3.2u of the
-      // crystal counts as its own ledge/mount, not an obstruction: a crystal
-      // above a perch disc (r 2.3) ALWAYS has its sightline graze the rim —
-      // measured live at dist-2.9. True blockers sit mid-ray, not at the end.
-      tmpRay.origin.copy(this.player.position)
-      tmpRay.origin.y += 1.2
-      tmpRay.direction.copy(tmpToPylon)
-      const hit = collider.bvh.raycastFirst(tmpRay, THREE.DoubleSide)
-      if (hit && hit.distance < dist - 3.2) continue
-      const score = dot - dist / RANGE / 4
-      if (score > bestScore) {
+      const score = this.scoreTarget(this.pylons[i].pos, collider)
+      if (score !== null && score > bestScore) {
         bestScore = score
         best = i
+        bestDyn = null
+      }
+    }
+    for (const d of dynamic) {
+      const score = this.scoreTarget(d.pos, collider)
+      if (score !== null && score > bestScore) {
+        bestScore = score
+        best = -1
+        bestDyn = d
       }
     }
     this.target = best
+    this.dynTarget = bestDyn
   }
 
   /** Fire toward the current target. Returns true if launched. */

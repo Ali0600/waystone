@@ -25,7 +25,7 @@ silently drift from the suite.
 ## Tools (each is found in the world; the acquire flips a capability flag)
 
 - [x] **Lantern** (`F`) — reveal latent discoverables & solidify ghost walkways; **T3** buried-cache sweep · `tests/verbs.test.ts` · `tests/discovery.test.ts`
-- [x] **Grapple** (`Q`) — pull to a crystal pylon; **T3** mid-air re-grapple · `tests/verbs.test.ts`
+- [x] **Grapple** (`Q`) — pull to a crystal pylon **or a prowling foe**; targeting scores pylons + enemies in one aim cone; **T3** mid-air re-grapple · `tests/grapple.test.ts` · `tests/verbs.test.ts`
 - [x] **Sounding Rod** (`T`) — pitch/warmth homing to buried caches · `tests/sounding.test.ts`
 - [x] **Chime** (`C`) — resonate a `sealed` stone open · `tests/chime.test.ts`
 - [x] **Mistwalker** — the mist sea holds your weight on a draining charge; charge-out sinks you · `tests/mistwalker.test.ts`
@@ -46,7 +46,7 @@ silently drift from the suite.
 - [x] **Plant a Waystone at a socket → manifest a latent isle** (ghost → solid) · `tests/world.test.ts`
 - [x] **Latent regions** hang as ghosts (no collision/content) until manifested · `tests/world.test.ts`
 - [x] **Waystone chains** (Veilspire → Cindervault → Palegrove) · `tests/world.test.ts`
-- [x] **Enemy contact begins a duel** — the **nearest** in-range enemy, with a post-fight grace so you don't chain straight into the next; defeated enemies despawn; guardians stay recorded · `tests/worldenemies.test.ts`
+- [x] **Enemy contact begins a duel** — the **nearest** in-range enemy, with a post-fight grace so you don't chain straight into the next; defeated enemies despawn; guardians stay recorded. Reaching a foe by **grapple** (contact fires mid-flight) opens with a crash-in blow · `tests/worldenemies.test.ts`
 
 ## Glyph Grid (`G`, at the Scribe)
 
@@ -73,6 +73,7 @@ silently drift from the suite.
 - [x] **Command menu** — classic JRPG box (Attack / Glyphs / Defend / Item): arrows navigate, **Enter** confirms/descends, **Esc** backs out, with cursor memory · `tests/menu.test.ts`
 - [x] **Defend (Brace)** — halves the next enemy turn's damage and widens the parry window · `tests/combat.test.ts`
 - [x] **Item** — eat a held fish to heal in battle (species-scaled, capped at max HP, costs the turn) · `tests/combat.test.ts`
+- [x] **Grapple entry blow** — grappling into a foe opens the duel with a tier-scaled crash-in hit (2 / 3 / 5 by grapple mastery), banner + impact · `tests/combat.test.ts`
 - [x] **Victory / defeat** — rewards on win; defeat costs nothing (respawn, keep everything) · `tests/combat.test.ts`
 
 ## Minigames
