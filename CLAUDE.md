@@ -56,6 +56,13 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
 - Tools: `content/tools.ts` `TOOL_INFO` is the single source of truth for tool
   names/keys/blurbs (reused by the acquire toasts AND the Ledger); `ACQUIRABLE_TOOL_IDS`
   is pinned to `GameState.tools` keys by `tools.test.ts`.
+- Per-region atmosphere (`world/atmosphere.ts`): `AtmosphereRig` blends scene
+  background/fog/hemi/sun/mist toward the current isle's authored `RegionPalette` +
+  `fog`/`sunDir`. `smoothFactor(dt)` = frame-rate-independent easing (pure, tested).
+  Driven by the SINGLE `announceRegionAt` tracker (banner + atmosphere, one owner);
+  `setTarget` on walking across, `snapTo` at boot (to the actual spawn isle) and on a
+  ferry hop. The rig owns `scene.background`. NOTE: each isle's palette is now really
+  applied for the first time — before this, all isles wore Amberfall's mood.
 - The Surveyor's Ledger (`ui/ledger.ts`, key `I`, replaces the old archivist panel): an
   `.esc-overlay` with an Inventory tab (always) + a Guide tab gated on Fen the Archivist
   being home. Talking to Fen opens it on the Guide tab. Add it to `uiOpen` in main; note

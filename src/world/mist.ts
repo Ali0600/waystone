@@ -27,6 +27,15 @@ export class MistSea {
     this.group.add(this.upper, this.lower)
   }
 
+  /** Retint the mist to a region's fog colour (same recipe as the ctor:
+   *  the lower disc is darkened toward the deep). Driven by AtmosphereRig. */
+  setColor(c: THREE.Color): void {
+    ;(this.upper.material as THREE.MeshBasicMaterial).color.copy(c)
+    ;(this.lower.material as THREE.MeshBasicMaterial).color
+      .copy(c)
+      .lerp(new THREE.Color('#1a1626'), 0.35)
+  }
+
   update(dt: number): void {
     this.upper.rotation.z += dt * 0.004
     this.lower.rotation.z -= dt * 0.0025

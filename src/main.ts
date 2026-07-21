@@ -38,6 +38,7 @@ import { LatentPaths } from './world/latentpath'
 import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
+import { AtmosphereRig } from './world/atmosphere'
 import { LedgerPanel } from './ui/ledger'
 import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
@@ -79,15 +80,19 @@ const world = new World(
 )
 scene.add(world.group)
 const prime = world.regions[0].def
-scene.background = new THREE.Color(prime.palette.sky)
-scene.fog = new THREE.Fog(prime.palette.fog, prime.fog.near, prime.fog.far)
-scene.add(new THREE.HemisphereLight(prime.palette.hemiSky, prime.palette.hemiGround, 1.9))
+const sceneFog = new THREE.Fog(prime.palette.fog, prime.fog.near, prime.fog.far)
+scene.fog = sceneFog
+const hemi = new THREE.HemisphereLight(prime.palette.hemiSky, prime.palette.hemiGround, 1.9)
+scene.add(hemi)
 const sun = new THREE.DirectionalLight(prime.palette.sun, 2.4)
-sun.position.set(...prime.sunDir).multiplyScalar(80)
 scene.add(sun)
 
 const mist = new MistSea(prime.palette.fog)
 scene.add(mist.group)
+
+// Each isle wears its OWN authored mood (sky/fog/hemi/sun/mist); the rig blends
+// toward the region the player is in. Owns scene.background + drives sun.position.
+const atmosphere = new AtmosphereRig(scene, sceneFog, hemi, sun, mist, prime)
 
 // --- Player ---
 const bus = new EventBus()
@@ -114,6 +119,9 @@ if (savedValid) {
 } else {
   player.respawn()
 }
+// Boot straight into the mood of whatever isle we actually loaded onto — a save
+// on Thornmere must not flash Amberfall's amber sky before the ease catches up.
+atmosphere.snapTo(world.regionAt(player.position.x, player.position.z)?.def ?? prime)
 
 const avatar = new Avatar()
 scene.add(avatar.group)
@@ -276,6 +284,7 @@ function announceRegionAt(x: number, z: number) {
   if (r && r.def.id !== currentRegionId) {
     currentRegionId = r.def.id
     hud.announceRegion(r.def.name)
+    atmosphere.setTarget(r.def) // ease the sky/fog/light to this isle's mood
   }
 }
 announceRegionAt(player.position.x, player.position.z)
@@ -388,6 +397,8 @@ function ferryTo(m: { regionId: string; name: string; x: number; z: number }) {
   player.setSpawn(lastSolid)
   currentRegionId = '' // force the arrival banner
   announceRegionAt(m.x, m.z)
+  // A ferry hop is a discrete jump under the fade — snap the mood, don't ease.
+  atmosphere.snapTo(world.regionAt(m.x, m.z)?.def ?? prime)
   bus.emit('toast', { text: `The ferry brings you to ${m.name}.`, flavor: 'info' })
   persist()
 }
@@ -499,6 +510,7 @@ function update(dt: number) {
   hud.setMistCharge(caps.mistwalker && mistCharge.fraction() < 0.999 ? mistCharge.fraction() : null)
   orbit.update(dt, snap, player.position, world.collider)
   mist.update(dt)
+  atmosphere.update(dt) // ease sky/fog/light toward the current isle's mood
   const groundY = groundHeightBelow(
     world.collider,
     player.position.x,
