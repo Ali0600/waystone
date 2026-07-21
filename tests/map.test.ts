@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { frameRegions } from '../src/discovery/map'
+import { frameRegions, markerFor } from '../src/discovery/map'
 import { amberfall } from '../src/content/regions/amberfall'
 import { veilspire } from '../src/content/regions/veilspire'
 import { waystation } from '../src/content/regions/waystation'
@@ -36,6 +36,29 @@ describe('frameRegions — world→canvas framing', () => {
   it('honors a custom margin', () => {
     const f = frameRegions([{ origin: [0, 0], radius: 10 }], 560, 0)
     expect(f.scale).toBeCloseTo(560 / 20, 9)
+  })
+})
+
+describe('markerFor — what a discoverable draws on the map', () => {
+  it('a discovered-but-uncollected spot pins, for every kind', () => {
+    for (const status of ['pinned', 'revealed'] as const) {
+      expect(markerFor('cache', status)).toBe('pin')
+      expect(markerFor('person', status)).toBe('pin')
+      expect(markerFor('glyphstone', status)).toBe('pin')
+    }
+  })
+
+  it('a collected spot is a hollow ring — EXCEPT a person, who is dropped', () => {
+    expect(markerFor('cache', 'found')).toBe('ring')
+    expect(markerFor('glyphstone', 'found')).toBe('ring')
+    expect(markerFor('buried', 'found')).toBe('ring')
+    // A recruited person walked home; no stale dot at the meeting spot.
+    expect(markerFor('person', 'found')).toBeNull()
+  })
+
+  it('an unseen spot draws nothing', () => {
+    expect(markerFor('cache', undefined)).toBeNull()
+    expect(markerFor('person', undefined)).toBeNull()
   })
 })
 

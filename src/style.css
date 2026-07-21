@@ -226,6 +226,14 @@ body {
   max-height: min(86vw, 86vh);
 }
 
+.map-legend {
+  color: var(--ui-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  max-width: 86vw;
+}
+
 /* --- Glyph Grid panel --- */
 
 .glyph-overlay[hidden] {

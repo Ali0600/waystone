@@ -68,7 +68,7 @@ out there come home with you, and home gets bigger.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 345 tests, including a **content-invariant suite** that enforces the design
+- Vitest: 348 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests
