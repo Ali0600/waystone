@@ -184,3 +184,26 @@ nearest-wins contact selection instead of first-by-array-order.
 must-leave-the-zone latch, or a require-re-approach), and when several triggers overlap,
 resolve by *nearest/most-relevant*, never by iteration order. Test the exact resume frame:
 "condition still true on the frame after the modal ends" must NOT re-fire.
+
+## `stopPropagation()` does NOT stop other listeners on the same element
+
+`event.stopPropagation()` stops the event from travelling to *other elements* in the
+capture/bubble path — it does nothing about sibling listeners attached to the **same**
+target. To prevent a later-registered listener on the same element from also running, you
+need `event.stopImmediatePropagation()`.
+
+**Why it came up:** every full-screen overlay (Ledger, cards, shop…) and the pause menu
+registered their Escape handlers on `window`. An overlay's handler closed itself and called
+`stopPropagation()`, expecting the pause-menu handler (also on `window`, registered later)
+to be suppressed — but it wasn't, because they share the target. The overlay hid itself,
+then the menu's handler ran, saw no overlay open (it had just hidden), and toggled the menu
+on. Pressing Esc to close the Ledger *also opened the pause menu underneath*. Switching to
+`stopImmediatePropagation()` fixed it (the overlays are all registered before the menu, so
+immediate-stop reaches its handler).
+
+**Takeaway:** when two listeners on the *same* element/`window`/`document` must be mutually
+exclusive for one event and one has to preempt the other, `stopImmediatePropagation()` is
+the tool — and it only preempts listeners registered *after* it, so registration order is
+part of the contract. `stopPropagation()` is for cross-element bubbling, a different job.
+Verify by reproducing the exact double-fire first (dispatch the real event, assert the
+second listener's effect is absent), not just that the first one's effect happened.
