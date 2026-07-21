@@ -46,7 +46,7 @@ silently drift from the suite.
 - [x] **Plant a Waystone at a socket → manifest a latent isle** (ghost → solid) · `tests/world.test.ts`
 - [x] **Latent regions** hang as ghosts (no collision/content) until manifested · `tests/world.test.ts`
 - [x] **Waystone chains** (Veilspire → Cindervault → Palegrove) · `tests/world.test.ts`
-- [x] **Enemy contact begins a duel; defeated enemies despawn; guardians stay recorded** · `tests/worldenemies.test.ts`
+- [x] **Enemy contact begins a duel** — the **nearest** in-range enemy, with a post-fight grace so you don't chain straight into the next; defeated enemies despawn; guardians stay recorded · `tests/worldenemies.test.ts`
 
 ## Glyph Grid (`G`, at the Scribe)
 

@@ -49,14 +49,42 @@ describe('WorldEnemies — touch begins a duel', () => {
     expect(we.update(1 / 60, 0, 0)).toBeNull() // no re-fight
   })
 
-  it('reports only ONE contact even when two enemies overlap the player', () => {
+  it('picks the NEAREST live enemy in range, not the first by array order', () => {
+    // You walked into the closer one — the duel must open against IT, not
+    // whichever happens to be earlier in the spawn list. The nearer enemy is
+    // deliberately placed LATER so a first-wins bug fails this.
     const we = new WorldEnemies(
-      [spawn({ x: 0, z: 0 }), spawn({ x: 0.5, z: 0 })],
+      [spawn({ x: 1.5, z: 0 }), spawn({ x: 0.3, z: 0 })], // idx0 far, idx1 near
       createInitialState(),
       flat,
     )
     const c = we.update(1 / 60, 0, 0)
     expect(c).not.toBeNull()
-    expect(c!.spawnIndex).toBe(0) // the first live enemy wins
+    expect(c!.spawnIndex).toBe(1)
+  })
+
+  it('a post-fight grace suppresses contact, then re-engages after it lapses', () => {
+    const we = new WorldEnemies([spawn({ x: 0, z: 0 })], createInitialState(), flat)
+    expect(we.update(1 / 60, 0, 0)).not.toBeNull() // in range, no grace
+    we.suppress(2)
+    expect(we.update(1 / 60, 0, 0)).toBeNull() // grace: standing on it, no duel
+    for (let t = 0; t < 2; t += 1 / 60) we.update(1 / 60, 0, 0) // step past the grace
+    expect(we.update(1 / 60, 0, 0)).not.toBeNull() // re-engages deliberately
+  })
+
+  it('the chained-duel bug: winning enemy A does not instantly start enemy B', () => {
+    // Two enemies both inside touch range (as when patrols overlap on an isle).
+    const we = new WorldEnemies(
+      [spawn({ x: 0.4, z: 0 }), spawn({ x: 0.8, z: 0 })],
+      createInitialState(),
+      flat,
+    )
+    const first = we.update(1 / 60, 0, 0)
+    expect(first!.spawnIndex).toBe(0) // nearest
+    // Model endEncounter(): defeat A + apply the post-fight grace.
+    we.markDefeated(first!.spawnIndex)
+    we.suppress(2)
+    // The very next world frame must NOT chain into a duel with B.
+    expect(we.update(1 / 60, 0, 0)).toBeNull()
   })
 })

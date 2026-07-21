@@ -10,6 +10,9 @@ export interface EnemyContact {
   guards?: string
 }
 
+/** How close the player must be to a wandering enemy to begin a duel. */
+export const CONTACT_RADIUS = 1.7
+
 interface WorldEnemy {
   spawn: EnemySpawnDef
   def: EnemyDef
@@ -78,6 +81,7 @@ export class WorldEnemies {
   readonly group = new THREE.Group()
   private enemies: WorldEnemy[] = []
   private t = 0
+  private suppressT = 0
 
   private rng = mulberry32(31337)
 
@@ -119,13 +123,24 @@ export class WorldEnemies {
     e.group.visible = false
   }
 
-  /** Returns a contact if the player touches a live enemy. */
+  /** After a duel, ignore contacts for a grace period so a neighbouring patrol
+   *  doesn't chain you straight into a second fight the instant the first ends.
+   *  Patrols keep animating; only the touch check pauses. */
+  suppress(seconds: number): void {
+    this.suppressT = Math.max(this.suppressT, seconds)
+  }
+
+  /** Returns a contact with the NEAREST live in-range enemy, or null. During a
+   *  post-fight grace window (see suppress) no contact is returned. */
   update(dt: number, px: number, pz: number): EnemyContact | null {
     this.t += dt
+    this.suppressT = Math.max(0, this.suppressT - dt)
     let contact: EnemyContact | null = null
+    let bestDist = CONTACT_RADIUS // only enemies strictly inside the touch radius
     for (const [i, e] of this.enemies.entries()) {
       if (e.defeated) continue
-      // Slow patrol loop around the spawn point.
+      // Slow patrol loop around the spawn point (always — the world stays alive
+      // even during the grace window).
       e.angle += dt * 0.25 * e.speed
       const cx = e.spawn.x + Math.cos(e.angle) * e.spawn.patrolR
       const cz = e.spawn.z + Math.sin(e.angle) * e.spawn.patrolR
@@ -135,8 +150,12 @@ export class WorldEnemies {
       if (halo) halo.rotation.z = this.t * 1.2
       e.group.position.y += Math.sin(this.t * 1.8 + i) * 0.05
 
-      if (contact === null && Math.hypot(px - cx, pz - cz) < 1.7) {
-        contact = { def: e.def, spawnIndex: i, guards: e.spawn.guards }
+      if (this.suppressT <= 0) {
+        const d = Math.hypot(px - cx, pz - cz)
+        if (d < bestDist) {
+          bestDist = d
+          contact = { def: e.def, spawnIndex: i, guards: e.spawn.guards }
+        }
       }
     }
     return contact
