@@ -1,7 +1,7 @@
 import { GLYPHS, type GlyphId } from '../content/glyphs'
 import type { EventBus } from '../core/events'
 import { PLAYER_MAX_HP, type Encounter } from '../combat/encounter'
-import { BEAT_WINDOW } from '../content/chains'
+import { BEAT_WINDOW, PARRY_WINDOW } from '../content/chains'
 import { inWindow } from '../combat/timing'
 
 /**
@@ -145,9 +145,16 @@ export class CombatUi {
       this.actions.hidden = true
     }
 
+    // The beat bar serves double duty: the player's own Chain, and — the fix
+    // for "I couldn't tell when to parry" — the enemy's incoming strikes.
     if (encounter.phase === 'playerChain' && encounter.chainRun) {
       this.beatBar.hidden = false
+      this.beatBar.classList.remove('parry')
       this.renderBeats(encounter)
+    } else if (encounter.strikeRun) {
+      this.beatBar.hidden = false
+      this.beatBar.classList.add('parry')
+      this.renderParry(encounter)
     } else {
       this.beatBar.hidden = true
     }
@@ -188,6 +195,26 @@ export class CombatUi {
     }
     html += `<div class="beat-cursor" style="left:${Math.min(100, (rel / total) * 100)}%"></div></div>
       <div class="beat-hint">SPACE on the beat</div>`
+    if (this.beatBar.innerHTML !== html) this.beatBar.innerHTML = html
+  }
+
+  /** The incoming-strike bar: each enemy hit as a marker that lights gold in
+   *  its parry window. Mirrors renderBeats so parry reads the same as chaining. */
+  private renderParry(encounter: Encounter): void {
+    const run = encounter.strikeRun!
+    const last = run.hitTimes[run.hitTimes.length - 1]
+    const total = last - run.startT + 0.4
+    const rel = encounter.t - run.startT
+    let html = '<div class="beat-track">'
+    for (const [i, hitT] of run.hitTimes.entries()) {
+      let cls: string
+      if (i < run.hitIndex) cls = run.parried[i] ? 'beat done parried' : 'beat done missed'
+      else if (inWindow(encounter.t, hitT, PARRY_WINDOW)) cls = 'beat live'
+      else cls = 'beat'
+      html += `<div class="${cls}" style="left:${((hitT - run.startT) / total) * 100}%"></div>`
+    }
+    html += `<div class="beat-cursor" style="left:${Math.min(100, Math.max(0, (rel / total) * 100))}%"></div></div>
+      <div class="beat-hint">SPACE — parry as it lands</div>`
     if (this.beatBar.innerHTML !== html) this.beatBar.innerHTML = html
   }
 

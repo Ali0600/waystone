@@ -37,6 +37,10 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus
   events); arena scene + DOM overlay render it but own no rules. `timing.ts` pure.
+  Parry is signposted (M23): `ui/combat.ts` reuses the chain beat bar in a `.parry`
+  variant off the public `strikeRun` (`startT`+`hitTimes`), and `arena.ts` glows the
+  enemy gold while a hit is `inWindow` (its emissive has ONE per-frame owner in
+  `update` — flash vs glow can't fight). Both sides of the beat bar now teach their key.
   Hidden Arts live in `content/chains.ts`; a longer Art's `sequence` must NOT end with a
   shorter Art's sequence, or the recognizer fires the shorter one first (Undertow's tail
   can't be `…↑ Space` = Emberwake).
