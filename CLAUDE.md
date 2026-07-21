@@ -1,8 +1,9 @@
 # Waystone — agent notes
 
-Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M25,
-PRs #1–#26): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
-per-isle atmosphere, parry signposting, contextual teaching hints. 294 tests, save v15.
+Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
+PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
+per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
+command menu. 315 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
