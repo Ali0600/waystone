@@ -1,8 +1,27 @@
-import type { GameState } from '../core/state'
+import type { GameState, DiscoveryStatus } from '../core/state'
 import type { World } from '../world/world'
 import type { RegionDef } from '../world/region'
+import type { DiscoveryKind } from './types'
+import { RECRUITS } from '../content/recruits'
 
 export type MapScope = 'local' | 'world'
+
+/**
+ * What marker a discoverable draws on the map, given its collection status:
+ *  - `'pin'` — an orange "?" for a discovered-but-uncollected spot (pinned/revealed).
+ *  - `'ring'` — a faint hollow ring for a COLLECTED spot (a record it's emptied).
+ *  - `null`  — nothing: unseen spots stay hidden, and a collected PERSON is dropped
+ *    (they walked home — they're drawn as a resident ☺ at their home, not a stale
+ *    dot at the place you first met them). Keeps the map in sync with the world.
+ */
+export function markerFor(
+  kind: DiscoveryKind,
+  status: DiscoveryStatus | undefined,
+): 'pin' | 'ring' | null {
+  if (status === 'pinned' || status === 'revealed') return 'pin'
+  if (status === 'found') return kind === 'person' ? null : 'ring'
+  return null
+}
 
 /** A world→canvas transform: centre in world coords + uniform px-per-unit scale. */
 export interface MapFrame {
@@ -75,7 +94,11 @@ export class RegionMap {
     this.canvas = document.createElement('canvas')
     this.canvas.width = 560
     this.canvas.height = 560
-    this.overlay.append(this.titleEl, this.canvas)
+    const legend = document.createElement('div')
+    legend.className = 'map-legend'
+    legend.textContent =
+      '?  undiscovered   ○  collected   ☺  resident   ⚓  mooring   ◎  socket   ≋  fishing'
+    this.overlay.append(this.titleEl, this.canvas, legend)
     document.body.appendChild(this.overlay)
     this.ctx = this.canvas.getContext('2d')!
 
@@ -213,19 +236,36 @@ export class RegionMap {
       }
     }
 
-    // Discoveries: pinned "?", found dots.
+    // Discoveries: an orange "?" for a spot still to reach, a faint hollow ring
+    // for one you've emptied. A collected PERSON draws nothing here (they walked
+    // home — see the residents pass below), so the map never lies about a dot.
     for (const def of this.world.discoverables) {
-      const status = this.state.discoveries[def.id]
+      const marker = markerFor(def.kind, this.state.discoveries[def.id])
+      if (!marker) continue
       const [dx, dy] = this.toCanvas(def.x, def.z)
-      if (status === 'pinned' || status === 'revealed') {
+      if (marker === 'pin') {
         ctx.fillStyle = '#ffb347'
         ctx.font = 'bold 14px Georgia'
+        ctx.textAlign = 'center'
         ctx.fillText('?', dx, dy + 5)
-      } else if (status === 'found') {
-        ctx.fillStyle = 'rgba(159, 216, 208, 0.8)'
+      } else {
+        ctx.strokeStyle = 'rgba(159, 216, 208, 0.45)'
+        ctx.lineWidth = 1.2
         ctx.beginPath()
-        ctx.arc(dx, dy, 2.2, 0, Math.PI * 2)
-        ctx.fill()
+        ctx.arc(dx, dy, 2.6, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    }
+
+    // Residents: recruited people drawn where they actually LIVE (their hub home),
+    // so the marker tracks the person, not the spot you first met them at.
+    ctx.fillStyle = 'rgba(255, 216, 160, 0.9)'
+    ctx.font = '12px Georgia'
+    ctx.textAlign = 'center'
+    for (const r of RECRUITS) {
+      if (this.state.discoveries[r.personId] === 'found') {
+        const [hx, hy] = this.toCanvas(r.home.x, r.home.z)
+        ctx.fillText('☺', hx, hy + 4)
       }
     }
 
