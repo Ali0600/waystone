@@ -788,6 +788,7 @@ if (qaMode || import.meta.env.DEV) {
         '.hud-region',
         '.combat-top',
         '.combat-bottom',
+        '.combat-menu',
         '.angling-bar',
         '.mist-meter',
         '.card-overlay',

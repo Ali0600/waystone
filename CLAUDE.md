@@ -45,6 +45,17 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   Hidden Arts live in `content/chains.ts`; a longer Art's `sequence` must NOT end with a
   shorter Art's sequence, or the recognizer fires the shorter one first (Undertow's tail
   can't be `…↑ Space` = Emberwake).
+  **Command menu (M28):** the classic JRPG box is a pure `combat/menu.ts` `BattleMenu`
+  (arrows + Enter + Esc, cursor memory) driven from the `player` phase — the encounter builds
+  `menuRoot()` (DATA: Attack→chains, Glyphs→inscribed, Defend, Item→held fish) and
+  `runCommit`s the selection. The menu SELECTS; the beat bar/parry still EXECUTE. Digit1-8
+  shortcuts + the ArtRecognizer stay (checked BEFORE the menu; arrows both drive the cursor
+  AND feed arts — Space, not Enter, fires arts). **Defend** = `braced`: `damagePlayer` halves
+  and `parryWindow` (getter, used by encounter/arena/ui) widens ×1.6 for the next enemy turn,
+  cleared when the player phase resumes. **Item** = `useItem` heals from `fishHeld`, capped at
+  `readonly maxHp` (= PLAYER_MAX_HP + meal shield). HP bar divides by `maxHp`. EscMenu skips
+  opening while `.combat-ui` exists (Esc = menu-back in a duel). `.combat-menu` is in the
+  auditFrame SELECTORS.
 - `src/minigames/` — `sounding.ts` (dig) and `angling.ts` (pure `AnglingSim` + species +
   `cookBestFish`/`mealShield`, all rng/time injected) with `anglingverb.ts` the DOM/input
   wrapper. Angling pays fish (Cook → pre-fight shield) + points (Angler teaches Undertow).

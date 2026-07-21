@@ -1,7 +1,7 @@
 import { GLYPHS, type GlyphId } from '../content/glyphs'
 import type { EventBus } from '../core/events'
-import { PLAYER_MAX_HP, type Encounter } from '../combat/encounter'
-import { BEAT_WINDOW, PARRY_WINDOW } from '../content/chains'
+import { type Encounter } from '../combat/encounter'
+import { BEAT_WINDOW } from '../content/chains'
 import { inWindow } from '../combat/timing'
 
 /**
@@ -13,7 +13,8 @@ export class CombatUi {
   private enemyName: HTMLElement
   private playerBar: HTMLElement
   private enemyBar: HTMLElement
-  private actions: HTMLElement
+  /** The classic JRPG command box (right side), shown in the player phase. */
+  private menuEl: HTMLElement
   private beatBar: HTMLElement
   private banner: HTMLElement
   private locksEl: HTMLElement
@@ -49,12 +50,15 @@ export class CombatUi {
     this.playerBar = document.createElement('div')
     this.playerBar.className = 'combat-bar player'
     this.playerBar.innerHTML = '<div class="combat-bar-fill"></div>'
-    this.actions = document.createElement('div')
-    this.actions.className = 'combat-actions'
     this.beatBar = document.createElement('div')
     this.beatBar.className = 'combat-beatbar'
     this.beatBar.hidden = true
-    bottom.append(this.beatBar, this.actions, this.playerBar)
+    bottom.append(this.beatBar, this.playerBar)
+
+    // The command box lives on the right, not in the bottom cluster.
+    this.menuEl = document.createElement('div')
+    this.menuEl.className = 'combat-menu'
+    this.menuEl.hidden = true
 
     this.banner = document.createElement('div')
     this.banner.className = 'combat-banner'
@@ -67,7 +71,7 @@ export class CombatUi {
     this.feedback = document.createElement('div')
     this.feedback.className = 'combat-feedback'
 
-    this.root.append(top, this.banner, this.locksEl, this.feedback, bottom)
+    this.root.append(top, this.banner, this.locksEl, this.feedback, bottom, this.menuEl)
     document.body.appendChild(this.root)
 
     this.unsubs.push(
@@ -135,7 +139,7 @@ export class CombatUi {
     if (this.hints && !this.hints.seen('lock-break')) {
       const teach = document.createElement('span')
       teach.className = 'combat-lock-teach'
-      teach.textContent = 'Cancel a lock with its matching glyph action (keys 3+).'
+      teach.textContent = 'Cancel a lock with its matching glyph (the Glyphs menu, or keys 3+).'
       this.locksEl.appendChild(teach)
     }
   }
@@ -151,15 +155,16 @@ export class CombatUi {
   /** Per-frame sync of bars, menu and beat bar. */
   update(encounter: Encounter): void {
     const pf = this.playerBar.firstElementChild as HTMLElement
-    pf.style.width = `${(encounter.playerHp / PLAYER_MAX_HP) * 100}%`
+    // Divide by maxHp (not PLAYER_MAX_HP) so a meal shield never overflows 100%.
+    pf.style.width = `${Math.min(100, (encounter.playerHp / encounter.maxHp) * 100)}%`
     const ef = this.enemyBar.firstElementChild as HTMLElement
     ef.style.width = `${(encounter.enemyHp / this.enemyMaxHp) * 100}%`
 
     if (encounter.phase === 'player') {
-      this.actions.hidden = false
-      this.renderActions(encounter)
+      this.menuEl.hidden = false
+      this.renderMenu(encounter)
     } else {
-      this.actions.hidden = true
+      this.menuEl.hidden = true
     }
 
     // The beat bar serves double duty: the player's own Chain, and — the fix
@@ -177,23 +182,22 @@ export class CombatUi {
     }
   }
 
-  private renderActions(encounter: Encounter): void {
-    const chains = encounter.availableChains()
-    const glyphs = encounter.availableGlyphs()
-    const parts: string[] = []
-    chains.forEach((c, i) => {
-      const uses = 0
-      void uses
-      parts.push(`<span class="combat-key">${i + 1}</span> ${c.name}`)
+  /** The classic command box: root Attack/Glyphs/Defend/Item or an open submenu. */
+  private renderMenu(encounter: Encounter): void {
+    const view = encounter.menu.view(encounter.menuRoot())
+    let html = ''
+    if (view.title) html += `<div class="combat-menu-title">${view.title}</div>`
+    html += '<div class="combat-menu-list">'
+    view.options.forEach((o, i) => {
+      const cls =
+        'combat-menu-item' + (i === view.cursor ? ' sel' : '') + (o.disabled ? ' disabled' : '')
+      const labelStyle = o.color ? ` style="color:${o.color}"` : ''
+      const detail = o.detail ? `<span class="combat-menu-detail">${o.detail}</span>` : ''
+      html += `<div class="${cls}"><span class="combat-menu-cur">${i === view.cursor ? '▸' : ''}</span><span class="combat-menu-label"${labelStyle}>${o.label}</span>${detail}</div>`
     })
-    glyphs.forEach((g, i) => {
-      const def = GLYPHS[g]
-      parts.push(
-        `<span class="combat-key">${i + 3}</span> <span style="color:${def.color}">${def.rune} ${def.name}</span>`,
-      )
-    })
-    const html = parts.join('<span class="combat-sep">·</span>')
-    if (this.actions.innerHTML !== html) this.actions.innerHTML = html
+    html += '</div>'
+    html += `<div class="combat-menu-foot">${view.footer}</div>`
+    if (this.menuEl.innerHTML !== html) this.menuEl.innerHTML = html
   }
 
   private renderBeats(encounter: Encounter): void {
@@ -226,7 +230,7 @@ export class CombatUi {
     for (const [i, hitT] of run.hitTimes.entries()) {
       let cls: string
       if (i < run.hitIndex) cls = run.parried[i] ? 'beat done parried' : 'beat done missed'
-      else if (inWindow(encounter.t, hitT, PARRY_WINDOW)) cls = 'beat live'
+      else if (inWindow(encounter.t, hitT, encounter.parryWindow)) cls = 'beat live'
       else cls = 'beat'
       html += `<div class="${cls}" style="left:${((hitT - run.startT) / total) * 100}%"></div>`
     }

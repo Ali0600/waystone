@@ -392,25 +392,78 @@ body {
   text-align: center;
 }
 
-.combat-actions {
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
+/* --- The classic JRPG command box (M28) --- */
+
+.combat-menu[hidden] {
+  display: none;
 }
 
-.combat-key {
-  display: inline-block;
-  min-width: 1.3em;
-  padding: 1px 4px;
+.combat-menu {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 190px;
+  max-width: 44vw;
+  background: rgba(12, 10, 20, 0.9);
   border: 1px solid var(--ui-accent);
-  border-radius: 3px;
-  color: var(--ui-accent);
-  font-size: 0.8rem;
-  margin-right: 3px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  text-align: left;
 }
 
-.combat-sep {
-  margin: 0 10px;
+.combat-menu-title {
+  color: var(--ui-accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  margin-bottom: 6px;
+}
+
+.combat-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.combat-menu-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  color: var(--ui-fg);
+}
+
+.combat-menu-item.sel {
+  background: rgba(255, 179, 71, 0.22);
+  color: #ffe8c0;
+}
+
+.combat-menu-item.disabled {
+  opacity: 0.4;
+}
+
+.combat-menu-cur {
+  width: 0.9em;
+  flex: none;
+  color: var(--ui-accent);
+}
+
+.combat-menu-label {
+  flex: 1;
+}
+
+.combat-menu-detail {
+  color: var(--ui-dim);
+  padding-left: 10px;
+}
+
+.combat-menu-foot {
+  margin-top: 8px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
   color: var(--ui-dim);
 }
 

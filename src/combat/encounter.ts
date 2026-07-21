@@ -13,11 +13,14 @@ import type { GlyphSystem } from '../progression/glyphs'
 import type { MasterySystem } from '../progression/mastery'
 import { beatExpired, judgePress } from './timing'
 import { ArtRecognizer } from './arts'
-import { mealShield } from '../minigames/angling'
+import { FISH, mealShield } from '../minigames/angling'
+import { BattleMenu, type MenuEntry, type MenuCommit } from './menu'
 
 export const PLAYER_MAX_HP = 30
 const GLYPH_DAMAGE = 4
 const REFLECT_DAMAGE = 4
+/** Bracing (Defend) widens the parry window this much on the next enemy turn. */
+const BRACE_WINDOW_MULT = 1.6
 
 export type EncounterPhase =
   | 'intro'
@@ -55,6 +58,8 @@ export class Encounter {
   phase: EncounterPhase = 'intro'
   t = 0
   playerHp = PLAYER_MAX_HP
+  /** Max HP the bar divides by — PLAYER_MAX_HP, or higher with a meal shield. */
+  readonly maxHp: number
   enemyHp: number
   /** Set when the outro is finished and the world may resume. */
   done = false
@@ -62,6 +67,10 @@ export class Encounter {
   strikeRun: StrikeRun | null = null
   /** Pending chorister chant: broken by matching glyph actions. */
   chantLocks: GlyphId[] | null = null
+  /** Defend stance: halves the next enemy turn's damage + widens the parry window. */
+  braced = false
+  /** The classic command menu (Attack/Glyphs/Defend/Item). */
+  readonly menu = new BattleMenu()
   private chantAttack: EnemyAttack | null = null
   private attackIndex = 0
   private phaseT = 0
@@ -88,6 +97,8 @@ export class Encounter {
       }
       state.pendingMeal = null
     }
+    // The bar (and in-battle Item heals) cap at whatever the player started with.
+    this.maxHp = Math.max(PLAYER_MAX_HP, this.playerHp)
     bus.emit('combat:start', { enemyName: enemy.name })
     this.setPhase('intro')
   }
@@ -108,10 +119,17 @@ export class Encounter {
     return [...seen]
   }
 
+  /** Live parry window — wider while braced, so Defend makes timing easier. */
+  get parryWindow(): number {
+    return PARRY_WINDOW * (this.braced ? BRACE_WINDOW_MULT : 1)
+  }
+
   private setPhase(phase: EncounterPhase): void {
     this.phase = phase
     this.phaseT = 0
     this.telegraphed = false
+    // A brace protects exactly one enemy turn; regaining the initiative ends it.
+    if (phase === 'player') this.braced = false
     this.bus.emit('combat:phase', { phase })
   }
 
@@ -128,10 +146,12 @@ export class Encounter {
   }
 
   private damagePlayer(amount: number): void {
-    this.playerHp = Math.max(0, this.playerHp - amount)
+    // Bracing (Defend) softens the blow this enemy turn.
+    const actual = this.braced ? Math.ceil(amount / 2) : amount
+    this.playerHp = Math.max(0, this.playerHp - actual)
     this.bus.emit('combat:damage', {
       target: 'player',
-      amount,
+      amount: actual,
       hpLeft: this.playerHp,
     })
     if (this.playerHp <= 0) {
@@ -173,6 +193,94 @@ export class Encounter {
       return this.enemy.attacks[this.attackIndex++ % this.enemy.attacks.length]
     }
     return attack
+  }
+
+  /** Build the current command-menu tree (DATA — the DOM overlay renders it). */
+  menuRoot(): MenuEntry[] {
+    const root: MenuEntry[] = [
+      {
+        key: 'attack',
+        label: 'Attack',
+        submenu: this.availableChains().map((c) => ({
+          key: c.id,
+          label: c.name,
+          commit: { kind: 'chain', id: c.id },
+        })),
+      },
+    ]
+    const glyphs = this.availableGlyphs()
+    if (glyphs.length > 0) {
+      root.push({
+        key: 'glyphs',
+        label: 'Glyphs',
+        submenu: glyphs.map((g) => ({
+          key: g,
+          label: `${GLYPHS[g].rune} ${GLYPHS[g].name}`,
+          color: GLYPHS[g].color,
+          commit: { kind: 'glyph', id: g },
+        })),
+      })
+    }
+    root.push({ key: 'defend', label: 'Defend', commit: { kind: 'defend' } })
+    const fish = FISH.filter((f) => (this.state.fishHeld[f.id] ?? 0) > 0)
+    root.push({
+      key: 'item',
+      label: 'Item',
+      disabled: fish.length === 0,
+      submenu: fish.map((f) => ({
+        key: f.id,
+        label: f.name,
+        detail: `×${this.state.fishHeld[f.id]}`,
+        commit: { kind: 'item', fishId: f.id },
+      })),
+    })
+    return root
+  }
+
+  private runCommit(commit: MenuCommit): void {
+    switch (commit.kind) {
+      case 'chain': {
+        const def = this.availableChains().find((c) => c.id === commit.id)
+        if (def) this.startChain(def)
+        break
+      }
+      case 'glyph':
+        this.useGlyph(commit.id)
+        break
+      case 'defend':
+        this.brace()
+        break
+      case 'item':
+        this.useItem(commit.fishId)
+        break
+    }
+  }
+
+  /** Defend: take a braced stance — the next enemy turn hits for half and its
+   *  parry window is wider. Costs the turn. */
+  private brace(): void {
+    this.braced = true
+    this.bus.emit('toast', {
+      text: 'You brace — the next blow lands softer, and easier to turn.',
+      flavor: 'info',
+    })
+    this.beginEnemyTurn()
+  }
+
+  /** Item: eat a held fish to heal (bigger species heal more). Costs the turn. */
+  private useItem(fishId: string): void {
+    if ((this.state.fishHeld[fishId] ?? 0) <= 0) return
+    const heal = Math.max(3, Math.ceil(mealShield(fishId) * 0.6))
+    const before = this.playerHp
+    this.playerHp = Math.min(this.maxHp, this.playerHp + heal)
+    this.state.fishHeld[fishId] -= 1
+    if (this.state.fishHeld[fishId] <= 0) delete this.state.fishHeld[fishId]
+    const name = FISH.find((f) => f.id === fishId)?.name ?? 'fish'
+    this.bus.emit('toast', {
+      text: `You eat the ${name} (+${this.playerHp - before} HP)`,
+      flavor: 'reward',
+    })
+    this.beginEnemyTurn()
   }
 
   /** A glyph action: damage + break every matching lock. */
@@ -231,13 +339,18 @@ export class Encounter {
           this.startChain(chains[1])
           break
         }
-        // Glyph actions on 3..8.
+        // Glyph actions on 3..8 (retained shortcuts; the menu is the main path).
         const glyphsAvail = this.availableGlyphs()
         for (let i = 0; i < glyphsAvail.length && i < 6; i++) {
           if (pressedCodes.includes(`Digit${i + 3}`)) {
             this.useGlyph(glyphsAvail[i])
             break
           }
+        }
+        // The command menu (arrows + Enter). Only if a shortcut didn't just act.
+        if (this.phase === 'player') {
+          const commit = this.menu.step(pressedCodes, this.menuRoot())
+          if (commit) this.runCommit(commit)
         }
         break
       }
@@ -344,7 +457,7 @@ export class Encounter {
         }
         const hitT = run.hitTimes[run.hitIndex]
         if (spacePressed) {
-          const judged = judgePress(this.t, hitT, PARRY_WINDOW)
+          const judged = judgePress(this.t, hitT, this.parryWindow)
           if (judged === 'hit') {
             run.parried[run.hitIndex] = true
             run.hitIndex++
@@ -358,7 +471,7 @@ export class Encounter {
             break
           }
         }
-        if (beatExpired(this.t, hitT, PARRY_WINDOW)) {
+        if (beatExpired(this.t, hitT, this.parryWindow)) {
           run.hitIndex++
           this.bus.emit('combat:parry', { result: 'hit' })
           this.damagePlayer(run.attack.damage)
