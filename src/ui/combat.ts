@@ -105,6 +105,9 @@ export class CombatUi {
         else if (result !== 'pending') this.flash(result, 'bad')
       }),
       bus.on('combat:art', ({ name }) => this.flash(name + '!', 'art')),
+      bus.on('combat:perfect', ({ kind }) =>
+        this.flash(kind === 'chain' ? 'Perfect!' : 'Perfect guard!', 'perfect'),
+      ),
       bus.on('combat:entry', ({ dmg }) => {
         this.showBanner(`Crashing entry!  −${dmg}`, 1.6)
       }),
@@ -147,7 +150,7 @@ export class CombatUi {
     }
   }
 
-  private flash(text: string, flavor: 'good' | 'bad' | 'art'): void {
+  private flash(text: string, flavor: 'good' | 'bad' | 'art' | 'perfect'): void {
     const el = document.createElement('div')
     el.className = `combat-flash ${flavor}`
     el.textContent = text

@@ -470,6 +470,11 @@ export class Encounter {
           break
         }
         if (run.hitIndex >= run.hitTimes.length) {
+          // A flawless defense: every hit of the string was parried. `parried` is
+          // sparse (set only on a parry), so check each index densely, not `.every`.
+          if (run.hitTimes.length > 0 && run.hitTimes.every((_, i) => run.parried[i] === true)) {
+            this.bus.emit('combat:perfect', { kind: 'guard' })
+          }
           this.strikeRun = null
           if (this.phase === 'enemyStrikes') this.setPhase('player')
           break
@@ -527,6 +532,8 @@ export class Encounter {
     if (completed) {
       this.state.chainUses[run.def.id] = (this.state.chainUses[run.def.id] ?? 0) + 1
       this.mastery.record('strike')
+      // A flawless chain (every beat landed — the only way to complete one).
+      this.bus.emit('combat:perfect', { kind: 'chain' })
     }
     if (damage > 0) this.damageEnemy(damage)
     if (this.phase !== 'victory') this.beginEnemyTurn()

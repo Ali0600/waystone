@@ -16,6 +16,7 @@ export interface GameEvents {
   'combat:lock': { remaining: string[] }
   'combat:art': { name: string; unlocked: boolean }
   'combat:entry': { dmg: number }
+  'combat:perfect': { kind: 'chain' | 'guard' }
   'combat:end': { victory: boolean }
   'tool:acquired': { tool: string }
   'path:revealed': { id: string }

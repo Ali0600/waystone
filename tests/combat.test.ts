@@ -28,6 +28,7 @@ function makeEncounter(
   bus.on('combat:lock', ({ remaining }) => events.push(`locks:${remaining.length}`))
   bus.on('combat:art', ({ name }) => events.push(`art:${name}`))
   bus.on('combat:entry', ({ dmg }) => events.push(`entry:${dmg}`))
+  bus.on('combat:perfect', ({ kind }) => events.push(`perfect:${kind}`))
   bus.on('combat:end', ({ victory }) => events.push(`end:${victory}`))
   return { enc, state, bus, mastery, glyphs, events }
 }
@@ -184,6 +185,58 @@ describe('enemy turns and parry', () => {
       if (i > 0) expect(run.hitTimes[i]).toBeGreaterThan(run.hitTimes[i - 1])
     }
     expect(run.startT).toBeLessThan(run.hitTimes[0])
+  })
+})
+
+describe('the Perfect signal', () => {
+  function toEnemyStrike(enc: Encounter) {
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    idle(enc, CHAINS[0].levels[0].beats[0] + BEAT_WINDOW + 0.05)
+    untilPhase(enc, 'enemyStrikes')
+  }
+
+  it('a flawless chain announces perfect:chain exactly once', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    for (const beat of CHAINS[0].levels[0].beats) {
+      while (enc.t - enc.chainRun!.startT < beat - DT / 2) enc.update(DT, [], false)
+      enc.update(DT, [], true) // Space on the beat
+    }
+    enc.update(DT, [], false) // completes
+    expect(events.filter((e) => e === 'perfect:chain')).toHaveLength(1)
+  })
+
+  it('a mistimed chain announces no perfect', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    idle(enc, CHAINS[0].levels[0].beats[0] + BEAT_WINDOW + 0.1) // miss the first beat
+    expect(events.some((e) => e.startsWith('perfect:'))).toBe(false)
+  })
+
+  it('parrying every hit of a string announces perfect:guard once', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    toEnemyStrike(enc)
+    const run = enc.strikeRun!
+    for (let i = 0; i < run.hitTimes.length; i++) {
+      while (enc.t < run.hitTimes[i] - DT / 2) enc.update(DT, [], false)
+      enc.update(DT, [], true) // parry on the beat
+    }
+    enc.update(DT, [], false)
+    expect(events.filter((e) => e === 'perfect:guard')).toHaveLength(1)
+  })
+
+  it('a string with one hit landing forfeits the guard (sparse-array trap)', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk) // Cinder Swipe: 2 hits
+    toEnemyStrike(enc)
+    const run = enc.strikeRun!
+    // Parry only the FIRST hit, then let the rest land.
+    while (enc.t < run.hitTimes[0] - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, [], true)
+    idle(enc, (run.attack.beats!.at(-1) ?? 0) + PARRY_WINDOW + 0.3)
+    expect(events).not.toContain('perfect:guard')
   })
 })
 
