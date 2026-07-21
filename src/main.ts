@@ -192,7 +192,13 @@ const recruits = new RecruitSystem(
 )
 scene.add(recruits.group)
 
-const map = new RegionMap(world, saves.state)
+const map = new RegionMap(
+  world,
+  saves.state,
+  // The isle to frame in the LOCAL scope — the one last entered (never null over
+  // mist), falling back to the prime isle before the first region is tracked.
+  () => world.regions.find((r) => r.def.id === currentRegionId)?.def ?? prime,
+)
 const postfx = new PostFx(renderer, scene, camera)
 // Session message log — the Toasts choke point records every bottom-left
 // message here, and the Ledger's Log tab renders it (survives the 5-toast cap).
@@ -682,7 +688,8 @@ function update(dt: number) {
   angling.update(dt, input.isHeld('KeyE'))
   // Gate the map/glyph toggles too, so M/G can't open a panel *underneath* an
   // open overlay (card table, shop, ferry, board, or the Ledger).
-  if (snap.map && !uiOpen) map.toggle()
+  if (snap.map && !uiOpen) map.toggle('local')
+  if (snap.worldMap && !uiOpen) map.toggle('world')
   if (snap.glyphs && !uiOpen) glyphPanel.toggle()
   hud.setPrompt(
     angling.statusText() ??
@@ -778,6 +785,7 @@ if (qaMode || import.meta.env.DEV) {
     rewardBoard,
     ledger,
     attunement,
+    map,
     worldEnemies,
     hints,
     discovery,

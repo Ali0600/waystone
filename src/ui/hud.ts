@@ -38,7 +38,7 @@ export function controlsLine(caps: { grapple: boolean; sounding: boolean; chime:
     caps.sounding ? 'T sounding' : null,
     caps.chime ? 'C chime' : null,
     'E interact',
-    'M map',
+    'M map · N world',
     'G glyphs',
     'I ledger',
     'L log',

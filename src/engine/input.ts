@@ -13,6 +13,8 @@ export interface InputSnapshot {
   lantern: boolean
   grapple: boolean
   map: boolean
+  /** Open the World Map (all islands). */
+  worldMap: boolean
   glyphs: boolean
   sounding: boolean
   chime: boolean
@@ -70,6 +72,7 @@ export class Input {
       lantern: this.pressed.has('KeyF'),
       grapple: this.pressed.has('KeyQ'),
       map: this.pressed.has('KeyM'),
+      worldMap: this.pressed.has('KeyN'),
       glyphs: this.pressed.has('KeyG'),
       sounding: this.pressed.has('KeyT'),
       chime: this.pressed.has('KeyC'),

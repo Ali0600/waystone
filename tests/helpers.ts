@@ -11,6 +11,7 @@ export function idleInput(overrides: Partial<InputSnapshot> = {}): InputSnapshot
     lantern: false,
     grapple: false,
     map: false,
+    worldMap: false,
     glyphs: false,
     sounding: false,
     chime: false,
