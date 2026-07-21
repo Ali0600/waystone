@@ -38,7 +38,7 @@ import { LatentPaths } from './world/latentpath'
 import { World } from './world/world'
 import { groundHeightBelow } from './world/collision'
 import { MistSea, MIST_Y } from './world/mist'
-import { ArchivistPanel } from './ui/archivist'
+import { LedgerPanel } from './ui/ledger'
 import { findOverlappingPairs, type Box } from './ui/framecheck'
 import { CardTable } from './ui/cardtable'
 import { ShopPanel } from './ui/shop'
@@ -182,7 +182,7 @@ scene.add(recruits.group)
 
 const map = new RegionMap(world, saves.state)
 const postfx = new PostFx(renderer, scene, camera)
-const archivist = new ArchivistPanel(world, saves.state)
+const ledger = new LedgerPanel(world, saves.state)
 const cardTable = new CardTable(saves.state, bus)
 const shop = new ShopPanel(saves.state, bus)
 
@@ -568,7 +568,11 @@ function update(dt: number) {
     !nearMooring &&
     boardProp.visible &&
     Math.hypot(player.position.x - boardPos.x, player.position.z - boardPos.z) < 3
-  const uiOpen = cardTable.visible || shop.visible || ferry.visible || rewardBoard.visible
+  // `otherOverlayOpen` excludes the Ledger so `I` can still close it; `uiOpen`
+  // includes it so E-interact and M/G stay blocked while any panel owns the screen.
+  const otherOverlayOpen = cardTable.visible || shop.visible || ferry.visible || rewardBoard.visible
+  const uiOpen = otherOverlayOpen || ledger.visible
+  if (snap.inventory && !angling.active && !otherOverlayOpen) ledger.toggle('inventory')
   if (angling.active) {
     // Angling in progress: E is the reel; every other interact waits.
   } else if (snap.interact && !uiOpen) {
@@ -585,7 +589,7 @@ function update(dt: number) {
     } else if (homeRecruit && hubLineCooldown <= 0) {
       hubLineCooldown = 2
       if (homeRecruit.role === 'archivist') {
-        archivist.toggle()
+        ledger.open('guide')
       } else if (homeRecruit.role === 'cook') {
         cookAtMarou()
       } else if (homeRecruit.role === 'cardplayer') {
@@ -600,8 +604,10 @@ function update(dt: number) {
     }
   }
   angling.update(dt, input.isHeld('KeyE'))
-  if (snap.map) map.toggle()
-  if (snap.glyphs) glyphPanel.toggle()
+  // Gate the map/glyph toggles too, so M/G can't open a panel *underneath* an
+  // open overlay (card table, shop, ferry, board, or the Ledger).
+  if (snap.map && !uiOpen) map.toggle()
+  if (snap.glyphs && !uiOpen) glyphPanel.toggle()
   hud.setPrompt(
     angling.statusText() ??
       (target
@@ -677,6 +683,7 @@ if (qaMode || import.meta.env.DEV) {
     shop,
     ferry,
     rewardBoard,
+    ledger,
     discovery,
     mastery,
     recruits,

@@ -41,6 +41,7 @@ out there come home with you, and home gets bigger.
 | Thornmere Deep | A sixth island with no bridge and no Waystone — it just sits across open mist, visible and out of reach. The only way in is to **mist-walk** the gap and **grapple** up the shore (both endgame tools), into a verdant deep guarded by Thorn Husks (four-beat strings + a two-lock rootsong) |
 | The Ferry | A fifth tool won deep in Thornmere: ring the **Ferryman's Bell** at any region's mooring to fast-travel to another — a fade, and you step off at the far shore. Only manifested regions are on the network |
 | The Reward Board | A posted board that appears by the arch once four recruits are home: 10 bounties spanning every system (clear a region, fell a boss, land 30 fish, win 5 card matches, master a verb, learn two Hidden Arts, wake three isles) with live progress bars, each paying Lumen — some rare Glyph Stones or a card — once |
+| The Surveyor's Ledger | Press `I` anywhere: an **Inventory** tab (what you hold — tools and what they do, catch, cards, learned Arts with their key sequences, discovered resonances) and a **100% Guide** tab kept by Fen the Archivist. The Guide lists everything still to do — remaining discoverables named only by their in-game **cue** (never spoiled), latent isles masked, Hidden Arts and fusions shown as counts — a guided shopping list, not a walkthrough |
 | Mist-angling | Once the Angler joins, cast (`E`) from rim spots: wait for a bite, strike, then reel against a tension see-saw. Fish are consumables the **Cook** turns into pre-fight shields; enough angling points earn the Angler's **Undertow** technique |
 | The Deck Game | Recruit Tam and play the residents at the Painted Table — a three-lane card game (quiet/echo/rally/bulwark abilities) where every card depicts an enemy, recruit, or place **you've actually met**. Wins pay Lumen, ranked-ladder wins pay rare Glyph Stones; Sel's shop stocks rotating boosters. 22 cards, a greedy AI, a 4-resident → 3-rival → Tam ladder |
 | Audio | Every sound synthesized in WebAudio — no audio assets; each enemy attack pattern has a distinct audible windup |
@@ -50,7 +51,7 @@ out there come home with you, and home gets bigger.
 
 `WASD` move · `Space` jump · `Shift` dash · mouse look (click to lock) ·
 `F` lantern pulse · `Q` grapple · `T` sounding ping · `C` chime · `E` interact ·
-`M` survey map · `G` glyph grid · `Esc` menu / save
+`M` survey map · `G` glyph grid · `I` ledger (inventory + guide) · `Esc` menu / save
 
 ## Stack
 

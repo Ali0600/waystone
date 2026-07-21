@@ -66,24 +66,34 @@ export class GlyphSystem {
     return this.recruitsHome() >= REINSCRIBE_RECRUITS
   }
 
+  /** Combo defs the player has ever discovered — permanent, from the save
+   *  (not the live grid), so the Ledger still lists them after a grid clear. */
+  discovered(): ComboDef[] {
+    return this.state.combosDiscovered
+      .map((id) => COMBOS.find((c) => c.id === id))
+      .filter((c): c is ComboDef => c !== undefined)
+  }
+
   /** Spend a blank stone to permanently inscribe a glyph. */
   inscribe(slot: number, glyph: GlyphId): boolean {
     if (slot < 0 || slot >= GRID_SIZE * GRID_SIZE) return false
     if (this.state.glyphGrid[slot] !== null) return false
     if (this.state.glyphStones < 1) return false
-    const combosBefore = this.combos().length
     this.state.glyphStones -= 1
     this.state.glyphGrid[slot] = glyph
     this.bus.emit('glyphstone:changed', { total: this.state.glyphStones, delta: 0 })
     this.bus.emit('glyph:inscribed', { slot, glyph })
     this.bus.emit('toast', { text: `${GLYPHS[glyph].name} inscribed`, flavor: 'reward' })
-    const gained = this.combos().length - combosBefore
-    if (gained > 0) {
-      const latest = this.combos()[this.combos().length - 1]
-      this.bus.emit('toast', {
-        text: `The glyphs resonate — ${latest.combo.name} awakens!`,
-        flavor: 'reward',
-      })
+    // Persist any resonance now on the grid as permanently discovered, and
+    // announce each the FIRST time only (re-forming a known combo is silent).
+    for (const ac of this.combos()) {
+      if (!this.state.combosDiscovered.includes(ac.combo.id)) {
+        this.state.combosDiscovered.push(ac.combo.id)
+        this.bus.emit('toast', {
+          text: `The glyphs resonate — ${ac.combo.name} awakens!`,
+          flavor: 'reward',
+        })
+      }
     }
     return true
   }

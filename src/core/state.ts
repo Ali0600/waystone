@@ -3,6 +3,7 @@
  * writes. Everything here must survive JSON round-tripping (no class
  * instances, no THREE objects, no functions).
  */
+import { COMBOS } from '../content/glyphs'
 
 /** unseen (absent) → pinned (seen but locked) → found. 'revealed' marks a
  *  latent discoverable made solid by the Lantern but not yet collected. */
@@ -26,7 +27,7 @@ export type GlyphSlot =
   | null
 
 export interface GameState {
-  version: 13
+  version: 14
   regionId: string
   playerPos: [number, number, number]
   /** Global upgrade currency. */
@@ -70,13 +71,16 @@ export interface GameState {
   enemiesFelled: Record<string, number>
   /** Reward-board bounty ids already claimed (paid once). */
   bountiesClaimed: string[]
+  /** Glyph adjacency combos ever discovered (permanent — survives clearing
+   *  the grid, unlike the live `activeCombos` read; powers the Ledger). */
+  combosDiscovered: string[]
 }
 
 export const SPAWN_REGION = 'amberfall'
 
 export function createInitialState(): GameState {
   return {
-    version: 13,
+    version: 14,
     regionId: SPAWN_REGION,
     // Placeholder until the first save; a fresh boot always uses the
     // region's authored spawn point (see SaveSystem.isFresh).
@@ -102,11 +106,48 @@ export function createInitialState(): GameState {
     cardWins: {},
     enemiesFelled: {},
     bountiesClaimed: [],
+    combosDiscovered: [],
   }
 }
 
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v)
+}
+
+/**
+ * Combo ids whose unordered pair sits orthogonally adjacent on the 4×4
+ * row-major grid. Deliberately self-contained (NOT the live `activeCombos`
+ * from progression/) so the v13→v14 migration stays frozen even if combo
+ * detection later changes — a migration must reproduce the same result forever.
+ */
+function combosOnGrid(grid: unknown): string[] {
+  if (!Array.isArray(grid)) return []
+  const W = 4
+  const cellAt = (i: number): string | null => {
+    const c = grid[i]
+    return typeof c === 'string' ? c : null
+  }
+  const found = new Set<string>()
+  for (let i = 0; i < grid.length; i++) {
+    const a = cellAt(i)
+    if (a === null) continue
+    const nbrs: number[] = []
+    if (i % W < W - 1) nbrs.push(i + 1) // right neighbour, no row wrap
+    if (i + W < W * W) nbrs.push(i + W) // down neighbour
+    for (const j of nbrs) {
+      const b = cellAt(j)
+      if (b === null) continue
+      for (const combo of COMBOS) {
+        if (
+          (combo.pair[0] === a && combo.pair[1] === b) ||
+          (combo.pair[0] === b && combo.pair[1] === a)
+        ) {
+          found.add(combo.id)
+        }
+      }
+    }
+  }
+  return [...found]
 }
 
 function isVec3(v: unknown): v is [number, number, number] {
@@ -212,8 +253,15 @@ export function parseGameState(json: string): GameState | null {
     o.version = 13
     o.bountiesClaimed = []
   }
+  // v13 → v14: the Surveyor's Ledger persists discovered glyph combos. Derive
+  // the initial set from the migrated grid so an existing save that already has
+  // a resonance inscribed keeps knowing it.
+  if (o.version === 13) {
+    o.version = 14
+    o.combosDiscovered = combosOnGrid(o.glyphGrid)
+  }
 
-  if (o.version !== 13) return null
+  if (o.version !== 14) return null
   if (typeof o.regionId !== 'string' || o.regionId.length === 0) return null
   if (!isVec3(o.playerPos)) return null
   if (!isFiniteNumber(o.lumen) || o.lumen < 0) return null
@@ -300,9 +348,10 @@ export function parseGameState(json: string): GameState | null {
     if (!isFiniteNumber(v) || v < 0) return null
   }
   if (!isStringArray(o.bountiesClaimed)) return null
+  if (!isStringArray(o.combosDiscovered)) return null
 
   return {
-    version: 13,
+    version: 14,
     regionId: o.regionId,
     playerPos: [o.playerPos[0], o.playerPos[1], o.playerPos[2]],
     lumen: o.lumen,
@@ -345,5 +394,6 @@ export function parseGameState(json: string): GameState | null {
     cardWins: { ...(cardWins as Record<string, number>) },
     enemiesFelled: { ...(enemiesFelled as Record<string, number>) },
     bountiesClaimed: [...(o.bountiesClaimed as string[])],
+    combosDiscovered: [...(o.combosDiscovered as string[])],
   }
 }

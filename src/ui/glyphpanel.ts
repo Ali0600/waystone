@@ -142,18 +142,18 @@ export class GlyphPanel {
       }
     }
 
-    if (combos.length > 0) {
+    // Persisted list: resonances stay listed once discovered, even after the
+    // grid is cleared (a discovery is permanent knowledge).
+    const discovered = this.glyphs.discovered()
+    if (discovered.length > 0) {
       const comboLabel = document.createElement('div')
       comboLabel.className = 'glyph-picker-label'
       comboLabel.textContent = 'Resonances discovered:'
       this.sideEl.appendChild(comboLabel)
-      const seen = new Set<string>()
-      for (const c of combos) {
-        if (seen.has(c.combo.id)) continue
-        seen.add(c.combo.id)
+      for (const c of discovered) {
         const line = document.createElement('div')
         line.className = 'glyph-combo-line'
-        line.innerHTML = `<span style="color:${c.combo.color}">${c.combo.rune} ${c.combo.name}</span> — ${c.combo.desc}`
+        line.innerHTML = `<span style="color:${c.color}">${c.rune} ${c.name}</span> — ${c.desc}`
         this.sideEl.appendChild(line)
       }
     }

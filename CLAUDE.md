@@ -49,8 +49,19 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   bridging save ↔ matches. UI in `ui/cardtable.ts` + `ui/shop.ts`. Card data in
   `content/cards.schema.ts` (`ALL_CARDS` — one per enemy/recruit/region, coverage-tested).
 - `src/progression/` — use-based mastery (verbs) + glyph grid + `bounties.ts` (pure
-  Reward-Board evaluator; bounty DATA in `content/bounties.ts`, UI in `ui/rewardboard.ts`).
+  Reward-Board evaluator; bounty DATA in `content/bounties.ts`, UI in `ui/rewardboard.ts`) +
+  `guide.ts` (pure `guideModel` — the 100% Guide; remaining discoverables carry the `cue`
+  only, NEVER the `label` — spoiler gate pinned by `guide.test.ts`).
 - `src/hub/` — recruit figures/structures; hub state DERIVES from discovery state.
+- Tools: `content/tools.ts` `TOOL_INFO` is the single source of truth for tool
+  names/keys/blurbs (reused by the acquire toasts AND the Ledger); `ACQUIRABLE_TOOL_IDS`
+  is pinned to `GameState.tools` keys by `tools.test.ts`.
+- The Surveyor's Ledger (`ui/ledger.ts`, key `I`, replaces the old archivist panel): an
+  `.esc-overlay` with an Inventory tab (always) + a Guide tab gated on Fen the Archivist
+  being home. Talking to Fen opens it on the Guide tab. Add it to `uiOpen` in main; note
+  `otherOverlayOpen` (excludes the Ledger) lets `I` still close it. Glyph combos now
+  persist in `state.combosDiscovered` (save v14) so a resonance survives a grid clear —
+  `GlyphSystem.inscribe` records + announces each once; `.discovered()` reads the list.
 
 ## Invariants enforced by tests (tests/content-invariants.test.ts)
 
