@@ -9,8 +9,14 @@ import type { GlyphId } from '../content/glyphs'
  * **cursor memory** — the menu reopens each turn on the last category and
  * sub-option chosen, so repeat turns are fast. The menu SELECTS; the existing
  * beat bar / parry still EXECUTE (the Super Mario RPG → Legend of Dragoon →
- * Sea of Stars lineage the brief descends from). Space is NOT a menu key — it
- * stays the beat/parry/art key.
+ * Sea of Stars lineage the brief descends from).
+ *
+ * **Space also confirms** (like Enter) so a fight can be driven entirely from
+ * the left hand. In the encounter's player phase, Hidden Arts are recognized
+ * BEFORE the menu and consume their finishing Space, so a Space that completes
+ * an art fires the art (unchanged); only a Space that doesn't reaches here as a
+ * confirm. Space stays the beat/parry/art key in the chain and enemy phases,
+ * where this menu isn't active.
  */
 
 export type MenuCommit =
@@ -44,7 +50,7 @@ export interface MenuView {
   footer: string
 }
 
-const FOOTER = '↑↓ select · Enter confirm · Esc back'
+const FOOTER = '↑↓ select · Enter/Space confirm · Esc back'
 
 export class BattleMenu {
   /** [] at the root, ['attack'] inside the Attack submenu. */
@@ -90,7 +96,9 @@ export class BattleMenu {
       else if (code === 'ArrowUp') this.move(entries, -1)
       else if (code === 'Escape' || code === 'Backspace') {
         if (this.path.length > 0) this.path = []
-      } else if (code === 'Enter' || code === 'NumpadEnter') {
+      } else if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') {
+        // Space confirms too (see the class comment): arts already consumed a
+        // finishing Space upstream, so anything reaching here is a plain confirm.
         const entry = entries[this.clampedCursor(entries)]
         if (!entry || entry.disabled) continue
         if (entry.submenu) {
