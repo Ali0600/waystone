@@ -3,7 +3,7 @@
 Browser exploration RPG (Three.js + TS + Vite). Phases 1–3 + polish complete (M0–M28,
 PRs #1–#31): 6 isles, 5 tools, 8 recruits, deck game, Reward Board, Surveyor's Ledger,
 per-isle atmosphere, parry signposting, contextual teaching hints, classic JRPG combat
-command menu, grapple-to-engage, LoD-style Attunement screen, Perfect signal, dual maps (isle/world, legible markers). 348 tests, save v15.
+command menu, grapple-to-engage, LoD-style Attunement screen, Perfect signal, dual maps (isle/world, legible markers) + minimap, WASD+Space combo chains. 352 tests, save v15.
 Play: https://ali0600.github.io/waystone/ · Repo: https://github.com/Ali0600/waystone
 
 ## Source of truth for design
@@ -62,8 +62,14 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   Hidden Arts live in `content/chains.ts`; a longer Art's `sequence` must NOT end with a
   shorter Art's sequence, or the recognizer fires the shorter one first (Undertow's tail
   can't be `…↑ Space` = Emberwake).
-  **Perfect signal (M31):** a completed chain (`finishChain(true)` — the only way to finish
-  one) emits `combat:perfect {kind:'chain'}`; a strike string where every hit was parried
+  **Combo chains (M35):** each `ChainLevel` carries `keys[]` (one per beat, from
+  `COMBO_KEYS` = WASD+Space; invariant-tested `keys.length === beats.length`). In the
+  `playerChain` branch, a pressed combo key ≠ the beat's expected key emits `combat:beat
+  {result:'wrong'}` + `finishChain(false)` (checked BEFORE the hit, so right+wrong same frame
+  fumbles); the expected key runs the existing `judgePress` timing. Patterns authored per level
+  (gentle ramp: traveler L1 = ␣-W-␣). Beat bar shows each key glyph (`.beat-key`, next emphasized);
+  parry stays Space-only, Arts stay arrows. **Perfect signal (M31):** a completed chain
+  (`finishChain(true)` — the only way to finish one) emits `combat:perfect {kind:'chain'}`; a strike string where every hit was parried
   emits `{kind:'guard'}`. NB `strikeRun.parried` is SPARSE (set only on a parry), so test it
   densely — `hitTimes.every((_, i) => parried[i] === true)`, never `parried.every(Boolean)`.
   `ui/combat.ts` flashes gold (`.combat-flash.perfect`), `audio.ts` plays a rising sting.

@@ -525,6 +525,24 @@ body {
   background: #9fd8a0;
 }
 
+/* The key each beat demands (M35 combo) — a glyph above its marker. */
+.combat-beatbar .beat-key {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--ui-font);
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--ui-dim);
+  pointer-events: none;
+}
+
+.combat-beatbar .beat-key.next {
+  color: var(--ui-accent);
+  font-size: 0.92rem;
+}
+
 .combat-beatbar .beat-cursor {
   position: absolute;
   top: -3px;

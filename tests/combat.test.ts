@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Encounter, PLAYER_MAX_HP } from '../src/combat/encounter'
 import { ArtRecognizer } from '../src/combat/arts'
 import { judgePress, beatExpired } from '../src/combat/timing'
-import { ARTS, BEAT_WINDOW, CHAINS, PARRY_WINDOW } from '../src/content/chains'
+import { ARTS, BEAT_WINDOW, CHAINS, COMBO_KEYS, PARRY_WINDOW } from '../src/content/chains'
 import { ENEMIES, type EnemyDef } from '../src/content/enemies'
 import { EventBus } from '../src/core/events'
 import { createInitialState, type GameState } from '../src/core/state'
@@ -29,6 +29,7 @@ function makeEncounter(
   bus.on('combat:art', ({ name }) => events.push(`art:${name}`))
   bus.on('combat:entry', ({ dmg }) => events.push(`entry:${dmg}`))
   bus.on('combat:perfect', ({ kind }) => events.push(`perfect:${kind}`))
+  bus.on('combat:beat', ({ result }) => events.push(`beat:${result}`))
   bus.on('combat:end', ({ victory }) => events.push(`end:${victory}`))
   return { enc, state, bus, mastery, glyphs, events }
 }
@@ -70,17 +71,14 @@ describe('chains', () => {
     enc.update(DT, ['Digit1'], false)
     expect(enc.phase).toBe('playerChain')
     const chain = CHAINS[0]
-    // Fire exactly on each beat of level 1.
+    // Fire exactly on each beat of level 1, pressing the KEY that beat demands.
     const level = chain.levels[0]
-    let last = 0
-    for (const beat of level.beats) {
-      // advance to the beat time then press
+    level.beats.forEach((beat, i) => {
       while (enc.t - enc.chainRun!.startT < beat - DT / 2) {
         enc.update(DT, [], false)
       }
-      enc.update(DT, [], true)
-      void last
-    }
+      enc.update(DT, [level.keys[i]], false)
+    })
     // Chain completes on the frame after the last hit.
     enc.update(DT, [], false)
     expect(state.chainUses[chain.id]).toBe(1)
@@ -99,6 +97,59 @@ describe('chains', () => {
     idle(enc, CHAINS[0].levels[0].beats[0] + BEAT_WINDOW + 0.1)
     expect(enc.phase).toBe('enemyWindup')
     expect(enc.enemyHp).toBe(ENEMIES.husk.hp) // zero hits, no bonus
+  })
+
+  it('every chain level has one key per beat, all from the combo set (M35)', () => {
+    for (const chain of CHAINS) {
+      for (const level of chain.levels) {
+        expect(level.keys).toHaveLength(level.beats.length)
+        for (const k of level.keys) expect(COMBO_KEYS).toContain(k)
+      }
+    }
+  })
+
+  it('a wrong combo key fumbles the chain (precision, not just timing)', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    const lvl = CHAINS[0].levels[0] // keys: ['Space', 'KeyW', 'Space']
+    // Land beat 0 (Space) correctly.
+    while (enc.t - enc.chainRun!.startT < lvl.beats[0] - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, [lvl.keys[0]], false)
+    expect(enc.chainRun!.hits).toBe(1)
+    // Beat 1 wants KeyW — press KeyS instead → fumble.
+    while (enc.t - enc.chainRun!.startT < lvl.beats[1] - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, ['KeyS'], false)
+    expect(events).toContain('beat:wrong')
+    expect(enc.phase).toBe('enemyWindup') // chain ended
+    expect(enc.enemyHp).toBe(ENEMIES.husk.hp - lvl.damagePerBeat) // only the 1 landed beat
+  })
+
+  it('the right key AND a wrong one on the same beat still fumbles', () => {
+    const { enc, events } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    const lvl = CHAINS[0].levels[0]
+    // On beat 0 (Space), press Space + a stray KeyA together.
+    while (enc.t - enc.chainRun!.startT < lvl.beats[0] - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, ['Space', 'KeyA'], false)
+    expect(events).toContain('beat:wrong')
+    expect(enc.chainRun).toBeNull() // fumbled before landing a hit
+  })
+
+  it('the correct next key pressed way early is ignored (pending), not consumed', () => {
+    const { enc } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    const lvl = CHAINS[0].levels[0] // beats [0.5, 1.1, 1.7], keys ['Space','KeyW','Space']
+    // Land beat 0 (Space) on time.
+    while (enc.t - enc.chainRun!.startT < lvl.beats[0] - DT / 2) enc.update(DT, [], false)
+    enc.update(DT, [lvl.keys[0]], false)
+    expect(enc.chainRun!.hits).toBe(1)
+    // Now press beat 1's key (KeyW) FAR early (~0.6s before its 1.1s beat = pending).
+    enc.update(DT, [lvl.keys[1]], false)
+    expect(enc.phase).toBe('playerChain') // still going — pending, not a miss
+    expect(enc.chainRun!.hits).toBe(1) // and not consumed
   })
 
   it('the second chain is strike-tier gated', () => {
@@ -200,10 +251,11 @@ describe('the Perfect signal', () => {
     const { enc, events } = makeEncounter(ENEMIES.husk)
     untilPhase(enc, 'player')
     enc.update(DT, ['Digit1'], false)
-    for (const beat of CHAINS[0].levels[0].beats) {
+    const lvl = CHAINS[0].levels[0]
+    lvl.beats.forEach((beat, i) => {
       while (enc.t - enc.chainRun!.startT < beat - DT / 2) enc.update(DT, [], false)
-      enc.update(DT, [], true) // Space on the beat
-    }
+      enc.update(DT, [lvl.keys[i]], false) // the beat's key
+    })
     enc.update(DT, [], false) // completes
     expect(events.filter((e) => e === 'perfect:chain')).toHaveLength(1)
   })

@@ -1,6 +1,7 @@
 import {
   BEAT_WINDOW,
   CHAINS,
+  COMBO_KEYS,
   PARRY_WINDOW,
   chainLevel,
   type ChainDef,
@@ -37,6 +38,8 @@ export type EncounterPhase =
 interface ChainRun {
   def: ChainDef
   beats: number[]
+  /** The key each beat demands (same length as `beats`) — the M35 combo. */
+  keys: string[]
   damagePerBeat: number
   startT: number
   beatIndex: number
@@ -382,7 +385,19 @@ export class Encounter {
           break
         }
         const beatT = run.beats[run.beatIndex]
-        if (spacePressed) {
+        const expected = run.keys[run.beatIndex]
+        // A wrong combo key (a WASD/Space that isn't the one this beat wants)
+        // fumbles the chain — precision matters, not just timing. Checked FIRST,
+        // so pressing the right key AND a wrong one the same frame still fumbles.
+        const wrongKey = pressedCodes.some(
+          (c) => (COMBO_KEYS as readonly string[]).includes(c) && c !== expected,
+        )
+        if (wrongKey) {
+          this.bus.emit('combat:beat', { result: 'wrong', beatIndex: run.beatIndex })
+          this.finishChain(false)
+          break
+        }
+        if (pressedCodes.includes(expected)) {
           const judged = judgePress(rel, beatT, BEAT_WINDOW)
           if (judged === 'hit') {
             run.hits++
@@ -393,7 +408,7 @@ export class Encounter {
             this.finishChain(false)
             break
           }
-          // 'pending' presses are ignored.
+          // 'pending' presses (the right key, way early) are ignored.
         } else if (beatExpired(rel, beatT, BEAT_WINDOW)) {
           this.bus.emit('combat:beat', { result: 'missed', beatIndex: run.beatIndex })
           this.finishChain(false)
@@ -517,6 +532,7 @@ export class Encounter {
     this.chainRun = {
       def,
       beats: level.beats,
+      keys: level.keys,
       damagePerBeat: level.damagePerBeat,
       startT: this.t,
       beatIndex: 0,
