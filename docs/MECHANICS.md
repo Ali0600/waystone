@@ -68,7 +68,7 @@ silently drift from the suite.
 ## Combat (touch an enemy → a duel)
 
 - [x] **Beat timing windows** (hit / early / late / expired) · `tests/combat.test.ts`
-- [x] **Chains** — timed input strings that level with use (`Space` on the beat) · `tests/combat.test.ts`
+- [x] **Chains** — timed **combo** strings that level with use: each beat demands a specific **W/A/S/D/Space** key shown on its marker; a wrong combo key fumbles the chain (precision + timing). Patterns authored per level (gentle intro → fuller mix) · `tests/combat.test.ts`
 - [x] **Parry** — per-hit window (`Space`); **T2** reflect projectiles, **T3** shatter a lock · `tests/combat.test.ts`
 - [x] **Parry visibility** — incoming-strike bar (markers gold in-window) + enemy glow + teach line · `browser-QA` + `tests/combat.test.ts` (bar geometry)
 - [x] **Chorister Locks** — broken by matching inscribed glyph types · `tests/combat.test.ts`

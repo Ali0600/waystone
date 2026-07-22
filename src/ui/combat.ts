@@ -4,6 +4,15 @@ import { type Encounter } from '../combat/encounter'
 import { BEAT_WINDOW } from '../content/chains'
 import { inWindow } from '../combat/timing'
 
+/** Beat-bar labels for the combo keys a chain demands (M35). */
+const COMBO_GLYPH: Record<string, string> = {
+  KeyW: 'W',
+  KeyA: 'A',
+  KeyS: 'S',
+  KeyD: 'D',
+  Space: '␣',
+}
+
 /**
  * Combat DOM overlay: HP bars, action menu, the beat bar, telegraphs and
  * lock icons. Renders what the Encounter says; owns no rules.
@@ -102,6 +111,7 @@ export class CombatUi {
       }),
       bus.on('combat:beat', ({ result }) => {
         if (result === 'hit') this.flash('●', 'good')
+        else if (result === 'wrong') this.flash('wrong key!', 'bad')
         else if (result !== 'pending') this.flash(result, 'bad')
       }),
       bus.on('combat:art', ({ name }) => this.flash(name + '!', 'art')),
@@ -218,10 +228,13 @@ export class CombatUi {
           : inWindow(rel, b, BEAT_WINDOW)
             ? 'beat live'
             : 'beat'
-      html += `<div class="${cls}" style="left:${(b / total) * 100}%"></div>`
+      // Each beat shows the key it demands (M35 combo); the NEXT beat is emphasized.
+      const key = COMBO_GLYPH[run.keys[i]] ?? '?'
+      const keyCls = 'beat-key' + (i === run.beatIndex ? ' next' : '')
+      html += `<div class="${cls}" style="left:${(b / total) * 100}%"><span class="${keyCls}">${key}</span></div>`
     }
     html += `<div class="beat-cursor" style="left:${Math.min(100, (rel / total) * 100)}%"></div></div>
-      <div class="beat-hint">SPACE on the beat</div>`
+      <div class="beat-hint">press each key on its beat</div>`
     if (this.beatBar.innerHTML !== html) this.beatBar.innerHTML = html
   }
 
