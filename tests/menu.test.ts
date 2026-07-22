@@ -86,6 +86,27 @@ describe('BattleMenu — navigation', () => {
     expect(m.step(['Enter'], r)).toEqual({ kind: 'defend' })
   })
 
+  it('Space confirms like Enter — descends into a submenu, then commits a leaf', () => {
+    const m = new BattleMenu()
+    const r = root()
+    // Space descends into Attack (same as Enter)…
+    expect(m.step(['Space'], r)).toBeNull()
+    expect(m.view(r).inSubmenu).toBe(true)
+    expect(m.view(r).title).toBe('Attack')
+    // …and Space on a leaf commits it.
+    expect(m.step(['Space'], r)).toEqual({ kind: 'chain', id: 'emberwake' })
+    expect(m.view(r).inSubmenu).toBe(false)
+  })
+
+  it('Space commits a no-submenu root item (Defend)', () => {
+    const m = new BattleMenu()
+    const r = root()
+    m.step(['ArrowDown'], r) // Glyphs
+    m.step(['ArrowDown'], r) // Defend
+    expect(label(m, r)).toBe('Defend')
+    expect(m.step(['Space'], r)).toEqual({ kind: 'defend' })
+  })
+
   it('Esc backs out of a submenu; Esc at root is a no-op (combat can’t be fled)', () => {
     const m = new BattleMenu()
     const r = root()

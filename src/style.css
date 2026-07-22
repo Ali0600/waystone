@@ -655,11 +655,25 @@ body {
 .combat-flash.good { color: #9fd8a0; }
 .combat-flash.bad { color: #e06a45; }
 .combat-flash.art { color: #c8e8ff; font-size: 1.5rem; }
-.combat-flash.perfect { color: #ffd98a; font-size: 1.4rem; letter-spacing: 0.18em; }
+/* Perfect lingers ~1s longer (holds full opacity, then fades) — see
+   flashLifetimeMs in ui/combat.ts, which matches this 1.9s to the removal. */
+.combat-flash.perfect {
+  color: #ffd98a;
+  font-size: 1.4rem;
+  letter-spacing: 0.18em;
+  animation: combat-float-perfect 1.9s ease-out forwards;
+}
 
 @keyframes combat-float {
   0% { opacity: 0; transform: translateY(6px); }
   20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
+@keyframes combat-float-perfect {
+  0% { opacity: 0; transform: translateY(6px); }
+  10% { opacity: 1; }
+  72% { opacity: 1; transform: translateY(-6px); }
   100% { opacity: 0; transform: translateY(-14px); }
 }
 

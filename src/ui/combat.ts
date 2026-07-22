@@ -14,6 +14,15 @@ const COMBO_GLYPH: Record<string, string> = {
 }
 
 /**
+ * How long a combat flash stays on screen, in ms — must match the CSS animation
+ * (`.combat-flash` = 0.9s, `.combat-flash.perfect` = 1.9s). The Perfect flash
+ * (a flawless chain / guard) lingers ~1s longer so it reads as the reward it is.
+ */
+export function flashLifetimeMs(flavor: 'good' | 'bad' | 'art' | 'perfect'): number {
+  return flavor === 'perfect' ? 1900 : 900
+}
+
+/**
  * Combat DOM overlay: HP bars, action menu, the beat bar, telegraphs and
  * lock icons. Renders what the Encounter says; owns no rules.
  */
@@ -165,7 +174,7 @@ export class CombatUi {
     el.className = `combat-flash ${flavor}`
     el.textContent = text
     this.feedback.appendChild(el)
-    setTimeout(() => el.remove(), 900)
+    setTimeout(() => el.remove(), flashLifetimeMs(flavor))
   }
 
   /** Per-frame sync of bars, menu and beat bar. */

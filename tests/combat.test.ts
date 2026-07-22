@@ -9,6 +9,7 @@ import { createInitialState, type GameState } from '../src/core/state'
 import { GlyphSystem } from '../src/progression/glyphs'
 import { MasterySystem, TIER_THRESHOLDS } from '../src/progression/mastery'
 import { mealShield } from '../src/minigames/angling'
+import { flashLifetimeMs } from '../src/ui/combat'
 
 const DT = 1 / 60
 
@@ -290,6 +291,15 @@ describe('the Perfect signal', () => {
     idle(enc, (run.attack.beats!.at(-1) ?? 0) + PARRY_WINDOW + 0.3)
     expect(events).not.toContain('perfect:guard')
   })
+
+  it('the Perfect flash outlives the other combat flashes', () => {
+    // The reward should linger ~1s longer than an ordinary hit/damage flash.
+    expect(flashLifetimeMs('perfect')).toBe(1900)
+    expect(flashLifetimeMs('good')).toBe(900)
+    expect(flashLifetimeMs('bad')).toBe(900)
+    expect(flashLifetimeMs('art')).toBe(900)
+    expect(flashLifetimeMs('perfect')).toBeGreaterThan(flashLifetimeMs('good'))
+  })
 })
 
 describe('chorister locks', () => {
@@ -411,6 +421,15 @@ describe('command menu — Attack / Defend / Item', () => {
     enc.update(DT, ['Space'], true)
     expect(events).toContain('art:Emberwake')
     expect(state.artsUnlocked).toContain('emberwake')
+  })
+
+  it('Space confirms the command menu (M36): descend Attack, commit the chain', () => {
+    const { enc } = makeEncounter(ENEMIES.husk)
+    untilPhase(enc, 'player')
+    // A plain Space (no art buffer) falls through to the menu as a confirm.
+    enc.update(DT, ['Space'], true) // descend into Attack
+    enc.update(DT, ['Space'], true) // commit the first chain
+    expect(enc.phase).toBe('playerChain')
   })
 
   it('the Digit shortcuts still start a chain (retained fast path)', () => {

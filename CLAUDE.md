@@ -73,12 +73,18 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   emits `{kind:'guard'}`. NB `strikeRun.parried` is SPARSE (set only on a parry), so test it
   densely — `hitTimes.every((_, i) => parried[i] === true)`, never `parried.every(Boolean)`.
   `ui/combat.ts` flashes gold (`.combat-flash.perfect`), `audio.ts` plays a rising sting.
+  The Perfect flash lingers ~1s longer than other flashes (M36): pure `flashLifetimeMs(flavor)`
+  drives the removal timeout and MUST match the CSS animation duration (`.combat-flash.perfect`
+  = 1.9s vs `.combat-flash` = 0.9s) — change both together or it fades early / lingers blank.
   **Command menu (M28):** the classic JRPG box is a pure `combat/menu.ts` `BattleMenu`
-  (arrows + Enter + Esc, cursor memory) driven from the `player` phase — the encounter builds
+  (arrows + Enter/**Space** + Esc, cursor memory) driven from the `player` phase — the encounter builds
   `menuRoot()` (DATA: Attack→chains, Glyphs→inscribed, Defend, Item→held fish) and
   `runCommit`s the selection. The menu SELECTS; the beat bar/parry still EXECUTE. Digit1-8
   shortcuts + the ArtRecognizer stay (checked BEFORE the menu; arrows both drive the cursor
-  AND feed arts — Space, not Enter, fires arts). **Defend** = `braced`: `damagePlayer` halves
+  AND feed arts). **Space also confirms the menu (M36)** so a fight is one-handed — but the
+  ArtRecognizer runs first and consumes a Space that *completes* an Art, so only a non-Art
+  Space reaches the menu as a confirm (Space stays the beat/parry key in the chain/enemy
+  phases, where the menu isn't active). **Defend** = `braced`: `damagePlayer` halves
   and `parryWindow` (getter, used by encounter/arena/ui) widens ×1.6 for the next enemy turn,
   cleared when the player phase resumes. **Item** = `useItem` heals from `fishHeld`, capped at
   `readonly maxHp` (= PLAYER_MAX_HP + meal shield). HP bar divides by `maxHp`. EscMenu skips

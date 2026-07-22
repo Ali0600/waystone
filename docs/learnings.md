@@ -232,3 +232,24 @@ appears then auto-hides can't be reliably screenshot-synced (the sim advances be
 probe and the capture). Verify such elements by attribute + **real-viewport** `getBoundingClientRect`
 (resize to 1280×800 first — the in-app QA browser's default geometry is degenerate), the same way
 pointer-lock/combat-only UI is verified without a live screenshot.
+
+## A CSS-animated ephemeral element's lifetime lives in TWO places — keep them in lockstep
+
+A common UI pattern: JS creates a transient element, a CSS `animation … forwards` fades it in/out,
+and a JS `setTimeout(() => el.remove(), MS)` cleans it up. The element's on-screen lifetime is the
+*minimum* of the two: if the CSS animation is shorter than the timeout, the element sits invisible
+(animation finished, still in the DOM) for the gap; if the timeout is shorter, it's yanked
+mid-animation. They are a coupled pair even though they live in different files.
+
+**Why it came up:** M36 made the "Perfect!" combat flash linger ~1s longer. Bumping only the JS
+`setTimeout` (900 → 1900ms) would have left it faded-out-but-present for a second; bumping only the
+CSS would have removed it mid-hold. Both had to move together: a dedicated `combat-float-perfect`
+1.9s keyframe (holds opacity 1 from 10%–72%, then fades) **and** a `flashLifetimeMs(flavor)` helper
+returning 1900 for `perfect` / 900 otherwise, used for the removal timeout.
+
+**Takeaway:** when an element's visible lifetime is set by a CSS animation duration AND a JS removal
+timer, treat them as one value with two expressions — change both in the same commit and leave a
+comment at each site pointing at the other. Extract the JS side as a tiny pure function
+(`flashLifetimeMs`) so the "perfect outlives the rest" invariant is unit-testable (fail-first: make
+them equal → red); verify the CSS side by reading the real element's *computed* `animation-duration`
+in the browser, not by trusting the timeout constant (verify the rendered outcome, not the proxy).
