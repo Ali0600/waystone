@@ -79,6 +79,7 @@ silently drift from the suite.
 - [x] **Item** — eat a held fish to heal in battle (species-scaled, capped at max HP, costs the turn) · `tests/combat.test.ts`
 - [x] **Grapple entry blow** — grappling into a foe opens the duel with a tier-scaled crash-in hit (2 / 3 / 5 by grapple mastery), banner + impact · `tests/combat.test.ts`
 - [x] **Perfect signal** — a flawless chain (every beat landed) or a fully-parried enemy string flashes gold (lingering ~1s longer than other flashes) + a rising sting · `tests/combat.test.ts`
+- [x] **Per-key sword swings** — the hero draws the blade from its back in the intro, then each combo beat plays a different attack (`W` overhead · `A` cut-left · `S` thrust · `D` cut-right · `Space` rising finisher); a whiff stumbles, a parry blocks, a taken hit flinches, a grapple-entry slams; sword raised on victory, kneel on defeat · `tests/heroanim.test.ts` · `tests/combat.test.ts` · `browser-QA`
 - [x] **Victory / defeat** — rewards on win; defeat costs nothing (respawn, keep everything) · `tests/combat.test.ts`
 
 ## Minigames

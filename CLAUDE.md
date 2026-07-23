@@ -71,7 +71,15 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `sounding` (dig buried) · `chime` (resonate `sealed` open, `player/chime.ts`) ·
   `combat`. Each tool-acquire is a `tool-*` payout meter that flips a `tools.*` flag.
 - `src/combat/` — `encounter.ts` is fully headless (consumes key codes, emits bus
-  events); arena scene + DOM overlay render it but own no rules. `timing.ts` pure.
+  events); arena scene + DOM overlay render it but own no rules. **The arena player is a
+  `HeroRig` (M37)**: it draws the sword from its back mid-intro (`playAction('draw')` in the
+  ctor — the Arena is built AFTER the Encounter emitted `combat:phase 'intro'`, so it can't
+  receive that event), then each combo beat plays `ATTACK_FOR_KEY[chainRun.keys[beatIndex]]`
+  read SYNCHRONOUSLY inside the `combat:beat` 'hit' emit (chainRun is nulled only on the next
+  tick — pinned by `tests/combat.test.ts` "arena per-key lookup"). Whiff→stumble, parry→block,
+  taken hit→flinch, entry→slam, victory/defeat→pose (defeat also sinks `group.position.y` for
+  the kneel — a rotations-only rig can't lower the pelvis). Sword-in-hand has ONE owner
+  (`ensureSwordInHand`). `timing.ts` pure.
   Parry is signposted (M23): `ui/combat.ts` reuses the chain beat bar in a `.parry`
   variant off the public `strikeRun` (`startT`+`hitTimes`), and `arena.ts` glows the
   enemy gold while a hit is `inWindow` (its emissive has ONE per-frame owner in

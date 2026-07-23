@@ -485,7 +485,7 @@ function startEncounter(contact: EnemyContact, grappleEntry = false) {
     contact.guards,
     grappleEntry,
   )
-  arena = new Arena(contact.def, bus, window.innerWidth / window.innerHeight)
+  arena = new Arena(contact.def, bus, window.innerWidth / window.innerHeight, encounter)
   combatUi = new CombatUi(bus, contact.def.name, contact.def.hp, hints)
   player.velocity.set(0, 0, 0)
   player.mode = 'normal'
@@ -801,6 +801,9 @@ if (qaMode || import.meta.env.DEV) {
     glyphPanel,
     get encounter() {
       return encounter
+    },
+    get arena() {
+      return arena
     },
     startFight(enemyId: string, grappleEntry = false) {
       const idx = world.enemies.findIndex((e) => e.enemyId === enemyId)
