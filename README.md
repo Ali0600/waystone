@@ -33,6 +33,7 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
+| The Surveyor | An **articulated hero** — a jointed, hooded wanderer who idles, runs, sprints out of a dash, jumps and falls with a real gait, a **sword sheathed on the back** and the lantern carried in the left hand. The animation is a pure, testable core (states + keyframes) driving a procedural skeleton, with a clean seam to swap in a downloadable rigged character later |
 | Discovery | 84 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
 | The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |

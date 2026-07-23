@@ -26,6 +26,23 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   origin and never moves. The Mistwalker adds a soft floor at the mist plane
   (`PlayerSim.mistFloorY`, gated by a draining `MistCharge`); main tracks the last solid
   shore so a fall or charge-out respawns there, nothing lost.
+- `src/player/` — **hero rig + animation (M37)** split into a PURE core and a THREE
+  skeleton, plus the sim. `heroanim.ts` (no THREE imports; plain `{x,y,z}` records):
+  `locomotionState` (idle/run/sprint/jump/fall/grapple), gait `samplePose`, keyframe
+  `sampleKeyframes`, the `ATTACKS` library + `ATTACK_FOR_KEY` (per combo key), and the
+  `AnimTrack` stepper. `rig.ts` (THREE): `buildHeroRig` (Group-pivot skeleton, cape,
+  lantern+light in the LEFT hand, sword + `backSocket`/`handSocket`), `attachSword` =
+  **the single owner of sword parenting**, `applyPose` = **the single writer of joint
+  rotations** (eases via `smoothFactor`), and `HeroDriver` (`setLocomotion`/`playAction`/
+  `currentAction`/`update`). `avatar.ts` (world) and `arena.ts` (combat) each own ONE rig
+  (byte-compatible public surface `group`/`lanternLight`/`update`; the old hand-built
+  duplicates are gone). Single-writer table: joint rotations → `applyPose`; sword parent →
+  `attachSword`; `body.rotation.y` → Avatar yaw ease (world) / static π/2 (arena);
+  `lanternLight.intensity` → LanternVerb (holds the world rig's PointLight by reference —
+  never rebuild the rig mid-session). **THE FUTURE-GLB SEAM**: to trial a downloadable
+  rigged character (CC0 pack / Mixamo), implement `HeroDriver`'s 4-method surface over an
+  `AnimationMixer` (LocoState/AttackId → named clips, sockets → bones) and leave
+  Avatar/Arena untouched. `__game.avatar` exposes the rig for QA; joint Groups are named.
 - `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`,
   `cindervault` — the last two latent, chained: Amberfall's waystone opens Veilspire,
   Veilspire's opens Cindervault), glyphs, chains, enemies, recruits, cards.schema (deck
