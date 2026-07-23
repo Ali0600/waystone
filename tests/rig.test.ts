@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { HeroDriver, applyPose, attachSword, buildHeroRig } from '../src/player/rig'
-import { JOINTS, zeroPose } from '../src/player/heroanim'
+import { DRAW_SWAP_U, JOINTS, zeroPose } from '../src/player/heroanim'
 
 describe('buildHeroRig', () => {
   it('exposes every joint and a lantern light in the left hand', () => {
@@ -77,5 +77,39 @@ describe('HeroDriver', () => {
     d.update(0.45 / 2)
     expect(d.currentAction()!.id).toBe('overhead')
     expect(d.currentAction()!.u).toBeCloseTo(0.5, 2)
+  })
+
+  // M41: the sword draw-swap moved OUT of the Arena INTO the driver, so combat and
+  // the (future) GLB path both get it for free through the IHeroCharacter surface.
+  it('draws the sword from the back into the hand as the draw action plays', () => {
+    const rig = buildHeroRig()
+    const d = new HeroDriver(rig)
+    expect(rig.sword.parent).toBe(rig.backSocket) // sheathed at rest
+
+    d.playAction('draw')
+    d.update(1 / 60) // early in the draw, before the swap point
+    expect(d.currentAction()!.id).toBe('draw')
+    expect(d.currentAction()!.u).toBeLessThan(DRAW_SWAP_U)
+    expect(rig.sword.parent).toBe(rig.backSocket)
+
+    // Advance past DRAW_SWAP_U (bounded — never loop unbounded on a UI/anim condition).
+    for (let i = 0; i < 120 && (d.currentAction()?.u ?? 1) < DRAW_SWAP_U; i++) d.update(1 / 60)
+    expect(rig.sword.parent).toBe(rig.handSocket)
+  })
+
+  it('leaves the sword sheathed while only locomotion plays — the world avatar', () => {
+    const rig = buildHeroRig()
+    const d = new HeroDriver(rig)
+    d.setLocomotion('run', 7)
+    for (let i = 0; i < 60; i++) d.update(1 / 60)
+    expect(rig.sword.parent).toBe(rig.backSocket)
+  })
+
+  it('a non-draw attack (a grapple slam that skips the draw) takes the sword in hand at once', () => {
+    const rig = buildHeroRig()
+    const d = new HeroDriver(rig)
+    d.playAction('slam')
+    d.update(1 / 60)
+    expect(rig.sword.parent).toBe(rig.handSocket)
   })
 })

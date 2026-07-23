@@ -22,7 +22,7 @@ silently drift from the suite.
 - [x] **Fall into the mist → respawn at the last solid shore**, nothing lost · `tests/collision.test.ts` · `tests/mistwalker.test.ts`
 - [x] **Mouse-look / pointer-lock camera** (click to look; learn-once hint) · `browser-QA` + `tests/hud.test.ts` (hint state)
 - [x] **Articulated hero** — a jointed rig with locomotion gaits (idle · run · sprint after a dash burst · jump · fall · grapple reach), sword sheathed on the back, lantern carried in the left hand; pure animation core + THREE skeleton, seam for a future GLB character · `tests/heroanim.test.ts` · `tests/rig.test.ts` · `browser-QA`
-- [x] **Downloadable GLB hero (trial)** — the D7 alternative: a `?char=glb` / Attunement toggle swaps the procedural hero for a CC0 rigged **hooded fantasy adventurer** (KayKit "Adventurers" — Rogue Hooded, by Kay Lousberg) driven over an `AnimationMixer` via the same `IHeroCharacter` seam; world locomotion maps to its named clips (`Idle`/`Running_A`/`Jump_Idle`), combat stays procedural · `tests/glbanim.test.ts` · `browser-QA`
+- [x] **Downloadable GLB hero (trial)** — the D7 alternative: a `?char=glb` / Attunement toggle swaps the procedural hero for a CC0 rigged **hooded fantasy adventurer** (KayKit "Adventurers" — Rogue Hooded, by Kay Lousberg) driven over an `AnimationMixer` via the same `IHeroCharacter` seam; world locomotion maps to its named clips (`Idle`/`Running_A`/`Jump_Idle`), and **combat follows the same toggle (M41)** — the rogue fights with a CC0 KayKit sword on its right hand · `tests/glbanim.test.ts` · `browser-QA`
 
 ## Tools (each is found in the world; the acquire flips a capability flag)
 
@@ -80,7 +80,7 @@ silently drift from the suite.
 - [x] **Item** — eat a held fish to heal in battle (species-scaled, capped at max HP, costs the turn) · `tests/combat.test.ts`
 - [x] **Grapple entry blow** — grappling into a foe opens the duel with a tier-scaled crash-in hit (2 / 3 / 5 by grapple mastery), banner + impact · `tests/combat.test.ts`
 - [x] **Perfect signal** — a flawless chain (every beat landed) or a fully-parried enemy string flashes gold (lingering ~1s longer than other flashes) + a rising sting · `tests/combat.test.ts`
-- [x] **Per-key sword swings** — the hero draws the blade from its back in the intro, then each combo beat plays a different attack (`W` overhead · `A` cut-left · `S` thrust · `D` cut-right · `Space` rising finisher); a whiff stumbles, a parry blocks, a taken hit flinches, a grapple-entry slams; sword raised on victory, kneel on defeat · `tests/heroanim.test.ts` · `tests/combat.test.ts` · `browser-QA`
+- [x] **Per-key sword swings** — the hero draws the blade from its back in the intro (sword ownership lives in the driver, so the GLB rogue equally wields its KayKit sword — M41), then each combo beat plays a different attack (`W` overhead · `A` cut-left · `S` thrust · `D` cut-right · `Space` rising finisher); a whiff stumbles, a parry blocks, a taken hit flinches, a grapple-entry slams; sword raised on victory, kneel on defeat · `tests/heroanim.test.ts` · `tests/rig.test.ts` · `tests/combat.test.ts` · `browser-QA`
 - [x] **Victory / defeat** — rewards on win; defeat costs nothing (respawn, keep everything) · `tests/combat.test.ts`
 
 ## Minigames

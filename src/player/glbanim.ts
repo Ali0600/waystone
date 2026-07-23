@@ -18,6 +18,15 @@ import type { AttackId, LocoState } from './heroanim'
 /** The path Vite serves the model from (base-aware: dev `/`, prod `/waystone/`). */
 export const GLB_HERO_URL = `${import.meta.env.BASE_URL}models/Rogue_Hooded.glb`
 
+/**
+ * The combat blade for the GLB hero (M41): KayKit's 1-handed sword, from the SAME
+ * CC0 pack/commit as the rogue (`Assets/gltf/sword_1handed.gltf`). Attached to the
+ * right-hand bone in combat only (the world rogue roams unarmed — KayKit has no
+ * back scabbard). A `.gltf`+`.bin`+texture triple; GLTFLoader resolves the sidecars
+ * relative to this URL. See `public/models/CREDITS.md`.
+ */
+export const SWORD_URL = `${import.meta.env.BASE_URL}models/kaykit/sword_1handed.gltf`
+
 /** Every clip the shipped Rogue_Hooded.glb contains (parsed from the file at add-time). */
 export const ADVENTURER_CLIPS = [
   '1H_Melee_Attack_Chop',

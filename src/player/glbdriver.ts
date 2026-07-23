@@ -4,6 +4,13 @@ import type { AttackId, LocoState } from './heroanim'
 import type { IHeroCharacter } from './rig'
 import { CLIP_FOR_ATTACK, CLIP_FOR_LOCO, GLB_HERO_URL } from './glbanim'
 
+/** Options for the GLB hero. `weaponUrl` is combat-only (the world rogue roams unarmed). */
+export interface GlbHeroOptions {
+  url?: string
+  weaponUrl?: string
+  lanternIntensity?: number
+}
+
 /** Crossfade duration between clips (seconds). */
 const FADE = 0.2
 /** Target height (world units) to normalize the loaded model to. */
@@ -32,15 +39,19 @@ export class GlbHeroDriver implements IHeroCharacter {
   private oneShot: { id: AttackId; action: THREE.AnimationAction } | null = null
   private ready = false
   private pending: { state: LocoState; speed: number } = { state: 'idle', speed: 0 }
+  /** Combat-only: a weapon GLB parented to the right-hand bone on load (world = none). */
+  private readonly weaponUrl: string | null
 
-  constructor(url = GLB_HERO_URL) {
+  constructor(opts: GlbHeroOptions = {}) {
+    this.weaponUrl = opts.weaponUrl ?? null
     this.group.add(this.body)
     // Created once, up front, so LanternVerb captures it by reference before the
     // async model arrives; re-parented onto the hand bone on load (same instance).
-    this.lanternLight = new THREE.PointLight('#ffb347', 14, 16, 1.8)
+    this.lanternLight = new THREE.PointLight('#ffb347', opts.lanternIntensity ?? 14, 16, 1.8)
     this.lanternLight.position.set(0, 1.0, 0.25)
     this.body.add(this.lanternLight)
 
+    const url = opts.url ?? GLB_HERO_URL
     new GLTFLoader()
       .loadAsync(url)
       .then((gltf) => this.onLoad(gltf))
@@ -72,8 +83,32 @@ export class GlbHeroDriver implements IHeroCharacter {
       this.lanternLight.position.set(0, 0, 0) // sit at the hand (re-parent keeps local pos)
     }
 
+    // Combat blade rides the RIGHT hand (world hero carries none). Same dot-stripped
+    // bone convention as the lantern, mirrored to the right: `handslot.r` → `handslotr`.
+    if (this.weaponUrl) this.attachWeapon(this.weaponUrl, model)
+
     this.ready = true
     this.apply(this.pending.state, this.pending.speed)
+  }
+
+  /**
+   * Load a weapon GLB and parent it to the right-hand bone with an identity local
+   * transform, so it inherits the character's scale/pose (KayKit authors weapon and
+   * body at one scale to sit in the handslot). Async — the blade pops in just after
+   * the body; the mesh keeps its native KayKit material, matching the rogue body.
+   */
+  private attachWeapon(url: string, model: THREE.Object3D): void {
+    const hand = ['handslotr', 'handr', 'Hand.R', 'Palm2.R']
+      .map((n) => model.getObjectByName(n))
+      .find(Boolean)
+    if (!hand) {
+      console.warn('[GlbHeroDriver] right-hand bone not found; weapon skipped')
+      return
+    }
+    new GLTFLoader()
+      .loadAsync(url)
+      .then((g) => hand.add(g.scene))
+      .catch((e) => console.warn('[GlbHeroDriver] failed to load weapon', url, e))
   }
 
   private crossfadeTo(action: THREE.AnimationAction | null, timeScale: number): void {

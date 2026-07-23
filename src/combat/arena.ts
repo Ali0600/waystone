@@ -5,8 +5,11 @@ import { makeToonMaterial } from '../engine/toon'
 import { buildEnemyMesh } from './worldenemies'
 import { inWindow } from './timing'
 import type { Encounter } from './encounter'
-import { buildHeroRig, HeroDriver, attachSword, type HeroRig } from '../player/rig'
-import { ATTACK_FOR_KEY, DRAW_SWAP_U, type AttackId } from '../player/heroanim'
+import { buildHeroRig, HeroDriver, type IHeroCharacter } from '../player/rig'
+import { GlbHeroDriver } from '../player/glbdriver'
+import { SWORD_URL } from '../player/glbanim'
+import { characterStyle } from '../player/avatar'
+import { ATTACK_FOR_KEY, type AttackId } from '../player/heroanim'
 
 /** The sword attack a completed combo beat plays (fallback: a generic slash). */
 function attackForKey(key: string | undefined): AttackId {
@@ -16,20 +19,22 @@ function attackForKey(key: string | undefined): AttackId {
 /**
  * The duel arena: its own tiny scene — a stone ring hanging in the dusk.
  * Purely presentational; every gameplay fact comes from the Encounter. The
- * player figure is a full HeroRig (M37) that draws its sword and swings a
- * different attack per combo key.
+ * player figure is the SAME character the world uses (M41) — the procedural rig,
+ * or the downloadable GLB rogue when the character toggle is 'glb' — driven purely
+ * through the `IHeroCharacter` surface; it draws a sword and swings a different
+ * attack per combo key.
  */
 export class Arena {
   readonly scene = new THREE.Scene()
   readonly camera: THREE.PerspectiveCamera
-  private rig: HeroRig
-  private driver: HeroDriver
+  /** Procedural rig or GLB rogue — one `characterStyle()` read, shared with the world. */
+  private readonly style = characterStyle()
+  private character: IHeroCharacter
   private enemyMesh: THREE.Group
   private t = 0
   private playerLunge = 0
   private enemyLunge = 0
   private flashT = 0 // seconds of white damage-flash remaining
-  private swordInHand = false
   private outroPlayed = false
   private unsubs: (() => void)[] = []
 
@@ -66,15 +71,19 @@ export class Arena {
     rim.position.y = 0.02
     this.scene.add(rim)
 
-    // The Surveyor — a full articulated rig, sword sheathed on the back and
-    // drawn during the intro (the arena is built AFTER the Encounter emitted
-    // 'combat:phase intro', so the draw is triggered here, not by that event).
-    this.rig = buildHeroRig({ lanternIntensity: 10 })
-    this.rig.group.position.set(-3.2, 0, 0)
-    this.rig.group.rotation.y = Math.PI / 2 // face the enemy (+Z → world +X toward foe)
-    this.driver = new HeroDriver(this.rig)
-    this.driver.playAction('draw')
-    this.scene.add(this.rig.group)
+    // The Surveyor — the SAME character the world builds: procedural rig, or the GLB
+    // rogue (with its combat sword) when the toggle is 'glb'. That one `characterStyle()`
+    // read is the single switch both surfaces share. Either way it draws its sword during
+    // the intro (the arena is built AFTER the Encounter emitted 'combat:phase intro', so
+    // the draw is triggered here, not by that event).
+    this.character =
+      this.style === 'glb'
+        ? new GlbHeroDriver({ weaponUrl: SWORD_URL, lanternIntensity: 10 })
+        : new HeroDriver(buildHeroRig({ lanternIntensity: 10 }))
+    this.character.group.position.set(-3.2, 0, 0)
+    this.character.group.rotation.y = Math.PI / 2 // face the enemy (+Z → world +X toward foe)
+    this.character.playAction('draw')
+    this.scene.add(this.character.group)
 
     this.enemyMesh = buildEnemyMesh(enemy)
     this.enemyMesh.position.set(3.2, 0, 0)
@@ -88,10 +97,10 @@ export class Arena {
           this.playerLunge = 1
           // The key just struck picks the swing (chainRun is still live in-emit —
           // pinned by tests/combat.test.ts).
-          this.driver.playAction(attackForKey(this.encounter.chainRun?.keys[beatIndex]))
+          this.character.playAction(attackForKey(this.encounter.chainRun?.keys[beatIndex]))
         } else if (result !== 'pending') {
           // A mistimed / wrong-key beat whiffs.
-          this.driver.playAction('stumble')
+          this.character.playAction('stumble')
         }
       }),
       bus.on('combat:damage', ({ target }) => {
@@ -100,30 +109,23 @@ export class Arena {
       bus.on('combat:parry', ({ result }) => {
         if (result !== 'hit') {
           this.playerLunge = 0.6
-          this.driver.playAction('block')
+          this.character.playAction('block')
         } else {
           this.enemyLunge = 1
-          this.driver.playAction('flinch')
+          this.character.playAction('flinch')
         }
       }),
       bus.on('combat:telegraph', () => {
         this.enemyLunge = 0.5
       }),
-      // The grapple crash-in: draw first (can't slam empty-handed), then the foe
-      // recoils hard (the white hurt-flash comes free with combat:damage).
+      // The grapple crash-in: the foe recoils hard (the white hurt-flash comes free
+      // with combat:damage). The driver takes the blade in hand the instant an action
+      // plays (slam skips the draw), so there's no explicit sword call here (M41).
       bus.on('combat:entry', () => {
         this.enemyLunge = 1
-        this.ensureSwordInHand()
-        this.driver.playAction('slam')
+        this.character.playAction('slam')
       }),
     )
-  }
-
-  /** THE single caller of `attachSword(rig, 'hand')` — draws the blade once. */
-  private ensureSwordInHand(): void {
-    if (this.swordInHand) return
-    attachSword(this.rig, 'hand')
-    this.swordInHand = true
   }
 
   /** Set the enemy's emissive on every sub-mesh (the one owner of it, so the
@@ -158,22 +160,22 @@ export class Arena {
 
     // Player figure -----------------------------------------------------
     // Baseline idle (a live attack track overrides it inside the driver).
-    this.driver.setLocomotion('idle', 0)
+    this.character.setLocomotion('idle', 0)
     // Outro, latched so it fires exactly once.
     if (!this.outroPlayed && (encounter.phase === 'victory' || encounter.phase === 'defeat')) {
       this.outroPlayed = true
-      this.driver.playAction(encounter.phase === 'victory' ? 'victory' : 'defeat')
+      this.character.playAction(encounter.phase === 'victory' ? 'victory' : 'defeat')
     }
-    // Swap the sword into the hand partway through the draw.
-    const act = this.driver.currentAction()
-    if (act && act.id === 'draw' && act.u >= DRAW_SWAP_U) this.ensureSwordInHand()
-
-    // Lunge slide (kept from the old arena); defeat sinks the rig into a kneel
-    // (rotations alone can't lower the pelvis — this is that Y's only owner).
-    this.rig.group.position.x = -3.2 + this.playerLunge * 1.6
-    const targetY = encounter.phase === 'defeat' ? -0.3 : 0
-    this.rig.group.position.y += (targetY - this.rig.group.position.y) * Math.min(1, dt * 3)
-    this.driver.update(dt)
+    // Lunge slide (kept from the old arena).
+    this.character.group.position.x = -3.2 + this.playerLunge * 1.6
+    // Defeat kneel: the procedural rig can't lower its pelvis by rotation, so sink the
+    // group; the GLB's Death_A already animates going down, so leave its group grounded.
+    if (this.style === 'procedural') {
+      const targetY = encounter.phase === 'defeat' ? -0.3 : 0
+      this.character.group.position.y +=
+        (targetY - this.character.group.position.y) * Math.min(1, dt * 3)
+    }
+    this.character.update(dt)
 
     // Enemy (unchanged) -------------------------------------------------
     this.enemyMesh.position.x = 3.2 - this.enemyLunge * 1.4

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { makeToonMaterial } from '../engine/toon'
 import { smoothFactor } from '../world/atmosphere'
 import {
+  DRAW_SWAP_U,
   JOINTS,
   type AttackId,
   type JointName,
@@ -235,6 +236,8 @@ export class HeroDriver implements IHeroCharacter {
   private state: LocoState = 'idle'
   private speed = 0
   private track: AnimTrack | null = null
+  /** The blade starts sheathed on the back; the first action draws it into the hand. */
+  private swordDrawn = false
 
   constructor(private rig: HeroRig) {}
 
@@ -268,6 +271,18 @@ export class HeroDriver implements IHeroCharacter {
   update(dt: number): void {
     this.t += dt
     this.track = stepTrack(this.track, dt)
+    // Sword ownership (moved here from the Arena, M41): the blade rides the back until
+    // an action needs it. `draw` swaps mid-animation (DRAW_SWAP_U); any other attack
+    // (e.g. a grapple `slam` that skips the draw) takes it in hand at once. The world
+    // avatar plays no action, so its sword stays sheathed. One-way latch — arenas build
+    // a fresh rig per fight, so there's no re-sheathe to model.
+    if (!this.swordDrawn && this.track) {
+      const drawnNow = this.track.id === 'draw' ? trackU(this.track) >= DRAW_SWAP_U : true
+      if (drawnNow) {
+        attachSword(this.rig, 'hand')
+        this.swordDrawn = true
+      }
+    }
     // An active attack overrides locomotion; otherwise the gait plays.
     const target = this.track ? trackPose(this.track) : samplePose(this.state, this.t, this.speed)
     applyPose(this.rig, target, dt, this.track ? POSE_TAU_ACTION : POSE_TAU_LOCO)
