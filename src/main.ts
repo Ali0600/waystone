@@ -773,6 +773,7 @@ if (qaMode || import.meta.env.DEV) {
   ;(window as unknown as Record<string, unknown>).__game = {
     THREE,
     player,
+    avatar,
     orbit,
     renderer,
     saves,

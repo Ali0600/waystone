@@ -21,6 +21,7 @@ silently drift from the suite.
 - [x] **Dash** (`Shift`) — burst; **T2** longer, **T3** air-dash (tier-gated) · `tests/verbs.test.ts`
 - [x] **Fall into the mist → respawn at the last solid shore**, nothing lost · `tests/collision.test.ts` · `tests/mistwalker.test.ts`
 - [x] **Mouse-look / pointer-lock camera** (click to look; learn-once hint) · `browser-QA` + `tests/hud.test.ts` (hint state)
+- [x] **Articulated hero** — a jointed rig with locomotion gaits (idle · run · sprint after a dash burst · jump · fall · grapple reach), sword sheathed on the back, lantern carried in the left hand; pure animation core + THREE skeleton, seam for a future GLB character · `tests/heroanim.test.ts` · `tests/rig.test.ts` · `browser-QA`
 
 ## Tools (each is found in the world; the acquire flips a capability flag)
 
