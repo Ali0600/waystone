@@ -292,6 +292,27 @@ describe('the Perfect signal', () => {
     expect(events).not.toContain('perfect:guard')
   })
 
+  it('exposes chainRun.keys[beatIndex] inside every beat hit (the arena per-key lookup)', () => {
+    // The Arena reads `encounter.chainRun.keys[beatIndex]` synchronously inside a
+    // combat:beat 'hit' to pick the swing — including on the FINAL beat, where
+    // finishChain nulls chainRun only on the next tick. Pin that contract.
+    const { enc, bus } = makeEncounter(ENEMIES.husk)
+    const reads: (string | null)[] = []
+    bus.on('combat:beat', ({ result, beatIndex }) => {
+      if (result === 'hit') reads.push(enc.chainRun ? (enc.chainRun.keys[beatIndex] ?? null) : null)
+    })
+    untilPhase(enc, 'player')
+    enc.update(DT, ['Digit1'], false)
+    const lvl = CHAINS[0].levels[0]
+    lvl.beats.forEach((beat, i) => {
+      while (enc.t - enc.chainRun!.startT < beat - DT / 2) enc.update(DT, [], false)
+      enc.update(DT, [lvl.keys[i]], false)
+    })
+    enc.update(DT, [], false) // last beat completes → finishChain next tick
+    // Each hit surfaced the exact key struck (beatIndex points at the completed beat).
+    expect(reads).toEqual(lvl.keys)
+  })
+
   it('the Perfect flash outlives the other combat flashes', () => {
     // The reward should linger ~1s longer than an ordinary hit/damage flash.
     expect(flashLifetimeMs('perfect')).toBe(1900)
