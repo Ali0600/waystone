@@ -43,6 +43,17 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   rigged character (CC0 pack / Mixamo), implement `HeroDriver`'s 4-method surface over an
   `AnimationMixer` (LocoState/AttackId → named clips, sockets → bones) and leave
   Avatar/Arena untouched. `__game.avatar` exposes the rig for QA; joint Groups are named.
+  **GLB SEAM REALIZED (M39/D7):** `IHeroCharacter` (in `rig.ts`) is the renderer-agnostic
+  surface (`group`/`body`/`lanternLight`/`baselineY` + `setLocomotion`/`playAction`/
+  `currentAction`/`update`); `HeroDriver` (procedural) and `glbdriver.ts` `GlbHeroDriver`
+  (a downloadable rigged model over an `AnimationMixer`) both implement it. `avatar.ts`
+  `characterStyle()` picks one at boot from `?char=glb` or localStorage `waystone:character-style`
+  (default procedural), toggled from the Attunement panel (reloads to apply — the character is
+  built once; LanternVerb holds the light). `glbanim.ts` = PURE clip map (`CLIP_FOR_LOCO`/
+  `CLIP_FOR_ATTACK`, `ROBOT_CLIPS`) tested by `glbanim.test.ts`; the asset is
+  `public/models/RobotExpressive.glb` (CC0, Quaternius — see `public/models/CREDITS.md`). The
+  trial is **world-only**: combat keeps the procedural rig (a generic pack has no bespoke sword
+  clips). Swapping a themed adventurer = drop a new `.glb` + update the clip map. No save change.
 - `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`,
   `cindervault` — the last two latent, chained: Amberfall's waystone opens Veilspire,
   Veilspire's opens Cindervault), glyphs, chains, enemies, recruits, cards.schema (deck

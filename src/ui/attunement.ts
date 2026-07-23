@@ -1,5 +1,6 @@
 import type { GameState } from '../core/state'
 import { attunementModel, type AttunementModel } from '../progression/attunement'
+import { CHARACTER_STYLE_KEY, characterStyle } from '../player/avatar'
 
 /** Roman numerals for tiers/levels — the LoD Addition-chart feel. */
 const ROMAN = ['I', 'II', 'III']
@@ -116,7 +117,24 @@ export class AttunementPanel {
     toggle.textContent = this.skin === 'lod' ? 'Skin: Dragoon' : 'Skin: Surveyor'
     toggle.title = 'Toggle the menu style'
     toggle.addEventListener('click', () => this.setSkin(this.skin === 'lod' ? 'surveyor' : 'lod'))
-    this.headEl.append(title, toggle)
+
+    // M39/D7 trial: swap the hero model. The character is built at boot, so this
+    // persists the choice and reloads (no live-swap — LanternVerb holds the light).
+    const isGlb = characterStyle() === 'glb'
+    const charToggle = document.createElement('button')
+    charToggle.className = 'attune-skin-toggle'
+    charToggle.textContent = isGlb ? 'Body: Robot ⟳' : 'Body: Surveyor ⟳'
+    charToggle.title = 'Trial the downloadable CC0 GLB hero — reloads to apply'
+    charToggle.addEventListener('click', () => {
+      try {
+        localStorage.setItem(CHARACTER_STYLE_KEY, isGlb ? 'procedural' : 'glb')
+      } catch {
+        /* private mode — ignore */
+      }
+      location.reload()
+    })
+
+    this.headEl.append(title, toggle, charToggle)
   }
 
   private section(title: string, sub?: string): HTMLElement {

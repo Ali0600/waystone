@@ -22,6 +22,7 @@ silently drift from the suite.
 - [x] **Fall into the mist → respawn at the last solid shore**, nothing lost · `tests/collision.test.ts` · `tests/mistwalker.test.ts`
 - [x] **Mouse-look / pointer-lock camera** (click to look; learn-once hint) · `browser-QA` + `tests/hud.test.ts` (hint state)
 - [x] **Articulated hero** — a jointed rig with locomotion gaits (idle · run · sprint after a dash burst · jump · fall · grapple reach), sword sheathed on the back, lantern carried in the left hand; pure animation core + THREE skeleton, seam for a future GLB character · `tests/heroanim.test.ts` · `tests/rig.test.ts` · `browser-QA`
+- [x] **Downloadable GLB hero (trial)** — the D7 alternative: a `?char=glb` / Attunement toggle swaps the procedural hero for a CC0 rigged model (RobotExpressive, by Quaternius) driven over an `AnimationMixer` via the same `IHeroCharacter` seam; world locomotion maps to its named clips (`Idle`/`Running`/`Jump`), combat stays procedural · `tests/glbanim.test.ts` · `browser-QA`
 
 ## Tools (each is found in the world; the acquire flips a capability flag)
 

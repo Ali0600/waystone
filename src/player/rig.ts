@@ -31,6 +31,8 @@ import {
 /** Frame-rate-independent easing time-constants (seconds). */
 export const POSE_TAU_LOCO = 0.09
 export const POSE_TAU_ACTION = 0.045
+/** The procedural rig hovers its body this high (the old cloak-hem gap). */
+export const HERO_HOVER_Y = 0.08
 
 export interface HeroRig {
   /** Root — set its position to the sim foot; the caller owns this transform. */
@@ -205,18 +207,49 @@ export function applyPose(rig: HeroRig, pose: JointPose, dt: number, tau: number
 }
 
 /**
- * Drives one rig from the semantic layer. THE FUTURE-GLB SEAM: a GLB/Mixamo
- * character implements this same 4-method surface over an AnimationMixer
- * (setLocomotion → crossfade a named loop clip, playAction → one-shot clipAction
- * with the same ids, sockets → bones) and Avatar/Arena never change.
+ * THE FUTURE-GLB SEAM (realized at M39): the renderer-agnostic surface Avatar and
+ * Arena drive. `HeroDriver` (procedural rig) and `GlbHeroDriver` (a downloadable
+ * rigged model over an `AnimationMixer`) both implement it, so swapping the body
+ * is a construction choice — no change to the game wiring. `group` roots the
+ * character in the scene, `body` is the yaw/bob owner, `lanternLight` is the
+ * single PointLight the LanternVerb captures by reference.
  */
-export class HeroDriver {
+export interface IHeroCharacter {
+  readonly group: THREE.Group
+  readonly body: THREE.Object3D
+  readonly lanternLight: THREE.PointLight
+  /** Rest height of `body` above the foot (the avatar bobs around this). */
+  readonly baselineY: number
+  setLocomotion(state: LocoState, speed: number): void
+  playAction(id: AttackId): void
+  currentAction(): { id: AttackId; u: number } | null
+  update(dt: number): void
+}
+
+/**
+ * Drives the procedural rig from the semantic layer. `setLocomotion` → gait,
+ * `playAction` → one-shot keyframe track with the same ids a GLB pack would name.
+ */
+export class HeroDriver implements IHeroCharacter {
   private t = 0
   private state: LocoState = 'idle'
   private speed = 0
   private track: AnimTrack | null = null
 
   constructor(private rig: HeroRig) {}
+
+  get group(): THREE.Group {
+    return this.rig.group
+  }
+  get body(): THREE.Object3D {
+    return this.rig.body
+  }
+  get lanternLight(): THREE.PointLight {
+    return this.rig.lanternLight
+  }
+  get baselineY(): number {
+    return HERO_HOVER_Y
+  }
 
   setLocomotion(state: LocoState, speed: number): void {
     this.state = state
