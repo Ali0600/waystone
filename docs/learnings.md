@@ -278,3 +278,24 @@ domain's own words) and keep the decision half free of the rendering library ent
 decision half as pure functions; verify the rendering half in the browser. The payoff is that
 swapping the backend is a new file, not a refactor — and pairs with the single-writer rule (one
 applier owns each rendered property) so the two halves can't fight.
+
+## A config selected by URL-param-OR-localStorage: a reload can drop the param and switch variants
+
+When a feature toggle reads a URL query param first and falls back to localStorage (e.g.
+`?char=glb` else `waystone:character-style`), a *reload* — a full navigation, or a Vite HMR
+full-reload — can drop the query string while keeping the same page, silently flipping you to the
+fallback variant. If you're QA'ing the URL-param variant, your later probes are now measuring the
+*other* code path.
+
+**Why it came up:** M39 QA'd the GLB hero via `?char=glb`. Mid-session the query params
+vanished (`location.search === ''`), so `characterStyle()` fell back to `procedural`; reading the
+(now procedural) driver's non-existent `locoAction` returned null and looked like a "jump
+animation bug." Measuring the driver directly — `constructor.name`, `'ready' in driver` — showed it
+was a `HeroDriver`, not the `GlbHeroDriver` I thought I was testing. Switching QA to set the
+*localStorage* key (the durable source) and reloading fixed it.
+
+**Takeaway:** for a dual-source toggle, assert *which variant is active* inside the same probe
+(read the discriminator — a class name, a style field) before trusting any result; and QA the
+**durable** source (localStorage/env), not the ephemeral URL param, so a reload can't switch the
+target under you. A "bug" that appears right after any reload is a prime suspect for
+tested-the-wrong-variant (pairs with "check the instrument before believing a negative").
