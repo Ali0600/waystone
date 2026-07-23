@@ -119,6 +119,27 @@ describe('BattleMenu — navigation', () => {
   })
 })
 
+describe('BattleMenu — WASD double as arrows (M38, one-handed nav)', () => {
+  it('KeyW/KeyS move the cursor like ArrowUp/ArrowDown', () => {
+    const m = new BattleMenu()
+    const r = root() // [Attack, Glyphs, Defend, Item(disabled)]
+    expect(label(m, r)).toBe('Attack')
+    m.step(['KeyS'], r) // down
+    expect(label(m, r)).toBe('Glyphs')
+    m.step(['KeyS'], r)
+    expect(label(m, r)).toBe('Defend')
+    m.step(['KeyW'], r) // up
+    expect(label(m, r)).toBe('Glyphs')
+  })
+
+  it('KeyW skips a disabled entry, exactly like ArrowUp', () => {
+    const m = new BattleMenu()
+    const r = root({ fish: 0 }) // Item disabled
+    m.step(['KeyW'], r) // up from Attack must skip the disabled Item → Defend
+    expect(label(m, r)).toBe('Defend')
+  })
+})
+
 describe('BattleMenu — Item + Glyphs conditionals + cursor memory', () => {
   it('a disabled Item never receives the cursor and never commits', () => {
     const m = new BattleMenu()

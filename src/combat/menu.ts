@@ -52,6 +52,19 @@ export interface MenuView {
 
 const FOOTER = '↑↓ select · Enter/Space confirm · Esc back'
 
+/**
+ * In a duel the movement keys are free (the world is paused), so WASD double as
+ * the arrow keys here for one-handed navigation (M38). This is menu-only: Hidden
+ * Arts read the REAL arrows (fed separately by the encounter, BEFORE the menu),
+ * so navigating with WASD can never accidentally perform an Art and cost a turn.
+ */
+const WASD_TO_ARROW: Record<string, string> = {
+  KeyW: 'ArrowUp',
+  KeyS: 'ArrowDown',
+  KeyA: 'ArrowLeft',
+  KeyD: 'ArrowRight',
+}
+
 export class BattleMenu {
   /** [] at the root, ['attack'] inside the Attack submenu. */
   private path: string[] = []
@@ -90,7 +103,8 @@ export class BattleMenu {
    * root items. Returns a commit the instant the player confirms one, else null.
    */
   step(codes: string[], root: MenuEntry[]): MenuCommit | null {
-    for (const code of codes) {
+    for (const raw of codes) {
+      const code = WASD_TO_ARROW[raw] ?? raw // WASD double as arrows for nav (M38)
       const entries = this.entriesFor(root)
       if (code === 'ArrowDown') this.move(entries, 1)
       else if (code === 'ArrowUp') this.move(entries, -1)
