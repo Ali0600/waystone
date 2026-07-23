@@ -1,34 +1,48 @@
 import * as THREE from 'three'
 import type { PlayerSim } from './controller'
-import { buildHeroRig, HeroDriver, type HeroRig } from './rig'
+import { buildHeroRig, HeroDriver, type IHeroCharacter } from './rig'
+import { GlbHeroDriver } from './glbdriver'
 import { locomotionState } from './heroanim'
 
+/** localStorage key persisting the trial character choice (no save-schema impact). */
+export const CHARACTER_STYLE_KEY = 'waystone:character-style'
+
+/** Which hero body to build: the procedural rig (default) or the downloadable GLB (M39/D7). */
+export function characterStyle(): 'procedural' | 'glb' {
+  try {
+    const q = new URLSearchParams(location.search).get('char')
+    if (q === 'glb' || q === 'procedural') return q
+    return localStorage.getItem(CHARACTER_STYLE_KEY) === 'glb' ? 'glb' : 'procedural'
+  } catch {
+    return 'procedural'
+  }
+}
+
 /**
- * The Surveyor: a hooded, articulated wanderer with a lantern in the left hand
- * and a sword sheathed on the back (drawn only in the arena). The rig + pure
- * animation core (rig.ts / heroanim.ts) carry the motion; this class picks the
- * locomotion state from the sim and keeps the world-only concerns (facing,
- * hover-bob, blob shadow).
+ * The Surveyor in the world: picks a locomotion state from the sim and drives an
+ * `IHeroCharacter` (the procedural hooded rig, or — the D7 trial — a downloadable
+ * rigged GLB). Owns the world-only concerns (facing, hover-bob, blob shadow).
  *
- * Public surface is byte-compatible with the old procedural avatar — `group`,
- * `lanternLight`, `update(dt, sim, groundY)` — so main.ts is untouched.
+ * Public surface is byte-compatible — `group`, `lanternLight`, `update(dt, sim,
+ * groundY)` — so main.ts is untouched. Combat (arena.ts) stays procedural.
  */
 export class Avatar {
   readonly group: THREE.Group
   readonly lanternLight: THREE.PointLight
-  private readonly rig: HeroRig
-  private readonly body: THREE.Group
-  private readonly driver: HeroDriver
+  readonly style: 'procedural' | 'glb'
+  private readonly character: IHeroCharacter
+  private readonly body: THREE.Object3D
   private readonly blob: THREE.Mesh
   private t = 0
   private sinceDash = Infinity
 
   constructor() {
-    this.rig = buildHeroRig({ lanternIntensity: 14 }) // sword starts on the back
-    this.group = this.rig.group
-    this.body = this.rig.body
-    this.lanternLight = this.rig.lanternLight // LanternVerb captures this by reference
-    this.driver = new HeroDriver(this.rig)
+    this.style = characterStyle()
+    this.character =
+      this.style === 'glb' ? new GlbHeroDriver() : new HeroDriver(buildHeroRig({ lanternIntensity: 14 }))
+    this.group = this.character.group
+    this.body = this.character.body
+    this.lanternLight = this.character.lanternLight // LanternVerb captures this by reference
 
     // Blob shadow — grounded readability without shadow maps (unchanged).
     this.blob = new THREE.Mesh(
@@ -49,7 +63,7 @@ export class Avatar {
     // gait can outlast the speed spike (heroanim SPRINT_HOLD).
     this.sinceDash = sim.stepEvents.dashed ? 0 : this.sinceDash + dt
 
-    this.driver.setLocomotion(
+    this.character.setLocomotion(
       locomotionState({
         speed,
         onGround: sim.onGround,
@@ -59,13 +73,13 @@ export class Avatar {
       }),
       speed,
     )
-    this.driver.update(dt)
+    this.character.update(dt)
 
-    // Hover-bob (halved — the legs now carry the sense of motion) + face-movement
-    // turn. Pitch/lean is owned by the pose's torso joint, not the body (one writer).
+    // Hover-bob around the character's rest height + face-movement turn. Pitch is
+    // owned by the pose/clip, not the body (one writer).
     const bobRate = sim.onGround ? 2.2 + speed * 0.9 : 1.2
     const bobAmp = sim.onGround ? 0.025 + Math.min(0.03, speed * 0.004) : 0.01
-    this.body.position.y = 0.08 + Math.sin(this.t * bobRate) * bobAmp
+    this.body.position.y = this.character.baselineY + Math.sin(this.t * bobRate) * bobAmp
 
     let dyaw = sim.facing - this.body.rotation.y
     dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw))

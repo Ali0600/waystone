@@ -16,9 +16,11 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 
 ## Backlog — alternatives worth trying later
 
-- **HD character via a downloadable rigged model** (see **D7**) — a CC0 stylized pack
-  (KayKit/Quaternius) first, Mixamo second. Revisit hook: a `GlbHeroDriver` over `AnimationMixer`
-  against the existing `HeroDriver` surface (`src/player/rig.ts`); Avatar/Arena stay untouched.
+- **A THEMED CC0 adventurer + GLB combat clips** (see **D7** → tried at M39) — the GLB pipeline
+  now ships (RobotExpressive robot, world locomotion, behind a toggle). Still worth trying: swap a
+  fantasy-humanoid CC0 `.glb` for the robot placeholder (drop-in + clip remap), and give combat GLB
+  clips (a generic pack has no bespoke sword swings — retarget or author them, else combat stays
+  procedural). Revisit hook: `GlbHeroDriver` + `glbanim.ts` clip map already exist.
 - **A bigger "Perfect" celebration** (see **D4**) — an arena flourish (camera kick / burst /
   slow-mo) on top of today's subtle gold flash + sting, if combat wants more punch.
 
@@ -71,6 +73,19 @@ licensing questions, no assets to commit to a public repo, native toon look. Bui
 (`setLocomotion` / `playAction` / `currentAction` / `update`) over a THREE `AnimationMixer` —
 mapping `LocoState`→loop clips, `AttackId`→one-shot clips, sockets→bones. `avatar.ts` and
 `arena.ts` need no changes (`src/player/rig.ts`, `src/player/heroanim.ts`).
+
+**➡ TRIED at M39 (2026-07-22) — the pipeline shipped; the seam held.** Built `IHeroCharacter` +
+`GlbHeroDriver` (`glbdriver.ts`) + a pure clip map (`glbanim.ts`) + a boot toggle
+(`?char=glb` / localStorage / Attunement button); default stays procedural. Loaded a verified
+**CC0 Quaternius** model (RobotExpressive) and drove world locomotion over its named clips
+(idle→Idle, run/sprint→Running, jump/fall→Jump) — `avatar.ts` picks the driver, `arena.ts`
+never changed. **Findings (why it stays a trial, not the default):** (1) it's a *robot*, not the
+hooded wanderer — a themed fantasy adventurer is a `.glb` swap + clip remap away; (2) a generic
+pack has **no bespoke combat clips** (only `Punch`/gestures), so the per-key sword swings (D-era
+M37b) don't exist — **combat kept the procedural rig**; (3) the model brings its own PBR
+materials (not toon-shaded), so it reads "HD" but off-palette against the toon world. Net: great
+for locomotion, seam proven, aesthetic + combat need a themed asset — both still `deferred` (see
+Backlog).
 
 ## D6 — Combo-chain input design (2026-07-22, M35)
 
