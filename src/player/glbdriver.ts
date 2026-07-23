@@ -8,8 +8,9 @@ import { CLIP_FOR_ATTACK, CLIP_FOR_LOCO, GLB_HERO_URL } from './glbanim'
 const FADE = 0.2
 /** Target height (world units) to normalize the loaded model to. */
 const TARGET_HEIGHT = 1.7
-/** Fixed yaw so the model's forward aligns with Waystone's +Z (tuned in QA). */
-const MODEL_YAW = Math.PI
+/** Fixed yaw so the model's forward aligns with Waystone's +Z (tuned in QA —
+ *  KayKit's Rogue faces +Z natively, so no rotation). */
+const MODEL_YAW = 0
 
 /**
  * The downloadable-GLB hero (M39, the D7 trial) — implements the SAME
@@ -60,9 +61,16 @@ export class GlbHeroDriver implements IHeroCharacter {
     this.mixer = new THREE.AnimationMixer(model)
     for (const clip of gltf.animations) this.actions[clip.name] = this.mixer.clipAction(clip)
 
-    // Lantern rides the left hand (falls back to the body if the bone is renamed).
-    const hand = model.getObjectByName('Hand.L') ?? model.getObjectByName('Palm2.L')
-    if (hand) hand.add(this.lanternLight)
+    // Lantern rides the left hand (falls back to the body). NB GLTFLoader strips
+    // dots from node names, so KayKit's `handslot.l`/`hand.l` load as
+    // `handslotl`/`handl` — try the sanitized forms first.
+    const hand = ['handslotl', 'handl', 'Hand.L', 'Palm2.L']
+      .map((n) => model.getObjectByName(n))
+      .find(Boolean)
+    if (hand) {
+      hand.add(this.lanternLight)
+      this.lanternLight.position.set(0, 0, 0) // sit at the hand (re-parent keeps local pos)
+    }
 
     this.ready = true
     this.apply(this.pending.state, this.pending.speed)

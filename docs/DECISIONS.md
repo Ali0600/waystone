@@ -16,11 +16,13 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 
 ## Backlog — alternatives worth trying later
 
-- **A THEMED CC0 adventurer + GLB combat clips** (see **D7** → tried at M39) — the GLB pipeline
-  now ships (RobotExpressive robot, world locomotion, behind a toggle). Still worth trying: swap a
-  fantasy-humanoid CC0 `.glb` for the robot placeholder (drop-in + clip remap), and give combat GLB
-  clips (a generic pack has no bespoke sword swings — retarget or author them, else combat stays
-  procedural). Revisit hook: `GlbHeroDriver` + `glbanim.ts` clip map already exist.
+- **GLB combat (per-key sword swings on the GLB hero)** (see **D7** → M39 robot, M40 hooded rogue) —
+  the fantasy adventurer is now in (KayKit Rogue Hooded, CC0), which ships **bespoke 1H melee
+  clips** — so combat-GLB is now actually possible (M39's "generic packs lack sword clips" no
+  longer applies). Still deferred: route `arena.ts` through the GLB driver (attach the sword to
+  `handslotr`, play `CLIP_FOR_ATTACK` — already mapped to `1H_Melee_Attack_Chop/Slice/Stab`), so the
+  GLB skin fights too. Revisit hook: `arena.ts` currently constructs `HeroDriver` directly — give it
+  the same `characterStyle()` pick `avatar.ts` uses.
 - **A bigger "Perfect" celebration** (see **D4**) — an arena flourish (camera kick / burst /
   slow-mo) on top of today's subtle gold flash + sting, if combat wants more punch.
 
@@ -86,6 +88,15 @@ M37b) don't exist — **combat kept the procedural rig**; (3) the model brings i
 materials (not toon-shaded), so it reads "HD" but off-palette against the toon world. Net: great
 for locomotion, seam proven, aesthetic + combat need a themed asset — both still `deferred` (see
 Backlog).
+
+**➡ M40 (2026-07-22) — swapped in the fantasy adventurer.** Replaced the robot with **KayKit
+"Adventurers" — Rogue (Hooded)** (verified CC0, Kay Lousberg; the license text says so
+verbatim). It's a hooded low-poly rogue — matches the Surveyor AND sits natively in the toon
+world (finding #1 + #3 resolved). Same `GlbHeroDriver`, only `glbanim.ts` (76 real clips) +
+two model-specific tweaks changed: `MODEL_YAW = 0` (KayKit faces +Z) and the hand-bone lookup
+(**GLTFLoader strips dots**, so `handslot.l` loads as `handslotl`). The pack ships bespoke melee
+clips, so finding #2 is now solvable — **GLB combat is the one remaining deferred piece** (see
+Backlog). Asset SHA-pinned in `public/models/CREDITS.md`.
 
 ## D6 — Combo-chain input design (2026-07-22, M35)
 
