@@ -50,10 +50,14 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `characterStyle()` picks one at boot from `?char=glb` or localStorage `waystone:character-style`
   (default procedural), toggled from the Attunement panel (reloads to apply — the character is
   built once; LanternVerb holds the light). `glbanim.ts` = PURE clip map (`CLIP_FOR_LOCO`/
-  `CLIP_FOR_ATTACK`, `ROBOT_CLIPS`) tested by `glbanim.test.ts`; the asset is
-  `public/models/RobotExpressive.glb` (CC0, Quaternius — see `public/models/CREDITS.md`). The
-  trial is **world-only**: combat keeps the procedural rig (a generic pack has no bespoke sword
-  clips). Swapping a themed adventurer = drop a new `.glb` + update the clip map. No save change.
+  `CLIP_FOR_ATTACK`, `ADVENTURER_CLIPS`) tested by `glbanim.test.ts`; the asset is
+  `public/models/Rogue_Hooded.glb` (**KayKit Adventurers — Rogue Hooded, CC0 by Kay Lousberg**,
+  SHA-pinned — see `public/models/CREDITS.md`). Two model-specific consts in `glbdriver.ts`:
+  `MODEL_YAW` (0 for KayKit; was π for the M39 robot) and the hand-bone lookup (**GLTFLoader
+  strips dots** → KayKit's `handslot.l` loads as `handslotl`). The trial is **world-only**:
+  combat keeps the procedural rig (the KayKit pack DOES ship bespoke melee clips, so combat-GLB
+  is now feasible — the one remaining D7 deferred item). Swapping another adventurer = drop a new
+  `.glb` + update the clip map. No save change.
 - `src/content/` — DATA, not code. Regions (`amberfall`, `waystation`, `veilspire`,
   `cindervault` — the last two latent, chained: Amberfall's waystone opens Veilspire,
   Veilspire's opens Cindervault), glyphs, chains, enemies, recruits, cards.schema (deck
