@@ -242,6 +242,10 @@ authored in island-local coords before it ever loaded.
 - A new mechanic lands with a row in `docs/MECHANICS.md` (name · key · covering test, or
   the `browser-QA` tag). `tests/mechanics-doc.test.ts` enforces both sides — every new
   `tests/*.test.ts` suite must be cited by a row, and every row must cite a test or QA tag.
+- Design forks are logged in `docs/DECISIONS.md` — the options considered, what was chosen,
+  and a "Backlog — alternatives worth trying later" list of the roads not taken (e.g. the
+  GLB-character swap deferred at M37). Append an entry at each substantive fork, per the
+  global "decision log" rule.
 
 ## Verify in prod after ship
 
