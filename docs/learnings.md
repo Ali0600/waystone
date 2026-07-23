@@ -253,3 +253,28 @@ comment at each site pointing at the other. Extract the JS side as a tiny pure f
 (`flashLifetimeMs`) so the "perfect outlives the rest" invariant is unit-testable (fail-first: make
 them equal → red); verify the CSS side by reading the real element's *computed* `animation-duration`
 in the browser, not by trusting the timeout constant (verify the rendered outcome, not the proxy).
+
+## Split animation into a PURE semantic layer + a swappable render driver (the "seam")
+
+When you build one implementation of something you know you'll want to swap later (a procedural
+character rig now, a downloadable GLB/Mixamo one next), put a seam between *what* it does and
+*how* it's drawn. In M37 the split is: `heroanim.ts` is PURE (no THREE) — locomotion *state
+names* (`idle/run/sprint/...`), *attack ids* (`overhead/thrust/...`), the `ATTACK_FOR_KEY`
+mapping, and keyframe math, all unit-testable headlessly; `rig.ts` turns a pose into a THREE
+skeleton and exposes a tiny `HeroDriver` interface (`setLocomotion` / `playAction` /
+`currentAction` / `update`). Everything above the driver (the Avatar and Arena wiring, the event
+handlers, the id mappings) speaks only the semantic vocabulary and never mentions how a pose
+becomes pixels.
+
+**Why it came up:** the user asked for a procedural rig *and* said "I want to test lots of
+options (GLB packs, Mixamo) later." A future `GlbHeroDriver` implements the same four methods
+over an `AnimationMixer` (state → named loop clip, id → one-shot clipAction, sockets → bones),
+and `Avatar`/`Arena` change zero lines. The pure layer means the animation *logic* (which key
+swings which way, when a track ends, gait antiphase) is tested without a renderer at all.
+
+**Takeaway:** when a component has a *decision* half and a *rendering* half and the rendering
+half is the thing you'll swap, name a narrow interface between them (a handful of verbs in the
+domain's own words) and keep the decision half free of the rendering library entirely. Test the
+decision half as pure functions; verify the rendering half in the browser. The payoff is that
+swapping the backend is a new file, not a refactor — and pairs with the single-writer rule (one
+applier owns each rendered property) so the two halves can't fight.
