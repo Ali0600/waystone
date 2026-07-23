@@ -110,6 +110,11 @@ test suite left off the list, and no mechanic listed without coverage.
   unit suite structurally cannot see.
 - Versioned save schema with chained forward migrations, structural validation of untrusted
   input, size caps, and non-destructive corrupt-save recovery.
+- Architected a character-animation system with a hard seam between a pure, headless-tested
+  semantic layer (locomotion states, per-input attack mappings, keyframe math) and a swappable
+  render driver, so a downloadable rigged model can later replace the procedural rig without
+  touching the game wiring — separation of concerns that keeps the animation *logic* under unit
+  test and the *rendering* isolated behind a four-method interface.
 
 ## Design lineage
 
