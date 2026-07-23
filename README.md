@@ -33,7 +33,7 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| The Surveyor | An **articulated hero** — a jointed, hooded wanderer who idles, runs, sprints out of a dash, jumps and falls with a real gait, a **sword sheathed on the back** and the lantern carried in the left hand. The animation is a pure, testable core (states + keyframes) driving a procedural skeleton, with a clean seam to swap in a downloadable rigged character. That seam is live: a **trial toggle** (Attunement screen, or `?char=glb`) swaps the hero for a **CC0 rigged fantasy adventurer** (KayKit's hooded Rogue, by Kay Lousberg) animated over an `AnimationMixer` — same game wiring, no code change |
+| The Surveyor | An **articulated hero** — a jointed, hooded wanderer who idles, runs, sprints out of a dash, jumps and falls with a real gait, a **sword sheathed on the back** and the lantern carried in the left hand. The animation is a pure, testable core (states + keyframes) driving a procedural skeleton, with a clean seam to swap in a downloadable rigged character. That seam is live: a **trial toggle** (Attunement screen, or `?char=glb`) swaps the hero for a **CC0 rigged fantasy adventurer** (KayKit's hooded Rogue, by Kay Lousberg) animated over an `AnimationMixer` — same game wiring, no code change. The toggle now reaches **combat** too: flip it and the rogue fights with a CC0 KayKit sword, its swings driven by the same per-key combat clips |
 | Discovery | 84 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
 | The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
@@ -112,9 +112,14 @@ test suite left off the list, and no mechanic listed without coverage.
   input, size caps, and non-destructive corrupt-save recovery.
 - Architected a character-animation system with a hard seam between a pure, headless-tested
   semantic layer (locomotion states, per-input attack mappings, keyframe math) and a swappable
-  render driver, so a downloadable rigged model can later replace the procedural rig without
-  touching the game wiring — separation of concerns that keeps the animation *logic* under unit
-  test and the *rendering* isolated behind a four-method interface.
+  render driver, so a downloadable rigged model replaces the procedural rig without touching the
+  game wiring — separation of concerns that keeps the animation *logic* under unit test and the
+  *rendering* isolated behind a four-method interface.
+- Applied the Strategy pattern end-to-end to make that swap propagate: a single interface with two
+  interchangeable implementations (a procedural skeleton and a downloadable GLB character over a
+  THREE `AnimationMixer`), selected at one **composition root** shared by both the open-world and
+  combat renderers — so one runtime toggle re-skins the hero everywhere, including its per-input
+  sword combat, with zero changes to game logic (dependency inversion / program-to-an-interface).
 
 ## Design lineage
 

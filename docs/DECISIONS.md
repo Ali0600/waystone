@@ -16,21 +16,37 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 
 ## Backlog — alternatives worth trying later
 
-- **GLB combat (per-key sword swings on the GLB hero)** (see **D7** → M39 robot, M40 hooded rogue) —
-  the fantasy adventurer is now in (KayKit Rogue Hooded, CC0), which ships **bespoke 1H melee
-  clips** — so combat-GLB is now actually possible (M39's "generic packs lack sword clips" no
-  longer applies). Still deferred: route `arena.ts` through the GLB driver (attach the sword to
-  `handslotr`, play `CLIP_FOR_ATTACK` — already mapped to `1H_Melee_Attack_Chop/Slice/Stab`), so the
-  GLB skin fights too. Revisit hook: `arena.ts` currently constructs `HeroDriver` directly — give it
-  the same `characterStyle()` pick `avatar.ts` uses.
 - **A bigger "Perfect" celebration** (see **D4**) — an arena flourish (camera kick / burst /
   slow-mo) on top of today's subtle gold flash + sting, if combat wants more punch.
+
+> ✅ **GLB combat** (was here since M40) shipped at **M41** — the rogue now fights with a KayKit
+> sword; see **D10** and D7's M41 note. D7 (the hero-art-style fork) is now fully realized.
 
 > Pure *deferred features* that were never offered as a fork (recruits beyond 8, NG+/post-game
 > descent, Palegrove brightness tone-down, Tunic-style manual-as-loot, Outer-Wilds rumor-web Guide)
 > live in the build plan's "out of scope" notes, not here — this file is only about **decision forks**.
 
 ---
+
+## D10 — Linking the battle model to the world toggle (2026-07-23, M41)
+
+**Fork:** the world could swap to the KayKit rogue, but combat stayed procedural — should combat
+follow the same toggle, and where does the rogue's blade come from (KayKit ships swing clips but no
+weapon mesh)?
+**Chosen:** **link them** through a **single composition root** (`arena.ts` reads the same
+`characterStyle()` `avatar.ts` does) + **download a KayKit weapon** (the pack's CC0 `sword_1handed`,
+parented to `handslotr`). The interface (`IHeroCharacter`) already made the swap *possible*; sharing
+the *selection* is what makes it *propagate* — an interface alone leaves two `new` sites that diverge.
+**Not taken:**
+- **Reuse our procedural sword mesh** (attach `buildSword()` to the GLB hand) — _rejected: the user
+  chose the KayKit weapon for the best art match; our blocky blade would clash with the rogue._
+  (Still the zero-asset fallback if the KayKit weapon ever needs dropping.)
+- **Empty-handed** (swing clips, no blade) — _rejected: the clips clearly expect a weapon; the rogue
+  would shadow-box._
+- **Keep combat procedural** — _rejected: the user explicitly wanted the toggle to change combat too._
+
+**Revisit hook:** `GlbHeroDriver({weaponUrl})` attaches any weapon GLB to `handslotr`; swap the
+KayKit dagger/axe/etc. (same pack) by changing `SWORD_URL` in `glbanim.ts`.
 
 ## D9 — How to preserve rejected options (2026-07-22, meta)
 
@@ -97,6 +113,12 @@ two model-specific tweaks changed: `MODEL_YAW = 0` (KayKit faces +Z) and the han
 (**GLTFLoader strips dots**, so `handslot.l` loads as `handslotl`). The pack ships bespoke melee
 clips, so finding #2 is now solvable — **GLB combat is the one remaining deferred piece** (see
 Backlog). Asset SHA-pinned in `public/models/CREDITS.md`.
+
+**➡ M41 (2026-07-23) — combat-GLB shipped; D7 fully realized.** `arena.ts` now holds an
+`IHeroCharacter` picked via the SAME `characterStyle()` as `avatar.ts` (the single composition
+root), so the toggle drives combat too; the rogue fights with a CC0 KayKit `sword_1handed` on
+`handslotr`, and sword ownership moved into the drivers. The last D7 deferred item is done — the
+fork is now **D10**.
 
 ## D6 — Combo-chain input design (2026-07-22, M35)
 

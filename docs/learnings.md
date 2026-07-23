@@ -299,3 +299,26 @@ was a `HeroDriver`, not the `GlbHeroDriver` I thought I was testing. Switching Q
 **durable** source (localStorage/env), not the ephemeral URL param, so a reload can't switch the
 target under you. A "bug" that appears right after any reload is a prime suspect for
 tested-the-wrong-variant (pairs with "check the instrument before believing a negative").
+
+## An interface enables swapping; a single composition root makes the swap *propagate*
+
+"Program to an interface" (the Strategy pattern) gives you *substitutability* — a caller holding
+the interface doesn't care which concrete implementation it has. But it does NOT centralize the
+*decision of which implementation to instantiate*. That choice happens at the `new X()` site — the
+**composition root**. If two callers each construct their own instance, they each make that choice
+independently, and they can silently diverge — even though they share one interface.
+
+**Why it came up:** Waystone's hero has one interface (`IHeroCharacter`) with two implementations
+(a procedural rig, a downloadable GLB rogue). The *world* avatar picked its implementation via a
+`characterStyle()` toggle; the *combat* arena **hardcoded** the procedural one. So flipping the
+toggle re-skinned the world but not combat — the user swapped "the model" and battles didn't
+change, and asked (rightly) "isn't this polymorphism — shouldn't they be linked?". The interface
+was doing its job (both were swappable); the gap was that the *selection* lived in two places and
+only one read the switch. The fix (M41) was to have the arena call the SAME `characterStyle()`, so
+one composition root is the single source of truth — then one toggle drives both surfaces.
+
+**Takeaway:** "program to an interface" (Strategy) and "one place decides which implementation"
+(a shared factory / composition root, dependency injection) are two *separate* moves — you need
+BOTH for "change it once, it changes everywhere." When a swap mysteriously applies in one place but
+not another, look for a second `new ConcreteType()` that never consulted the selector; don't just
+confirm the interface is implemented. Centralize the choice in one function both consumers call.

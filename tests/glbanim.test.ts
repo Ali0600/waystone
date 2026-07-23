@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CLIP_FOR_ATTACK, CLIP_FOR_LOCO, ADVENTURER_CLIPS } from '../src/player/glbanim'
+import { CLIP_FOR_ATTACK, CLIP_FOR_LOCO, ADVENTURER_CLIPS, SWORD_URL } from '../src/player/glbanim'
 
 /**
  * `ADVENTURER_CLIPS` is the clip list parsed from the shipped Rogue_Hooded.glb at
@@ -28,5 +28,11 @@ describe('GLB hero clip mapping', () => {
     for (const s of ['idle', 'run', 'sprint', 'jump'] as const) {
       expect(CLIP_FOR_LOCO[s]).toBeTruthy()
     }
+  })
+
+  // M41: combat blade path. The actual bone-attach needs the binary asset → browser-QA;
+  // here we just pin the committed path so a typo can't silently 404 the sword.
+  it('SWORD_URL points at the committed KayKit blade under models/kaykit', () => {
+    expect(SWORD_URL.endsWith('models/kaykit/sword_1handed.gltf')).toBe(true)
   })
 })
