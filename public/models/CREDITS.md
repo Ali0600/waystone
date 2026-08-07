@@ -30,3 +30,18 @@ The rogue's **combat blade** (M41): parented to its right-hand bone (`handslot.r
 after GLTFLoader strips the dot) with an identity transform, so it inherits the character's scale.
 Combat-only — the world rogue roams unarmed (KayKit has no back scabbard). A `.gltf`+`.bin`+texture
 triple (not a self-contained `.glb`); GLTFLoader resolves the sidecars relative to the `.gltf` URL.
+
+## waystone/socket.glb
+
+- **Original work** for this repo — no third-party asset, no third-party licence. Modelled
+  procedurally in **Blender 5.2 LTS**, driven over the Blender MCP (M42).
+- **Reproducible:** [`tools/blender/build_waystone_socket.py`](../../tools/blender/build_waystone_socket.py)
+  rebuilds and re-exports it deterministically (hash-noise, no RNG), so this `.glb` is a build
+  output rather than an opaque binary. Re-run it to re-tune the monument.
+- **SHA-256** (as committed): `4d2b1bd1…71ef`.
+- 1,840 tris · 122 KB · footprint ≈ 5.96u Ø × 2.61u tall — deliberately matching the primitive
+  `buildSocket()` it replaces (6.0 × 2.5), so `LandmarkDef` placements and `lm.scale` still fit.
+- **No textures and no animations.** Three named materials — `rock` · `rock-dark` · `rune` — are
+  the re-toon handles: `src/world/landmarkglb.ts` maps them onto `makeToonMaterial(...)` at load
+  so the monument wears the region's palette instead of an imported PBR look. One material per
+  mesh, which the `applyGhost`/`applySolid` material swaps require.

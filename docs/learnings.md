@@ -322,3 +322,52 @@ one composition root is the single source of truth — then one toggle drives bo
 BOTH for "change it once, it changes everywhere." When a swap mysteriously applies in one place but
 not another, look for a second `new ConcreteType()` that never consulted the selector; don't just
 confirm the interface is implemented. Centralize the choice in one function both consumers call.
+
+## `visible = false` can silently un-collide geometry
+
+Renderers and physics often read the *same* scene graph but ask different questions of it.
+three-mesh-bvh's `StaticGeometryGenerator` builds its collision mesh by walking
+`object.traverseVisible(...)` — so `object.visible` isn't only a rendering flag, it's the
+**collision opt-in**. Hiding a mesh that way removes it from the BVH the next time collision is
+rebuilt. Nothing errors; the object just stops being solid.
+
+The distinction that saves you: `object.visible` gates the traversal, while `material.visible`
+gates only the renderer's draw-list push. So "hide it but keep it solid" is `material.visible =
+false`.
+
+**Why it came up:** M42 swapped the Amberfall waystone socket for a Blender-authored GLB but kept
+the primitive as the collider (so the BVH stays untouched). The obvious way to hide the primitive
+— `mesh.visible = false` — would have deleted the monument from collision. Worse, it wouldn't have
+shown up immediately: the region's collider is built once at boot and only *rebuilt* on latent-path
+solidify and waystone planting, so the socket would have stayed solid all through early play and
+become walk-through-able after the player planted a waystone. A test that snapshots the BVH
+triangle count across the hide caught it: 144 → **0**.
+
+**Takeaway:** before hiding an object that participates in a non-rendering system (collision,
+raycasting, physics, culling, export), check which flag that system reads — many walk
+`traverseVisible`. And pin the answer with a test that asserts the *other* system's output is
+unchanged (triangle count, raycast hit), because the visual result looks identical either way and
+the regression may only surface after some later rebuild.
+
+## A boolean/CSG operation can delete geometry it never touched
+
+Blender's EXACT boolean solver treats its input as one solid. Feed it a mesh containing several
+**disjoint shells** and the shells that aren't part of the operation can be discarded outright —
+even ones nowhere near the cutter.
+
+**Why it came up:** authoring the socket monument, six standing stones were joined into the plinth
+object *after* that object already carried a BOOLEAN modifier for the recessed well. The join put
+the stones downstream of the boolean, and all six vanished — though the cutter was a small cylinder
+at the centre, 2 units away from any of them. The fix was ordering: apply the modifiers, *then*
+join.
+
+What made it expensive was measuring the wrong thing. `obj.data.vertices` still contained all 84
+vertices (the stones were genuinely in the base mesh), and `obj.bound_box` was stale. Only the
+depsgraph-**evaluated** mesh told the truth — toggling the modifier off moved its z-extent from
+0.35 to 2.11.
+
+**Takeaway:** in any modifier/pipeline stack (DCC modifiers, shader graphs, build transforms),
+adding input to an object retroactively subjects it to that object's existing pipeline — so
+sequence matters, and "apply before merging" is the safe default. And when debugging one, read the
+**evaluated output**, never the source data or a cached bounding box: the source is the input you
+provided, not the result the system produced.

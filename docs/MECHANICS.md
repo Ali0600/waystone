@@ -125,6 +125,7 @@ silently drift from the suite.
 ## World Presentation
 
 - [x] **Per-region atmosphere** — sky/fog/hemi/sun/mist blend to each isle (frame-rate-independent) · `tests/atmosphere.test.ts`
+- [x] **Blender-authored landmark models (M42)** — a landmark opts in via `LandmarkDef.model` and a GLB monument replaces its *rendering* only: the primitive stays as the collider (hidden with `material.visible`, never `object.visible`, because three-mesh-bvh bakes `traverseVisible`), and models hang in a render-only `decor` group so no collider rebuild can absorb them. Imported materials are re-tooned by name (`rock`/`rock-dark`/`rune`) into the region's palette; a failed load leaves the primitive visible and warns. Currently the Amberfall waystone socket · `tests/landmarkglb.test.ts` · `browser-QA`
 - [x] **Toon material** — banded gradient / NearestFilter choke point · `tests/toon.test.ts`
 - [x] **Terrain heightfield** + seeded scatter (mulberry32) · `tests/terrain.test.ts`
 - [x] **Triangle winding** — walkable faces point up (physics ≠ rendering) · `tests/terrain-winding.test.ts`
