@@ -15,6 +15,26 @@ export interface GlbHeroOptions {
 const FADE = 0.2
 /** Target height (world units) to normalize the loaded model to. */
 const TARGET_HEIGHT = 1.7
+/**
+ * Target blade length (world units) — a longsword reads at roughly half the
+ * wielder's height. Weapons are authored to whatever hand a given pack has, so
+ * the raw import can be wildly off: KayKit's sword arrives at 1.91u on our 1.7u
+ * hero (112% of body height) because it was drawn for a chibi body with huge
+ * hands. `weaponScaleFor` renormalizes it the same way the body is normalized,
+ * so swapping either the hero or the weapon can't reintroduce the mismatch.
+ */
+const TARGET_WEAPON_LENGTH = 0.95
+
+/**
+ * Scale factor bringing an imported weapon's longest axis to
+ * `TARGET_WEAPON_LENGTH`. Pure so the sizing rule is unit-testable without the
+ * binary asset. A degenerate measurement (0/NaN) leaves the weapon untouched
+ * rather than collapsing it to a point.
+ */
+export function weaponScaleFor(longestAxis: number): number {
+  if (!Number.isFinite(longestAxis) || longestAxis <= 0) return 1
+  return TARGET_WEAPON_LENGTH / longestAxis
+}
 /** Fixed yaw so the model's forward aligns with Waystone's +Z (tuned in QA —
  *  KayKit's Rogue faces +Z natively, so no rotation). */
 const MODEL_YAW = 0
@@ -92,10 +112,10 @@ export class GlbHeroDriver implements IHeroCharacter {
   }
 
   /**
-   * Load a weapon GLB and parent it to the right-hand bone with an identity local
-   * transform, so it inherits the character's scale/pose (KayKit authors weapon and
-   * body at one scale to sit in the handslot). Async — the blade pops in just after
-   * the body; the mesh keeps its native KayKit material, matching the rogue body.
+   * Load a weapon GLB, renormalize its length, and parent it to the right-hand
+   * bone. Async — the blade pops in just after the body and keeps its native
+   * material. Scaling matters: a weapon is authored for the hand of whatever body
+   * its pack drew, so on a different hero it imports at the wrong size.
    */
   private attachWeapon(url: string, model: THREE.Object3D): void {
     const hand = ['handslotr', 'handr', 'Hand.R', 'Palm2.R']
@@ -107,7 +127,11 @@ export class GlbHeroDriver implements IHeroCharacter {
     }
     new GLTFLoader()
       .loadAsync(url)
-      .then((g) => hand.add(g.scene))
+      .then((g) => {
+        const size = new THREE.Box3().setFromObject(g.scene).getSize(new THREE.Vector3())
+        g.scene.scale.setScalar(weaponScaleFor(Math.max(size.x, size.y, size.z)))
+        hand.add(g.scene)
+      })
       .catch((e) => console.warn('[GlbHeroDriver] failed to load weapon', url, e))
   }
 

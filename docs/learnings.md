@@ -371,3 +371,51 @@ adding input to an object retroactively subjects it to that object's existing pi
 sequence matters, and "apply before merging" is the safe default. And when debugging one, read the
 **evaluated output**, never the source data or a cached bounding box: the source is the input you
 provided, not the result the system produced.
+
+## A rig is a contract of names — you can replace the mesh and inherit the animation
+
+A skinned glTF character is really three separable things: a **mesh**, an **armature**, and a set
+of **animation clips** that address bones by name. Nothing binds the mesh to the other two except
+vertex groups — which are also just bone names. So you can delete a character's mesh entirely,
+model your own over the same armature, and the original clips keep working, because they were
+never addressing the mesh in the first place.
+
+That inverts the cost model. Authoring believable locomotion and combat animation is the expensive,
+specialised part of making a character; geometry is comparatively cheap. Borrowing a permissively
+licensed rig for its *skeleton and clips* and supplying your own mesh gets you a custom character
+for the price of the cheap half.
+
+**Why it came up:** Waystone's GLB hero was a stock CC0 KayKit rogue. Making it Waystone's own
+Surveyor could have meant commissioning or hand-keying 13 animations; instead the build script
+imports the rogue purely for its armature and clips, throws the rogue mesh away, builds the
+Surveyor over the same bones, and re-exports. Zero animation authored, zero driver code changed —
+the loader resolves everything by name (`Idle`, `Running_A`, `handslot.l`), so keeping those names
+was the entire integration.
+
+**Takeaway:** before authoring animation for a custom character, check whether a licence-compatible
+rig already has the clips you need — then treat its bone and clip names as the API and swap the
+mesh underneath. Verify the round-trip *first*, though: import the donor and re-export it
+unchanged, and assert the clip names, joint count and socket bones survive your DCC's importer
+before investing in modelling. And be honest about what you inherit — you also inherit its
+proportions' assumptions (see the next entry).
+
+## An asset authored for one body is mis-sized on another — normalize by measurement
+
+Props that attach to a character (weapons, tools, hats) are modelled to fit the hand of the
+character they shipped with. Parent one to a different character with an identity transform and it
+inherits that character's scale, not a correct size — and "correct" depended on a body you replaced.
+
+**Why it came up:** Waystone parents a CC0 KayKit sword to the hero's right-hand bone. That read
+fine while the hero was KayKit's own chibi rogue — big head, big hands, big sword all agreed. Swapping
+in a slim, realistically-proportioned hero left the blade at **1.91 units against a 1.70-unit
+character — 112% of body height**, a flagpole. Nothing errored; it just looked absurd, and only
+measuring the ratio made it a fact rather than a vague sense that something was off.
+
+The fix is the same trick the character loader already used on the body: measure the imported
+object's bounding box and scale it to a target size, rather than trusting the authoring scale. That
+is self-correcting — swapping either the weapon or the hero can't reintroduce the mismatch.
+
+**Takeaway:** when attaching third-party props to your own character (or vice versa), normalize by
+measured size, not by the transform the asset shipped with. And when a visual "feels off", measure
+the ratio — a number turns a vague aesthetic doubt into a defect you can test (here, a unit test on
+the pure scale function pins the blade between 40% and 65% of body height).

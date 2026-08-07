@@ -18,6 +18,9 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 
 - **A bigger "Perfect" celebration** (see **D4**) — an arena flourish (camera kick / burst /
   slow-mo) on top of today's subtle gold flash + sting, if combat wants more punch.
+- **Generate the anime corsair from the reference image** (see **D12**) — Hyper3D Rodin for the
+  mesh, then bind it to the same KayKit armature the Surveyor uses; the only path that starts from
+  `reference.png`.
 - **Roll the Blender-GLB prop pipeline out past the one socket** (see **D11**) — arch, spire,
   recruit huts, mooring posts; each is a one-line `model:` opt-in once the `.glb` exists.
 - **Let a GLB landmark be the collider too** (see **D11**) — drops the primitive entirely and makes
@@ -29,6 +32,47 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 > Pure *deferred features* that were never offered as a fork (recruits beyond 8, NG+/post-game
 > descent, Palegrove brightness tone-down, Tunic-style manual-as-loot, Outer-Wilds rumor-web Guide)
 > live in the build plan's "out of scope" notes, not here — this file is only about **decision forks**.
+
+---
+
+## D12 — A custom hero, and which proportions it wears (2026-08-07, M43)
+
+**Fork A — how to get a hero that's Waystone's own** rather than a stock CC0 rogue.
+
+**Chosen:** **model our own mesh over the KayKit skeleton** and inherit its animation clips. A rig
+is a contract of names, so discarding the donor's mesh costs nothing: the clips address bones, not
+geometry. Zero animations authored, zero driver code changed. Verified the import→export round-trip
+preserves clip names / 41 joints / handslot bones *before* modelling anything.
+
+**Not taken:**
+- **Generate the anime corsair from `reference.png` via Hyper3D Rodin, then rig it** — closest to the
+  reference art and the only path that starts from the image, but mesh quality is unproven AND the
+  animation problem stays unsolved (retargeting onto a foreign skeleton is the risky part).
+  · _status: deferred — worth trying_ (the seam makes it a drop-in; see
+  `~/projects/img2threejs-test/RESEARCH.md`. **Never** use Hunyuan3D — its licence excludes the EU.)
+- **Upgrade the procedural rig in code** — no asset pipeline at all, but bounded by primitives.
+  · _status: rejected — that's the thing the GLB path exists to move past_
+- **Just recolour the KayKit rogue** — cheapest, but the hero stays someone else's character.
+  · _status: rejected — defeats the purpose_
+
+**Fork B — proportions**, surfaced only once the two were rendered side by side: KayKit's rogue is
+**chibi** (head ≈ ⅓ of height); sizing geometry from the actual bones gives a **slim, realistic**
+figure. Both normalize to 1.7u in game, so this is purely style.
+
+**Chosen:** **slim**, then polish. It matches the procedural hero and the world's realistically-
+proportioned props, so the game reads as one art style with the chibi rogue retired.
+**Not taken:** **rebuild chibi to match KayKit** — would sit more consistently beside the CC0 KayKit
+sword and any future KayKit assets. · _status: rejected — it would make the hero match the borrowed
+assets rather than the game_
+
+**Consequence worth recording:** the inherited sword was authored for chibi hands and imported at
+112% of the slim hero's height. Fixed by normalizing weapons by measurement (`weaponScaleFor`),
+which is swap-proof in both directions.
+
+**Revisit hook:** `tools/blender/build_waystone_hero.py` regenerates the mesh (proportions live in
+the segment radii and the graded torso profile); `GLB_HERO_URL` + `HERO_CLIPS` in
+`src/player/glbanim.ts` point at the asset. A Rodin-generated body would enter at the same place —
+build it over this armature and the rest is unchanged.
 
 ---
 

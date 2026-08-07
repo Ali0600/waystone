@@ -65,12 +65,26 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   `characterStyle()` picks one at boot from `?char=glb` or localStorage `waystone:character-style`
   (default procedural), toggled from the Attunement panel (reloads to apply — the character is
   built once; LanternVerb holds the light). `glbanim.ts` = PURE clip map (`CLIP_FOR_LOCO`/
-  `CLIP_FOR_ATTACK`, `ADVENTURER_CLIPS`) tested by `glbanim.test.ts`; the asset is
-  `public/models/Rogue_Hooded.glb` (**KayKit Adventurers — Rogue Hooded, CC0 by Kay Lousberg**,
-  SHA-pinned — see `public/models/CREDITS.md`). Two model-specific consts in `glbdriver.ts`:
-  `MODEL_YAW` (0 for KayKit; was π for the M39 robot) and the hand-bone lookup (**GLTFLoader
-  strips dots** → KayKit's `handslot.l` loads as `handslotl`; the combat sword mirrors it to
-  `handslotr`). **COMBAT-GLB REALIZED (M41):** the toggle now applies to combat too — `arena.ts`
+  `CLIP_FOR_ATTACK`, `HERO_CLIPS`) tested by `glbanim.test.ts`.
+  **CUSTOM HERO (M43)** — the asset is now `public/models/waystone/hero.glb`, **Waystone's own
+  Surveyor**: the MESH is original (Blender), the **skeleton + 13 clips are inherited CC0 from
+  KayKit Adventurers**. The insight worth keeping: a rig is a contract of NAMES, so you can throw
+  away a pack's mesh, model your own over its bones, and inherit all its animation for free —
+  authoring animation is the expensive part, geometry isn't. Rebuild with
+  `tools/blender/build_waystone_hero.py` (imports the pinned rogue for armature+clips, discards its
+  mesh, re-exports). Verified before relying on it: a bare import→export round-trip preserves clip
+  names, the 41-joint skin and the handslot bones exactly — **re-run that probe first if this ever
+  breaks**. Binding rule: limbs are RIGID (one bone, weight 1.0 — a forearm really is rigid); the
+  torso and cape are single volumes with GRADIENT weights across hips/spine/chest, because stacked
+  rigid cones read as a caterpillar when the spine bends. Every vertex must be weighted — an
+  unweighted one collapses to the origin (the build script asserts this). Proportions are
+  deliberately slim/realistic, matching the procedural rig — NOT KayKit's chibi (see DECISIONS D12).
+  The export is trimmed 76→14 clips (3.5 MB → 591 KB) and `glbanim.test.ts` pins the list BOTH
+  ways (nothing mapped is missing; nothing shipped is unused).
+  Model-specific consts in `glbdriver.ts`: `MODEL_YAW` (0 — the rig faces +Z), the hand-bone lookup
+  (**GLTFLoader strips dots** → `handslot.l` loads as `handslotl`; the combat sword mirrors to
+  `handslotr`), and `weaponScaleFor` — a weapon is authored for ITS pack's hand, so KayKit's sword
+  imported at 112% of our hero's height until it was renormalized by measurement. **COMBAT-GLB REALIZED (M41):** the toggle now applies to combat too — `arena.ts`
   holds an `IHeroCharacter` and picks it via the SAME `characterStyle()` `avatar.ts` uses (the
   **single composition root** — one switch, both surfaces; an interface alone only makes the swap
   *possible*, a shared selection makes it *propagate*). In GLB combat the rogue fights with a

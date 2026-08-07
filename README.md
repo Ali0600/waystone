@@ -33,7 +33,7 @@ out there come home with you, and home gets bigger.
 
 | System | Shape |
 |---|---|
-| The Surveyor | An **articulated hero** — a jointed, hooded wanderer who idles, runs, sprints out of a dash, jumps and falls with a real gait, a **sword sheathed on the back** and the lantern carried in the left hand. The animation is a pure, testable core (states + keyframes) driving a procedural skeleton, with a clean seam to swap in a downloadable rigged character. That seam is live: a **trial toggle** (Attunement screen, or `?char=glb`) swaps the hero for a **CC0 rigged fantasy adventurer** (KayKit's hooded Rogue, by Kay Lousberg) animated over an `AnimationMixer` — same game wiring, no code change. The toggle now reaches **combat** too: flip it and the rogue fights with a CC0 KayKit sword, its swings driven by the same per-key combat clips |
+| The Surveyor | An **articulated hero** — a jointed, hooded wanderer who idles, runs, sprints out of a dash, jumps and falls with a real gait, a **sword sheathed on the back** and the lantern carried in the left hand. The animation is a pure, testable core (states + keyframes) driving a procedural skeleton, with a clean seam to swap in a downloadable rigged character. That seam is live: a toggle (Attunement screen, or `?char=glb`) swaps the hero for a **Blender-authored Surveyor** — an original mesh built over a **CC0 KayKit skeleton so it inherits that pack's animation clips without any being authored** — animated over an `AnimationMixer` with no game-code change. The toggle reaches **combat** too: flip it and the Surveyor fights with a CC0 KayKit sword, its swings driven by the same per-key combat clips |
 | Discovery | 84 authored discoverables across 6 regions: caches, glyph stones, latents, buried, **sealed**, guarded, perches, people, Waystones |
 | The Waystation | A hub isle that starts as one ruined arch; each of 8 recruits found in the world raises their structure (Scribe, Smith, Cartographer, Cook, Archivist, Merchant, Cardplayer, Angler) |
 | Glyph Grid | Finite blank stones inscribe 6 glyphs into a 4×4 grid at the Scribe; **adjacent glyphs fuse** (find the recipes yourself); re-inscription unlocks as the hub grows |
@@ -69,9 +69,9 @@ out there come home with you, and home gets bigger.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
 - Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework; the only assets are a
-  CC0 rigged hero and one original Blender-authored landmark model (rebuildable from
-  `tools/blender/`), everything else is generated in code
-- Vitest: 400 tests, including a **content-invariant suite** that enforces the design
+  two original Blender-authored assets — the hero mesh (on a CC0 KayKit rig) and the
+  waystone monument — both rebuildable from `tools/blender/`; everything else is generated in code
+- Vitest: 404 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests
