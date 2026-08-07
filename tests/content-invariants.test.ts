@@ -11,6 +11,7 @@ import { GLYPHS } from '../src/content/glyphs'
 import { MIST_CAPACITY } from '../src/player/mistwalker'
 import { DEFAULT_PLAYER_PARAMS } from '../src/player/controller'
 import type { RegionDef } from '../src/world/region'
+import { LANDMARK_GLB_URLS } from '../src/world/landmarkglb'
 
 /**
  * The design pillars as executable tests. Authoring mistakes fail CI, not
@@ -142,5 +143,32 @@ describe('cross-region invariants', () => {
   it('recruit roles are unique (one structure each)', () => {
     const roles = RECRUITS.map((r) => r.role)
     expect(new Set(roles).size).toBe(roles.length)
+  })
+
+  /**
+   * A GLB landmark model attaches ASYNC, but `World.applyGhost` runs once at
+   * construction — so a model landing afterwards on a latent island would never
+   * be ghosted and would hang there fully lit inside a translucent isle. Until
+   * ghosting handles late arrivals, models are only legal on solid ground.
+   */
+  it('landmark models are only used on non-latent regions', () => {
+    for (const region of REGIONS) {
+      for (const lm of region.landmarks) {
+        if (!lm.model) continue
+        expect(
+          region.latent ?? false,
+          `${region.id} landmark "${lm.model}" — a latent region misses the ghost pass`,
+        ).toBe(false)
+      }
+    }
+  })
+
+  it('every landmark model resolves to a registered asset URL', () => {
+    for (const region of REGIONS) {
+      for (const lm of region.landmarks) {
+        if (!lm.model) continue
+        expect(LANDMARK_GLB_URLS[lm.model], `${region.id} → ${lm.model}`).toBeTruthy()
+      }
+    }
   })
 })

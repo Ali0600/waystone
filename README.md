@@ -68,8 +68,10 @@ out there come home with you, and home gets bigger.
   `BatchedMesh` scenery (~52 draw calls with all six isles live)
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
-- Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework, no asset files
-- Vitest: 352 tests, including a **content-invariant suite** that enforces the design
+- Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework; the only assets are a
+  CC0 rigged hero and one original Blender-authored landmark model (rebuildable from
+  `tools/blender/`), everything else is generated in code
+- Vitest: 400 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
   coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
   drift from the suite) — authoring mistakes fail CI, not playtests

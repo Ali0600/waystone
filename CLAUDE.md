@@ -26,6 +26,21 @@ Lumen; guaranteed-payout rule = ≥1 glyph stone + ≥1 buried cache per region.
   origin and never moves. The Mistwalker adds a soft floor at the mist plane
   (`PlayerSim.mistFloorY`, gated by a draining `MistCharge`); main tracks the last solid
   shore so a fall or charge-out respawns there, nothing lost.
+  **Landmark GLB models (M42, `landmarkglb.ts`)** — the first static assets in the world
+  layer. A `LandmarkDef.model` opts a landmark into a Blender-authored GLB that replaces
+  its RENDERING only; the primitive remains the collider. Two rules make that work, and
+  both are load-bearing (pinned by `tests/landmarkglb.test.ts`): (1) three-mesh-bvh's
+  `StaticGeometryGenerator` walks **`object.traverseVisible`**, so hide the primitive with
+  `material.visible = false` — `object.visible = false` would silently delete it from the
+  BVH at the next `rebuildCollider` (which fires on latent-path solidify + planting);
+  `hidePrimitiveRender` is the single owner of that distinction. (2) Models attach to a
+  render-only **`decor`** Group — a SIBLING of `collidable`, never inside it — so no
+  rebuild can absorb them. Net: the BVH is unchanged by the feature. Imported materials are
+  re-tooned by NAME (`rock`/`rock-dark`/`rune` → `makeToonMaterial`, array-guarded), so a
+  monument wears the region's palette; a failed load keeps the primitive and warns. Models
+  are legal only on NON-latent regions (`applyGhost` runs once at construction, so an async
+  arrival would miss it) — a content invariant enforces this. Assets are reproducible:
+  `tools/blender/build_waystone_socket.py` regenerates `public/models/waystone/socket.glb`.
 - `src/player/` — **hero rig + animation (M37)** split into a PURE core and a THREE
   skeleton, plus the sim. `heroanim.ts` (no THREE imports; plain `{x,y,z}` records):
   `locomotionState` (idle/run/sprint/jump/fall/grapple), gait `samplePose`, keyframe

@@ -39,7 +39,9 @@ export const amberfall: RegionDef = {
   fog: { near: 40, far: 190 },
   sunDir: [0.55, 1, 0.35],
   landmarks: [
-    { kind: 'socket', x: 0, z: 0 },
+    // The one landmark upgraded to a Blender-authored model (M42). Amberfall is
+    // never latent, which is what makes an async model attach safe here.
+    { kind: 'socket', x: 0, z: 0, model: 'socket' },
     { kind: 'arch', x: 6, z: 48, yaw: 0.5 },
     { kind: 'spire', x: -38, z: -24 },
     { kind: 'stone', x: 30, z: 28, yaw: 0.3 },

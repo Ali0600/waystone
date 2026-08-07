@@ -18,6 +18,10 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 
 - **A bigger "Perfect" celebration** (see **D4**) — an arena flourish (camera kick / burst /
   slow-mo) on top of today's subtle gold flash + sting, if combat wants more punch.
+- **Roll the Blender-GLB prop pipeline out past the one socket** (see **D11**) — arch, spire,
+  recruit huts, mooring posts; each is a one-line `model:` opt-in once the `.glb` exists.
+- **Let a GLB landmark be the collider too** (see **D11**) — drops the primitive entirely and makes
+  the recessed well physically walkable-into; needs async collider rebuilds.
 
 > ✅ **GLB combat** (was here since M40) shipped at **M41** — the rogue now fights with a KayKit
 > sword; see **D10** and D7's M41 note. D7 (the hero-art-style fork) is now fully realized.
@@ -25,6 +29,48 @@ conversation scrolls past. This is the design-decision sibling of `docs/learning
 > Pure *deferred features* that were never offered as a fork (recruits beyond 8, NG+/post-game
 > descent, Palegrove brightness tone-down, Tunic-style manual-as-loot, Outer-Wilds rumor-web Guide)
 > live in the build plan's "out of scope" notes, not here — this file is only about **decision forks**.
+
+---
+
+## D11 — Blender-authored GLB props vs procedural primitives (2026-08-07, M42)
+
+**Fork:** with the Blender MCP available, should world props keep being built from Three.js
+primitives in code, or be modelled in Blender and shipped as GLB? Probed it by authoring a
+replacement for the game's namesake landmark, the waystone socket (a flat drum + a raised dark
+octagon + 6 identical boxes), and comparing side-by-side.
+
+**Chosen:** **ship the GLB, scoped to the Amberfall socket only** — a beveled plinth with a
+boolean-recessed well, an emissive rune-ring inlay, and 6 irregular broken standing stones
+(1,840 tris, 122 KB, same 6u × 2.6u footprint so placements still fit). The primitive stays as
+the collider, so the BVH is untouched, and a failed load falls back to it. Scoping to Amberfall
+avoids the latent-isle ghost-pass problem entirely. Draw calls actually drop (−8 primitive meshes,
++3 GLB).
+
+**Not taken:**
+- **Refine the primitives in code instead** (more/better `THREE` primitives in `landmarks.ts`) —
+  no new asset, no loader, no async; but hand-composed primitives can't do bevels, booleans, or
+  per-vertex irregularity, which is exactly what made the monument read as carved stone rather than
+  stacked boxes. · _status: rejected — it's the thing we were trying to move past_
+- **Replace the GLB's rendering wholesale (import its PBR materials/textures)** — closer to the
+  Blender look, but it would break the toon art direction and the `makeToonMaterial` choke point.
+  Instead the GLB exports **no textures** and its material *names* are re-tooned into the region's
+  palette. · _status: rejected — art-direction conflict_
+- **Make the GLB the collider too** (drop the primitive) — one source of truth for shape, and the
+  recessed well would become physically walkable-into; but it changes the BVH, needs async
+  collider rebuilds, and risks a shipped regression for a cosmetic change.
+  · _status: deferred — worth trying_ once the visual swap has proven itself
+- **Roll out to every landmark at once** (arch, spire, huts, moorings) — consistent art in one
+  pass, but a much larger blast radius for a first trial of the pipeline.
+  · _status: deferred — worth trying_ (the mechanism is data-driven, so each is a one-line opt-in)
+- **Full art-style replacement** (retire procedural props entirely) — · _status: rejected — far
+  beyond the calibration question that prompted this_
+
+**Revisit hook:** `LandmarkDef.model` (`src/world/region.ts`) opts any landmark in by name;
+`LANDMARK_GLB_URLS` in `src/world/landmarkglb.ts` registers the asset. Rolling out to another prop
+= author it in Blender (mirror `tools/blender/build_waystone_socket.py`), drop the `.glb` in
+`public/models/waystone/`, add the URL, set `model:` on the landmark. For the latent isles
+(Veilspire, Cindervault sockets) `World.applyGhost` must first learn to ghost late-attached meshes —
+a content invariant currently blocks that combination on purpose.
 
 ---
 

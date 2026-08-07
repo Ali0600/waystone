@@ -3,6 +3,7 @@ import { mulberry32 } from '../core/rng'
 import { makeToonMaterial } from '../engine/toon'
 import { buildCollider, type Collider } from './collision'
 import { buildLandmark, type LandmarkKind } from './landmarks'
+import { hidePrimitiveRender, loadLandmarkGlb, retoonGlb } from './landmarkglb'
 import {
   buildScatterMesh,
   makeRockGeometry,
@@ -36,6 +37,15 @@ export interface LandmarkDef {
   z: number
   yaw?: number
   scale?: number
+  /**
+   * Opt in to a Blender-authored GLB model (key into `LANDMARK_GLB_URLS`). The
+   * primitive stays as the collider and is merely hidden from the renderer once
+   * the model loads — see `world/landmarkglb.ts`. Only valid on a NON-latent
+   * region: `applyGhost` runs once at World construction, so a model arriving
+   * async afterwards would render fully lit inside a ghost island. Pinned by
+   * `tests/content-invariants.test.ts`.
+   */
+  model?: string
 }
 
 export interface RegionDef {
@@ -76,6 +86,11 @@ export interface BuiltRegion {
   group: THREE.Group
   collider: Collider
   spawn: THREE.Vector3
+  /**
+   * Render-only sibling of `collidable`. GLB landmark models live here so no
+   * `rebuildCollider` can ever pull them into the BVH (see `landmarkglb.ts`).
+   */
+  decor: THREE.Group
   heightAt(x: number, z: number): number
   /** Rebuild collision including extra solidified groups (latent paths). */
   rebuildCollider(extra: THREE.Object3D[]): void
@@ -87,6 +102,11 @@ export function buildRegion(def: RegionDef): BuiltRegion {
   const collidable = new THREE.Group()
   collidable.name = 'collidable'
   group.add(collidable)
+  // Render-only. Deliberately NOT under `collidable` — GLB landmark models hang
+  // here so collision can never absorb them (world/landmarkglb.ts).
+  const decor = new THREE.Group()
+  decor.name = 'decor'
+  group.add(decor)
   const [ox, oz] = def.origin
 
   // Terrain (island-local geometry placed at the region origin).
@@ -114,6 +134,23 @@ export function buildRegion(def: RegionDef): BuiltRegion {
     built.rotation.y = lm.yaw ?? 0
     built.scale.setScalar(lm.scale ?? 1)
     collidable.add(built)
+
+    // A GLB model, if this landmark opts in: it replaces the primitive's LOOK
+    // only. Async, so the primitive renders until the model lands — and stays
+    // rendering forever if the load fails.
+    if (lm.model) {
+      void loadLandmarkGlb(lm.model).then((model) => {
+        if (!model) return
+        retoonGlb(model, def.palette.rock)
+        // Copy the transform off the primitive rather than recomputing it, so
+        // the terrain snap and `lm.scale` can't drift between the two.
+        model.position.copy(built.position)
+        model.rotation.copy(built.rotation)
+        model.scale.copy(built.scale)
+        decor.add(model)
+        hidePrimitiveRender(built)
+      })
+    }
   }
 
   // Elevated perch discoverables stand on real floating ledges — grapple
@@ -182,6 +219,7 @@ export function buildRegion(def: RegionDef): BuiltRegion {
     group,
     collider: buildCollider(collidable),
     spawn,
+    decor,
     heightAt: h,
     rebuildCollider(extra: THREE.Object3D[]) {
       built.collider = buildCollider([collidable, ...extra])
