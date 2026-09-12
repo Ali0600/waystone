@@ -1,8 +1,8 @@
 # Waystone
 
-A browser third-person exploration RPG built on Three.js. The world was *sung into being*
-and the song stopped partway — most of it hangs latent over a sea of mist, real enough to
-see, not real enough to walk on. You are the last **Surveyor**: your lantern reveals what
+A browser third-person exploration RPG built on Three.js. The world was *sung into being*,
+and the song stopped partway. Most of it hangs latent over a sea of mist: real enough to
+see, not real enough to walk on. You are the last **Surveyor**. Your lantern reveals what
 is latent, and the Waystones you plant finish what the song abandoned. The people you find
 out there come home with you, and home gets bigger.
 
@@ -20,14 +20,14 @@ out there come home with you, and home gets bigger.
 - **Compact and dense, never vast.** Three hand-authored floating islands; no open world,
   no procedural terrain.
 - **Everything you do levels itself.** Verbs (Lantern, Grapple, Dash, Strike, Parry) have
-  hidden use-counters; tiers grant new *properties* — the lantern learns to solidify
-  ghost walkways, the grapple learns to fire mid-air. No XP screen. The world is the trainer.
-- **Every discoverable pays at least two meters** (item + Lumen + completion), every secret
-  has a visible cue, and anything you can't reach yet auto-pins as a **?** on your maps
-  (an always-on **minimap**, a zoomed **isle map**, and a whole **World Map**) —
-  backtracking is a shopping list, never a memory test.
-- **Knowledge is a reward.** Glyph adjacency combos appear in no tooltip; Hidden Arts are
-  input sequences the game never documents; enemy chants are puzzles your glyphs answer.
+  hidden use-counters. Each tier grants new *properties*: the lantern learns to solidify
+  ghost walkways, the grapple learns to fire mid-air. There is no XP screen. The world is the trainer.
+- **Every discoverable pays at least two meters** (item + Lumen + completion). Every secret
+  has a visible cue. Anything you cannot reach yet auto-pins as a **?** on your maps
+  (an always-on **minimap**, a zoomed **isle map**, and a whole **World Map**).
+  Backtracking is a shopping list, never a memory test.
+- **Knowledge is a reward.** Glyph adjacency combos appear in no tooltip. Hidden Arts are
+  input sequences the game never documents. Enemy chants are puzzles your glyphs answer.
 
 ## What's in the slice
 
@@ -68,13 +68,13 @@ out there come home with you, and home gets bigger.
   `BatchedMesh` scenery (~52 draw calls with all six isles live)
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — capsule collide-and-slide
   character controller, no physics engine
-- Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework; the only assets are a
-  two original Blender-authored assets — the hero mesh (on a CC0 KayKit rig) and the
-  waystone monument — both rebuildable from `tools/blender/`; everything else is generated in code
+- Vite + TypeScript, vanilla DOM/CSS UI, Web Audio API — no framework. The only assets are
+  two original Blender-authored ones: the hero mesh (on a CC0 KayKit rig) and the
+  waystone monument. Both can be rebuilt from `tools/blender/`. Everything else is generated in code.
 - Vitest: 404 tests, including a **content-invariant suite** that enforces the design
   pillars over the authored content (payout layering, cue coverage, density budgets,
-  coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` can't
-  drift from the suite) — authoring mistakes fail CI, not playtests
+  coordinate bounds) and a **mechanics↔tests meta-gate** (`docs/MECHANICS.md` cannot
+  drift from the suite). Authoring mistakes fail CI, not playtests.
 - GitHub Actions CI → GitHub Pages, deploy gated on green tests
 
 ## Development
@@ -89,10 +89,10 @@ npm run build      # production build to dist/
 
 Append `?qa=1` to the URL for the QA harness: no pointer lock, and a `window.__game`
 handle with a deterministic `step(n)` that advances the fixed-timestep simulation even in
-hidden tabs — the same hook the automated browser QA drives.
+hidden tabs. The automated browser QA drives the same hook.
 
-**[`docs/MECHANICS.md`](docs/MECHANICS.md)** is the complete mechanic checklist — every
-system, the key that triggers it, and its covering tests. A meta-test
+**[`docs/MECHANICS.md`](docs/MECHANICS.md)** is the complete mechanic checklist: every
+system, the key that triggers it, and the tests that cover it. A meta-test
 (`tests/mechanics-doc.test.ts`) keeps it honest in both directions: no dead test refs, no
 test suite left off the list, and no mechanic listed without coverage.
 
@@ -101,31 +101,31 @@ test suite left off the list, and no mechanic listed without coverage.
 - Designed and shipped a complete CI/CD pipeline: typecheck + test + build on every PR,
   SHA-pinned actions with least-privilege permissions, and a Pages deploy job that can
   only run after tests pass on `main`.
-- Encoded design rules as an executable invariant test suite over game content, turning
-  authoring mistakes into CI failures instead of playtest bugs (caught a whole region
+- Turned the design rules into an executable invariant test suite over the game content, so
+  an authoring mistake fails CI instead of surfacing in a playtest (it caught a whole region
   authored in the wrong coordinate space before it was ever loaded).
-- Built a deterministic, headless-testable simulation core (fixed-timestep loop, pure
-  timing math, event-bus-decoupled combat) with 269 unit/integration tests, including
+- Built a deterministic simulation core you can test headless (fixed-timestep loop, pure
+  timing math, combat decoupled through an event bus) with 404 unit/integration tests, including
   capsule-vs-BVH physics regression tests that run in Node.
-- Implemented a browser automation QA harness (`?qa=1` + `window.__game.step`) and used it
-  to drive scripted end-to-end playthroughs — catching rendering, physics and UX bugs a
+- Built a browser automation QA harness (`?qa=1` + `window.__game.step`) and used it
+  to drive scripted end-to-end playthroughs, catching rendering, physics and UX bugs a
   unit suite structurally cannot see.
-- Versioned save schema with chained forward migrations, structural validation of untrusted
-  input, size caps, and non-destructive corrupt-save recovery.
-- Architected a character-animation system with a hard seam between a pure, headless-tested
+- Versioned the save schema with chained forward migrations, structural checks on untrusted
+  input, size caps, and corrupt-save recovery that never destroys data.
+- Built a character-animation system with a hard seam between a pure, headless-tested
   semantic layer (locomotion states, per-input attack mappings, keyframe math) and a swappable
-  render driver, so a downloadable rigged model replaces the procedural rig without touching the
-  game wiring — separation of concerns that keeps the animation *logic* under unit test and the
-  *rendering* isolated behind a four-method interface.
-- Applied the Strategy pattern end-to-end to make that swap propagate: a single interface with two
-  interchangeable implementations (a procedural skeleton and a downloadable GLB character over a
-  THREE `AnimationMixer`), selected at one **composition root** shared by both the open-world and
-  combat renderers — so one runtime toggle re-skins the hero everywhere, including its per-input
-  sword combat, with zero changes to game logic (dependency inversion / program-to-an-interface).
+  render driver. A downloadable rigged model replaces the procedural rig without touching the
+  game wiring, so the animation *logic* stays under unit test and the *rendering* sits behind
+  a four-method interface.
+- Applied the Strategy pattern end to end so that swap reaches everywhere: one interface with
+  two interchangeable implementations (a procedural skeleton and a downloadable GLB character over
+  a THREE `AnimationMixer`), chosen at one **composition root** shared by the open-world and
+  combat renderers. One runtime toggle re-skins the hero everywhere, including its per-input
+  sword combat, with zero changes to game logic (dependency inversion / program to an interface).
 
 ## Design lineage
 
 Derived from a personal JRPG design-research codex (162 mechanics across 34 games).
-Systems descend from: Grandia's use-based skills, Wild ARMs' Tools, FF7's Materia
+The systems descend from: Grandia's use-based skills, Wild ARMs' Tools, FF7's Materia
 adjacency, Suikoden II's growing castle, Legend of Dragoon's Additions, Sea of Stars'
 Locks, Legend of Legaia's hidden Arts, and FF9's Chocobo Hot & Cold.
